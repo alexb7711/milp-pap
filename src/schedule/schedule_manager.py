@@ -26,26 +26,28 @@ class Schedule:
     #
     def __init__(self,
                  model,
-                 T              = 16,
-                 N              = 6,
                  A              = 3,
-                 Q              = 2,
-                 max_route_time = 3,
                  H_final        = 0.95,
                  H_min          = 0.25,
-                 m              = [5, 5, 10],
-                 e              = [3, 3, 6],
-                 discharge_rate = [2, 2, 2, 2, 2]):
+                 N              = 6,
+                 Q              = 2,
+                 T              = 16,
+                 discharge_rate = np.array([2, 2, 2, 2, 2], dtype=int),
+                 e              = np.array([3, 6], dtype=int),
+                 m              = np.array([5, 5, 10], dtype=int),
+                 max_route_time = 3,
+                 r              = np.array([3, 6], dtype=int)):
 
-        self.T       = T              # [hr]
         self.A       = A
-        self.N       = N
-        self.Q       = Q
-        self.e       = e
-        self.mrt     = max_route_time # [hr]
         self.H_final = H_final        # [%]
         self.H_min   = H_min          # [%]
+        self.N       = N
+        self.Q       = Q
+        self.T       = T              # [hr]
         self.dis_rat = discharge_rate # [kwh]
+        self.e       = e
+        self.mrt     = max_route_time # [hr]
+        self.r       = r              # [kwh]
 
         self.model   = model
 
@@ -114,13 +116,13 @@ class Schedule:
         eta = self.model.addMVar(shape=self.N-self.A, vtype=GRB.CONTINUOUS, name="eta")
 
         ## Vector representation of queue
-        w = self.model.addMVar(shape=(self.N,self.A), vtype=GRB.BINARY, name="w")
+        w = self.model.addMVar(shape=self.N*self.Q, vtype=GRB.BINARY, name="w")
 
         ## Sigself.model.
-        sigma = self.model.addMVar(shape=(self.N,self.A), vtype=GRB.BINARY, name="sigma")
+        sigma = self.model.addMVar(shape=self.N*self.A, vtype=GRB.BINARY, name="sigma")
 
         ## Delta
-        delta = self.model.addMVar(shape=(self.N,self.A), vtype=GRB.BINARY, name="delta")
+        delta = self.model.addMVar(shape=self.N*self.A, vtype=GRB.BINARY, name="delta")
 
         # Compile schedule into dictionary
         schedule = \
@@ -137,6 +139,7 @@ class Schedule:
                 'gamma' : self.gamma,
                 'l'     : self.l,
                 't'     : self.t,
+                'r'     : self.r,
                 ## Decision Variables
                 'c'     : c,
                 'delta' : delta,

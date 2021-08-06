@@ -34,3 +34,11 @@ def adjustArray(lb, arr):
             norm_arr[i] -= lb
 
     return norm_arr
+
+##===========================================================================
+# Input:
+#   garr: Gurobi array values to be placed in matrix
+#   size: Size of array to be created
+#
+def toArr(garr, size):
+    return [garr[i] for i in range(size)]

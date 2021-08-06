@@ -5,7 +5,7 @@ import numpy as np
 
 # Developed
 from mat_util   import NQMat
-from array_util import adjustArray
+from array_util import *
 
 ##===============================================================================
 #
@@ -44,17 +44,18 @@ class GenMat:
 
         # Create A_eq
         ## Create A_pack
-        self.a_pack_eq = self.__APackEq()
+        self.a_pack_eq, self.x_pack_eq, self.b_pack_eq = self.__APackEq()
 
         ## Create A_dyanmics
-        self.a_dyn_eq = self.__ADynEq()
+        #  self.a_dyn_eq, self.x_pack_eq, self.b_pack_eq = self.__ADynEq()
 
         # Create A_ineq
         ## Create A_pack
-        self.a_pack_ineq = self.__APackIneq()
+        #  self.a_dyn_eq, self.x_dyn_eq, self.b_dyn_eq = self.__AdynIneq()
 
         ## Create A_dyanmics
-        self.a_dyn_ineq = self.__ADynIneq()
+        self.a_dyn_ineq, self.x_dyn_ineq, self.b_dyn_ineq = self.__ADynIneq()
+
         return
 
     ##===========================================================================
@@ -126,12 +127,14 @@ class GenMat:
         A_pack_eq = np.append(A_pack_eq, A_v, axis=0)
 
         # x_pack_eq
-        x_pack_eq = np.append(self.p, self.u)
-        x_pack_eq = np.append(x_pack_eq, self.w)
+        x_pack_eq = np.append(toArr(self.p, self.N), toArr(self.u, self.N))
+        x_pack_eq = np.append(x_pack_eq, toArr(self.w, self.N*self.Q))
+
+        print("x_pack: ", x_pack_eq)
 
         # b_pack_eq
-        b_pack_eq = np.append(self.c, np.ones(self.N))
-        b_pack_eq = np.append(b_pack_eq, self.v)
+        b_pack_eq = np.append(toArr(self.c, self.N), np.ones(self.N))
+        b_pack_eq = np.append(b_pack_eq, toArr(self.v, self.N))
 
         return A_pack_eq, x_pack_eq, b_pack_eq
 
@@ -164,7 +167,7 @@ class GenMat:
         A_next_charge = np.append(A_next_charge, n_0, axis=1)
 
         # x
-        x_next_charge = np.append(self.eta, self.g)
+        x_next_charge = np.append(toArr(self.eta, self.N-self.A), toArr(self.g, self.N*self.Q))
         x_next_charge = np.append(x_next_charge, self.l)
 
         # b
