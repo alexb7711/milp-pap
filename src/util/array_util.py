@@ -40,5 +40,8 @@ def adjustArray(lb, arr):
 #   garr: Gurobi array values to be placed in matrix
 #   size: Size of array to be created
 #
-def toArr(garr, size):
-    return [garr[i] for i in range(size)]
+# Output:
+#   Array of gurobi values
+def toArr(garr):
+    arr = garr.copy()
+    return [arr[i] for i in range(arr.shape[0])]

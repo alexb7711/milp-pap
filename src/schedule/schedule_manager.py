@@ -6,7 +6,7 @@ import random
 from gurobipy import GRB
 
 # Developed
-from array_util import first
+from array_util import *
 
 ##===============================================================================
 #
@@ -110,7 +110,7 @@ class Schedule:
         p = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="p")
 
         ## Lineriztion term
-        g = self.model.addMVar(shape=self.N*self.A, vtype=GRB.CONTINUOUS, name="g")
+        g = self.model.addMVar(shape=self.N*self.Q, vtype=GRB.CONTINUOUS, name="g")
 
         ## Initial charge
         eta = self.model.addMVar(shape=self.N-self.A, vtype=GRB.CONTINUOUS, name="eta")
@@ -174,7 +174,7 @@ class Schedule:
             self.a[i] = min + (max - min)*random.random()
             min       = self.a[i]
 
-        print (self.a)
+        print ("a: \n", self.a)
         return
 
     ##---------------------------------------------------------------------------
@@ -198,7 +198,7 @@ class Schedule:
                     prev_id = self.Gamma[i];
                     break
 
-        print("Gamma: ", self.Gamma)
+        print("Gamma: \n", self.Gamma)
 
         return
 
@@ -224,7 +224,7 @@ class Schedule:
                 min       = self.a[i]
                 self.t[i] = min + (max - min)*random.random()
 
-        print("tau: ", self.t)
+        print("tau:\n ", self.t)
 
         return
 
@@ -254,7 +254,7 @@ class Schedule:
                 self.gamma[prev_idx[self.Gamma[i]]] = i
                 prev_idx[self.Gamma[i]]             = i
 
-        print("gamma: ", self.gamma)
+        print("gamma:\n ", self.gamma)
         return
 
     ##---------------------------------------------------------------------------
@@ -289,5 +289,5 @@ class Schedule:
             if self.gamma[i] > 0:
                 self.l[i] = self.dis_rat[self.Gamma[i]] * (self.t[i] - self.a[i])
 
-        print("Discharge: ", self.l)
+        print("Discharge:\n ", self.l)
         return

@@ -51,7 +51,7 @@ def test_gen_dims():
     assert delta.shape[0] == N*A
     assert e.shape[0]     == Q
     assert eta.shape[0]   == N-A
-    assert g.shape[0]     == N*A
+    assert g.shape[0]     == N*Q
     assert g_idx.shape[0] == N
     assert l.shape[0]     == N
     assert p.shape[0]     == N
@@ -60,6 +60,6 @@ def test_gen_dims():
     assert t.shape[0]     == N
     assert u.shape[0]     == N
     assert v.shape[0]     == N
-    assert w.shape[0]     == N*A
+    assert w.shape[0]     == N*Q
 
     return

@@ -33,8 +33,6 @@ def test_A_pack_eq():
 
     # x
     m = gm.x_pack_eq.shape[0]
-    print("======")
-    print(m)
     assert m == 2*N+N*Q
 
     # b
@@ -57,15 +55,15 @@ def test_A_dyn_eq():
 
     # A
     m,n = gm.a_dyn_eq.shape
-    assert m ==
-    assert n ==
+    assert m == N
+    assert n == 2*N + N*Q
 
     # x
     m = gm.x_dyn_eq.shape[0]
-    assert m ==
+    assert m == 2*N + N*Q
 
     # b
     m = gm.b_dyn_eq.shape[0]
-    assert m
+    assert m == N
 
     return

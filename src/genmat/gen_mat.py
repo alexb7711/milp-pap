@@ -47,14 +47,14 @@ class GenMat:
         self.a_pack_eq, self.x_pack_eq, self.b_pack_eq = self.__APackEq()
 
         ## Create A_dyanmics
-        #  self.a_dyn_eq, self.x_pack_eq, self.b_pack_eq = self.__ADynEq()
+        self.a_dyn_eq, self.x_dyn_eq, self.b_dyn_eq = self.__ADynEq()
 
         # Create A_ineq
         ## Create A_pack
         #  self.a_dyn_eq, self.x_dyn_eq, self.b_dyn_eq = self.__AdynIneq()
 
         ## Create A_dyanmics
-        self.a_dyn_ineq, self.x_dyn_ineq, self.b_dyn_ineq = self.__ADynIneq()
+        #  self.a_dyn_ineq, self.x_dyn_ineq, self.b_dyn_ineq = self.__ADynIneq()
 
         return
 
@@ -77,8 +77,10 @@ class GenMat:
         self.e     = schedule['e']
         self.eta   = schedule['eta']
         self.g_idx = schedule['gamma']
+        self.kappa = schedule['kappa']
         self.l     = schedule['l']
         self.t     = schedule['t']
+        self.xi    = schedule['xi']
 
         ## Decision Variables
         self.a     = schedule['a']
@@ -127,26 +129,14 @@ class GenMat:
         A_pack_eq = np.append(A_pack_eq, A_v, axis=0)
 
         # x_pack_eq
-        x_pack_eq = np.append(toArr(self.p, self.N), toArr(self.u, self.N))
-        x_pack_eq = np.append(x_pack_eq, toArr(self.w, self.N*self.Q))
-
-        print("x_pack: ", x_pack_eq)
+        x_pack_eq = np.append(toArr(self.p), toArr(self.u))
+        x_pack_eq = np.append(x_pack_eq, toArr(self.w))
 
         # b_pack_eq
-        b_pack_eq = np.append(toArr(self.c, self.N), np.ones(self.N))
-        b_pack_eq = np.append(b_pack_eq, toArr(self.v, self.N))
+        b_pack_eq = np.append(toArr(self.c), np.ones(self.N))
+        b_pack_eq = np.append(b_pack_eq, toArr(self.v))
 
         return A_pack_eq, x_pack_eq, b_pack_eq
-
-    ##---------------------------------------------------------------------------
-    # Input:
-    def __ADynEq(self):
-        return
-
-    ##---------------------------------------------------------------------------
-    # Input:
-    def __APackIneq(self):
-        return
 
     ##---------------------------------------------------------------------------
     # Input:
@@ -158,24 +148,35 @@ class GenMat:
     # Output:
     #   A_dyn_eq
     #
-    def __ADynIneq(self):
+    def __ADynEq(self):
         n_0 = np.eye(self.N, dtype=float)
 
-        # A_next_charge
-        A_next_charge = NQMat(self.N, self.Q, float, self.e)
-        A_next_charge = np.append(n_0, A_next_charge, axis=1)
-        A_next_charge = np.append(A_next_charge, n_0, axis=1)
+        # A_dyn_eq
+        A_dyn_eq = NQMat(self.N, self.Q, float, self.e)
+        A_dyn_eq = np.append(n_0, A_dyn_eq, axis=1)
+        A_dyn_eq = np.append(A_dyn_eq, n_0, axis=1)
 
         # x
-        x_next_charge = np.append(toArr(self.eta, self.N-self.A), toArr(self.g, self.N*self.Q))
-        x_next_charge = np.append(x_next_charge, self.l)
+        x_dyn_eq = np.append(self.kappa, toArr(self.eta))
+        x_dyn_eq = np.append(x_dyn_eq, toArr(self.g))
+        x_dyn_eq = np.append(x_dyn_eq, self.l)
 
         # b
         ## Because eta has size (N-A), the index values (0-A) need to be ignored
         ## and the values greater than A need to be normalized
         ## (i.e. start from 0)
-        g             = adjustArray(self.A, self.g_idx)
-        b_next_charge = np.array([self.eta[i] for i in g])
+        idx           = adjustArray(self.N, self.g_idx)
+        b_dyn_eq = np.array([self.eta[i] for i in idx])
 
-        return A_next_charge, x_next_charge, b_next_charge
+        return A_dyn_eq, x_dyn_eq, b_dyn_eq
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    def __APackIneq(self):
+        return
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    def __ADynIneq(self):
+        return
 
