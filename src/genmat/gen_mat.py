@@ -4,7 +4,7 @@
 import numpy as np
 
 # Developed
-from mat_util   import NQMat
+from mat_util   import *
 from array_util import *
 
 ##===============================================================================
@@ -51,7 +51,8 @@ class GenMat:
 
         # Create A_ineq
         ## Create A_pack
-        #  self.a_dyn_eq, self.x_dyn_eq, self.b_dyn_eq = self.__AdynIneq()
+        #  self.a_pack_ineq, self.x_pack_eq, self.b_pack_eq = self.__APackIneq()
+        self.a_pack_ineq = self.__APackIneq()
 
         ## Create A_dyanmics
         #  self.a_dyn_ineq, self.x_dyn_ineq, self.b_dyn_ineq = self.__ADynIneq()
@@ -74,6 +75,9 @@ class GenMat:
         self.G_idx = schedule['Gamma']
         self.N     = schedule['N']
         self.Q     = schedule['Q']
+        self.S     = schedule['S']
+        self.T     = schedule['T']
+        self.Xi    = self.N*(self.N-1)
         self.e     = schedule['e']
         self.eta   = schedule['eta']
         self.g_idx = schedule['gamma']
@@ -173,6 +177,26 @@ class GenMat:
     ##---------------------------------------------------------------------------
     # Input:
     def __APackIneq(self):
+        # A_time
+        ## A_u
+        A_u = QNMat(self.Xi, self.N, int)
+
+        ## A_v
+        A_v = A_u.copy()
+
+        ## A_p
+        A_p = A_u.copy()
+
+        ## A_sigma
+        A_sigma = np.eye(self.Xi, dtype=int)
+
+        ## A_ones
+        A_ones = np.eye(self.Xi, dtype=int)
+
+        # A_queue
+        # A_a
+        # A_c
+        # A_gw
         return
 
     ##---------------------------------------------------------------------------

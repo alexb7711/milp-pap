@@ -132,6 +132,8 @@ class Schedule:
                 'Gamma' : self.Gamma,
                 'N'     : self.N,
                 'Q'     : self.Q,
+                'T'     : self.T,
+                'S'     : 1,
                 'a'     : self.a,
                 'e'     : self.e,
                 'kappa' : self.kappa,
