@@ -52,28 +52,23 @@ def QNMat(Xi, N, t, val=1):
     # Initialize Matrix
     mat = np.zeros((Xi, N), dtype=t)
 
-    # Place value in appropriate locations
-    ## Bus i
+    # i indicates the bus visit in sigma[i][j]
     i = 0
 
-    ## Bus j
-    j = 0
+    # Loop through each possible combination
+    for k in range(0,Xi,N-1):
+        for j in range(N-1):
+            mat[k+j,i] = 1
 
-    ## Loop through each possible combination
-    for k in range(Xi):
-        for l in range(N):
-            ### Check if i is out of bound
-            if i >= Xi:
-                break
-            ### Ignore diagonals
-            elif j == l:
-                continue
+            ## If j < i, j's indexing is simply incremented from 0
+            if j < i:
+                mat[k+j,j]   = 1
+            ## Otherwise the j's index must be added by 1 because the diagonal
+            ## terms are being ignored
+            else:
+                mat[k+j,j+1] = 1
 
-            mat[i,j] = -1
-            mat[i,l] = 1
-            i       += 1
-
-        j = j + 1 if j+1 < N else 0
+        i += 1
 
     print(mat)
 
