@@ -213,7 +213,7 @@ class GenMat:
         A_ones = -1*A_sigma.copy()
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((Xi, 3*Xi + 4*N + 3*N*Q))
+        A_zeros_aft = np.zeros((Xi, 2*Xi + 4*N + 3*N*Q))
 
         ## Combine sub-matrices
         A_time = np.append(A_u    , A_p         , axis=1)
@@ -238,14 +238,14 @@ class GenMat:
         A_ones = -1*A_sigma.copy()
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((Xi, Xi + 2*N + 3*N*Q), dtype=int)
+        A_zeros_aft = np.zeros((Xi, 2*N + 3*N*Q), dtype=int)
 
         ## Combine sub-matrices
-        A_time = np.append(A_zeros_bef , A_v         , axis=1)
-        A_time = np.append(A_time      , A_s         , axis=1)
-        A_time = np.append(A_time      , A_delta     , axis=1)
-        A_time = np.append(A_time      , A_ones      , axis=1)
-        A_time = np.append(A_time      , A_zeros_aft , axis=1)
+        A_queue = np.append(A_zeros_bef , A_v         , axis=1)
+        A_queue = np.append(A_queue     , A_s         , axis=1)
+        A_queue = np.append(A_queue     , A_delta     , axis=1)
+        A_queue = np.append(A_queue     , A_ones      , axis=1)
+        A_queue = np.append(A_queue     , A_zeros_aft , axis=1)
 
         # A_sd
         ## A_zeros_bef
@@ -332,9 +332,20 @@ class GenMat:
         A_gw_b = np.append(A_gw_b, A_nqzero, axis=1)
 
         ## Combine sub-matrices
-        A_g = np.append(A_gp_t, A_gp_b, axis=0)
-        A_g = np.append(A_g, A_gw_t, axis=0)
-        A_g = np.append(A_g, A_gw_b, axis=0)
+        A_g = np.append(A_gp_t      , A_gp_b , axis=0)
+        A_g = np.append(A_g         , A_gw_t , axis=0)
+        A_g = np.append(A_g         , A_gw_b , axis=0)
+        A_g = np.append(A_zeros_bef , A_g    , axis=1)
+
+        # A_dyn_ineq
+        print(A_time.shape)
+        print(A_queue.shape)
+        print(A_sd.shape)
+        print(A_s.shape)
+        print(A_d.shape)
+        print(A_a.shape)
+        print(A_c.shape)
+        print(A_g.shape)
 
         return
 
