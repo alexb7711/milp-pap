@@ -89,24 +89,18 @@ def XiNMat(Xi, N, t, vals=[1,-1]):
 # Output:
 #   An NxNQ matrix with the appropriate values
 #
-def NXiMat(N, Xi, Q, t, vals=[]):
+def NQNMat(N, Q, t, vals=[]):
     if not len(vals):
         vals = np.ones(Q, dtype=t)
 
-    N = 4*N
-
     inc  = len(vals)
-    print(inc)
-    input()
-    mat  = np.zeros((N, Xi), dtype=t)
+    mat  = np.zeros((N, N*Q), dtype=t)
 
     for i in range(N):
         idx = 0
-        for j in range(Xi):
+        for j in range(N*Q):
             if j >= i*inc and j <= i*inc + inc - 1:
                 mat[i][j] = vals[idx]
                 idx     += 1
-
-    print(mat)
 
     return mat
