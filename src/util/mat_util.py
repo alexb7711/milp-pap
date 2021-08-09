@@ -38,7 +38,7 @@ def NQMat(N, Q, t, vals=[]):
 #   Xi  : N*(N-1)
 #   Q   : Number of chargers
 #   t   : Type of matrix (float, int, ...)
-#   val : The value to be placed in the matrix
+#   vals : The values to be placed in the matrix
 #
 # Output:
 #   An XixN matrix. The values will be placed as
@@ -46,8 +46,9 @@ def NQMat(N, Q, t, vals=[]):
 #        [  1 -1  0  0 0 0 ...]
 #        [  0  0 -1  1 0 0 ...]
 #        [  0  0  1 -1 0 0 ...]
+#   to loop through every combination
 #
-def QNMat(Xi, N, t, val=1):
+def XiNMat(Xi, N, t, vals=[1,-1]):
 
     # Initialize Matrix
     mat = np.zeros((Xi, N), dtype=t)
@@ -58,17 +59,53 @@ def QNMat(Xi, N, t, val=1):
     # Loop through each possible combination
     for k in range(0,Xi,N-1):
         for j in range(N-1):
-            mat[k+j,i] = 1
+            ## Create a column of 1's to represent i's in matrix
+            mat[k+j,i] = vals[0]
 
             ## If j < i, j's indexing is simply incremented from 0
             if j < i:
-                mat[k+j,j]   = 1
+                mat[k+j,j]   = vals[1]
             ## Otherwise the j's index must be added by 1 because the diagonal
             ## terms are being ignored
             else:
-                mat[k+j,j+1] = 1
+                mat[k+j,j+1] = vals[1]
 
+        ## Increment i to iterate over next bus
         i += 1
+
+    return mat
+
+##===============================================================================
+# Input:
+#   N    : Number of visits
+#   Q    : Number of chargers
+#   t    : Type of matrix (float, int, ...)
+#   vals : Array of values to be placed. i.e. [1, 2] will be placed as follows :
+#          [[ 1 2 0 0 ...]
+#           [ 0 0 1 2 ...]...]
+#          By default the values will increment, but you can specify the values
+#          as well
+#
+# Output:
+#   An NxNQ matrix with the appropriate values
+#
+def NXiMat(N, Xi, Q, t, vals=[]):
+    if not len(vals):
+        vals = np.ones(Q, dtype=t)
+
+    N = 4*N
+
+    inc  = len(vals)
+    print(inc)
+    input()
+    mat  = np.zeros((N, Xi), dtype=t)
+
+    for i in range(N):
+        idx = 0
+        for j in range(Xi):
+            if j >= i*inc and j <= i*inc + inc - 1:
+                mat[i][j] = vals[idx]
+                idx     += 1
 
     print(mat)
 

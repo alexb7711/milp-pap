@@ -176,27 +176,141 @@ class GenMat:
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   u     : Initial charge time for each bus visit
+    #   p     : Time on charger for each bus visit
+    #   v     : Selected queue for each bus visit
+    #   s     : Bus size of each bus visit
+    #   sigma : Matrix representation of time relative to other bus visits
+    #   detla : Matrix representation of physical space relative to other bus
+    #           visits
+    #   a     : Arrival time for each bus visit
+    #   c     : Detatch time from charger for each bus visit
+    #   t     : Time of departure from station for each bus visit
+    #   g     : Linearization term for p[i]*w[i][q]
+    #   w     : Vector representation of v
+    #
+    # Output:
+    #   A_pack_ineq, x_pack_ineq, b_pack_ineq
+    #
     def __APackIneq(self):
         # A_time
         ## A_u
-        A_u = QNMat(self.Xi, self.N, int)
-
-        ## A_v
-        A_v = A_u.copy()
+        A_u = XiNMat(self.Xi, self.N, int)
 
         ## A_p
-        A_p = A_u.copy()
+        A_p = XiNMat(self.Xi, self.N, int, [0,-1])
 
         ## A_sigma
-        A_sigma = np.eye(self.Xi, dtype=int)
+        A_sigma = -self.T*np.eye(self.Xi, dtype=int)
 
         ## A_ones
-        A_ones = np.eye(self.Xi, dtype=int)
+        A_ones = -1*A_sigma.copy()
+
+        ## A_zeros_aft
+        A_zeros_aft = np.zeros((self.Xi, 3*self.Xi + 4*self.N))
+
+        ## Combine sub-matrices
+        A_time = np.append(A_u    , A_p         , axis=1)
+        A_time = np.append(A_time , A_sigma     , axis=1)
+        A_time = np.append(A_time , A_ones      , axis=1)
+        A_time = np.append(A_time , A_zeros_aft , axis=1)
 
         # A_queue
+        ## A_zeros_bef
+        A_zeros_bef = np.zeros((self.Xi, 2*self.Xi + 2*self.N))
+
+        ## A_v
+        A_v = XiNMat(self.Xi, self.N, int)
+
+        ## A_s
+        A_s = XiNMat(self.Xi, self.N, int, [0,-1])
+
+        ## A_sigma
+        A_delta = -self.T*np.eye(self.Xi, dtype=int)
+
+        ## A_ones
+        A_ones = -1*A_sigma.copy()
+
+        ## A_zeros_aft
+        A_zeros_aft = np.zeros((self.Xi, self.Xi + 2*self.N), dtype=int)
+
+        ## Combine sub-matrices
+        A_time = np.append(A_zeros_bef , A_v         , axis=1)
+        A_time = np.append(A_time      , A_s         , axis=1)
+        A_time = np.append(A_time      , A_delta     , axis=1)
+        A_time = np.append(A_time      , A_ones      , axis=1)
+        A_time = np.append(A_time      , A_zeros_aft , axis=1)
+
+        # A_sd
+        ## A_zeros_bef
+        A_zeros_bef = np.zeros((self.Xi,2*self.N), dtype=int)
+
+        ## A_zeros_int
+        A_zeros_int = np.zeros((self.Xi,self.Xi+2*self.N), dtype=int)
+
+        ## A_zeros_aft
+        A_zeros_aft = np.zeros((self.Xi, 2*self.Xi + 2*self.N), dtype=int)
+
+        ## A_sd
+        A_sd = np.append(A_zeros_bef , A_sigma     , axis=1)
+        A_sd = np.append(A_sd        , A_zeros_int , axis=1)
+        A_sd = np.append(A_sd        , A_delta     , axis=1)
+        A_sd = np.append(A_sd        , A_zeros_aft , axis=1)
+
+        # A_s
+        ## A_zeros_bef
+        A_zeros_bef = np.zeros((self.Xi,2*self.N), dtype=int)
+
+        ## A_zeros_aft
+        A_zeros_aft = np.zeros((self.Xi, 5*self.Xi + 4*self.N), dtype=int)
+
+        # A_s
+        A_s = np.append(A_zeros_bef , -1*A_sigma  , axis=1)
+        A_s = np.append(A_s         , A_zeros_aft , axis=1)
+
+        # A_d
+        ## A_zeros_bef
+        A_zeros_bef = np.zeros((self.Xi,2*self.Xi+4*self.N), dtype=int)
+
+        ## A_zeros_aft
+        A_zeros_aft = np.zeros((self.Xi, self.Xi + 2*self.N), dtype=int)
+
+        ## A_d
+        A_d = np.append(A_zeros_bef , -1*A_delta  , axis=1)
+        A_d = np.append(A_d         , A_zeros_aft , axis=1)
+
         # A_a
+        ## A_zeros_bef
+        A_zeros_bef = np.zeros((self.N,4*self.Xi+4*self.N), dtype=int)
+
+        ## A_zeros_aft
+        A_zeros_aft = np.zeros((self.N, self.Xi+self.N), dtype=int)
+
+        ## A_a
+        A_a = np.append(A_zeros_bef , -1*np.eye(self.N,dtype=int) , axis=1)
+        A_a = np.append(A_a         , A_zeros_aft                 , axis=1)
+
         # A_c
+        ## A_zeros_bef
+        A_zeros_bef = np.zeros((self.N,4*self.Xi+5*self.N), dtype=int)
+
+        ## A_zeros_aft
+        A_zeros_aft = np.zeros((self.N, self.Xi), dtype=int)
+
+        ## A_c
+        A_c = np.append(A_zeros_bef , -1*np.eye(self.N,dtype=int) , axis=1)
+        A_c = np.append(A_a         , A_zeros_aft                 , axis=1)
+
         # A_gw
+        ## A_zeros_bef
+        A_zeros_bef = np.zeros((4*self.N,self.N), dtype=int)
+
+        ## A_zeros_int
+        A_zeros_int = np.zeros((4*self.N,4*self.Xi+3*self.N), dtype=int)
+
+        ## A_gw
+        NXiMat(self.N, self.Xi, self.Q, int)
+
         return
 
     ##---------------------------------------------------------------------------
