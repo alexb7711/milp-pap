@@ -338,14 +338,14 @@ class GenMat:
         A_g = np.append(A_zeros_bef , A_g    , axis=1)
 
         # A_pack_ineq
-        A_pack_ineq = np.append(A_time, A_queue, axis=0)
-        A_pack_ineq = np.append(A_pack_ineq, A_sd, axis=0)
-        A_pack_ineq = np.append(A_pack_ineq, A_s, axis=0)
-        A_pack_ineq = np.append(A_pack_ineq, A_d, axis=0)
-        d_pack_ineq = np.append(A_pack_ineq, A_a, axis=0)
-        d_pack_ineq = np.append(A_pack_ineq, A_c, axis=0)
-        d_pack_ineq = np.append(A_pack_ineq, A_c, axis=0)
-        d_pack_ineq = np.append(A_pack_ineq, A_g, axis=0)
+        A_pack_ineq = np.append(A_time      , A_queue , axis=0)
+        A_pack_ineq = np.append(A_pack_ineq , A_sd    , axis=0)
+        A_pack_ineq = np.append(A_pack_ineq , A_s     , axis=0)
+        A_pack_ineq = np.append(A_pack_ineq , A_d     , axis=0)
+        A_pack_ineq = np.append(A_pack_ineq , A_a     , axis=0)
+        A_pack_ineq = np.append(A_pack_ineq , A_c     , axis=0)
+        A_pack_ineq = np.append(A_pack_ineq , A_c     , axis=0)
+        A_pack_ineq = np.append(A_pack_ineq , A_g     , axis=0)
 
         return A_pack_ineq
 
