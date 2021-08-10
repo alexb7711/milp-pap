@@ -56,6 +56,7 @@ class GenMat:
 
         ## Create A_dyanmics
         #  self.a_dyn_ineq, self.x_dyn_ineq, self.b_dyn_ineq = self.__ADynIneq()
+        self.a_dyn_ineq = self.__ADynIneq()
 
         return
 
@@ -352,5 +353,40 @@ class GenMat:
     ##---------------------------------------------------------------------------
     # Input:
     def __ADynIneq(self):
+        # Local variables
+        N  = self.N
+        Q  = self.Q
+        Xi = self.Xi
+        M  = self.T
+
+        # A_max_charge
+        A_ones = -1*np.eye(N, dtype=int)
+        A_eta  = NQNMat(N, Q, int, -1*self.e)
+        A_z    = 0*np.eye(N, dtype=int)
+
+        ## Combine submatrices
+        A_max_charge = np.append(A_ones       , A_eta , axis=1)
+        A_max_charge = np.append(A_max_charge , A_z   , axis=1)
+
+        # A_min_charge
+        A_ones = np.eye(N, dtype=int)
+        A_eta  = NQNMat(N, Q, int, self.e)
+        A_l    = np.eye(N, dtype=int)*self.l
+        A_z    = 0*np.eye(N, dtype=int)
+
+        ## Combine submatrices
+        A_min_charge = np.append(A_ones       , A_eta , axis=1)
+        A_min_charge = np.append(A_min_charge , A_eta , axis=1)
+        A_min_charge = np.append(A_min_charge , A_l   , axis=1)
+
+        # A_last_charge
+        A_z    = 0*np.eye(N, dtype=int)
+        A_ones = np.eye(N, dtype=int)
+
+        ## Combine submatrices
+        A_max_charge
+
+        # A_dyn_ineq
+
         return
 
