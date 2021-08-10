@@ -255,7 +255,7 @@ class GenMat:
         A_zeros_int = np.zeros((Xi,Xi+2*N), dtype=int)
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((Xi, 2*N + 3*N*Q), dtype=int)
+        A_zeros_aft = np.zeros((Xi, Xi + 2*N + 3*N*Q), dtype=int)
 
         ## Combine sub-matrices
         A_sd = np.append(A_zeros_bef , A_sigma     , axis=1)
@@ -279,7 +279,7 @@ class GenMat:
         A_zeros_bef = np.zeros((Xi,2*Xi+4*N), dtype=int)
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((Xi, 2*N + 3*N*Q), dtype=int)
+        A_zeros_aft = np.zeros((Xi, Xi + 2*N + 3*N*Q), dtype=int)
 
         ## Combine sub-matrices
         A_d = np.append(A_zeros_bef , -1*A_delta  , axis=1)
@@ -305,7 +305,7 @@ class GenMat:
 
         ## Combine sub-matrices
         A_c = np.append(A_zeros_bef , -1*np.eye(N,dtype=int) , axis=1)
-        A_c = np.append(A_a         , A_zeros_aft                 , axis=1)
+        A_c = np.append(A_c         , A_zeros_aft                 , axis=1)
 
         # A_g
         ## A_zeros_bef
@@ -338,14 +338,6 @@ class GenMat:
         A_g = np.append(A_zeros_bef , A_g    , axis=1)
 
         # A_dyn_ineq
-        print(A_time.shape)
-        print(A_queue.shape)
-        print(A_sd.shape)
-        print(A_s.shape)
-        print(A_d.shape)
-        print(A_a.shape)
-        print(A_c.shape)
-        print(A_g.shape)
 
         return
 
