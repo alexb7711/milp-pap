@@ -72,6 +72,10 @@ class Schedule:
 
         ## Index of next bus visit
         self.Gamma = -1*np.ones(N, dtype=int)
+
+        ## Index of final bus visit
+        final_arr = zeros(A, dtype=int)
+
         return
 
     ##---------------------------------------------------------------------------
@@ -96,7 +100,11 @@ class Schedule:
         ## Generate discharge amounts
         self.__genDischarge()
 
+        ## Generate the final arrival index for each bus
+        self.__genFinalArrival()
+
         # Generate decision variables
+        # TODO: Put gurobi var generation in own function
         ## Initial charge time
         u = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="u")
 
@@ -127,31 +135,33 @@ class Schedule:
         # Compile schedule into dictionary
         schedule = \
         {
-                ## Input Variables
-                'A'     : self.A,
-                'Gamma' : self.Gamma,
-                'N'     : self.N,
-                'Q'     : self.Q,
-                'T'     : self.T,
-                'S'     : 1,
-                'a'     : self.a,
-                'e'     : self.e,
-                'kappa' : self.kappa,
-                'xi'    : self.xi,
-                'gamma' : self.gamma,
-                'l'     : self.l,
-                't'     : self.t,
-                'r'     : self.r,
-                ## Decision Variables
-                'c'     : c,
-                'delta' : delta,
-                'eta'   : eta,
-                'g'     : g,
-                'p'     : p,
-                'sigma' : sigma,
-                'u'     : u,
-                'v'     : v,
-                'w'     : w,
+            ## Input Variables
+            'A'     : self.A,
+            'Gamma' : self.Gamma,
+            'N'     : self.N,
+            'Q'     : self.Q,
+            'T'     : self.T,
+            'S'     : 1,
+            'a'     : self.a,
+            'e'     : self.e,
+            'kappa' : self.kappa,
+            'xi'    : self.xi,
+            'gamma' : self.gamma,
+            'l'     : self.l,
+            't'     : self.t,
+            'r'     : self.r,
+            'fa'    : self.final_arr,
+
+            ## Decision Variables
+            'c'     : c,
+            'delta' : delta,
+            'eta'   : eta,
+            'g'     : g,
+            'p'     : p,
+            'sigma' : sigma,
+            'u'     : u,
+            'v'     : v,
+            'w'     : w,
         }
 
         return schedule
@@ -292,4 +302,18 @@ class Schedule:
                 self.l[i] = self.dis_rat[self.Gamma[i]] * (self.t[i] - self.a[i])
 
         print("Discharge:\n ", self.l)
+        return
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   N     : Number of visits
+    #   Gamma : List of ID'ss for each visit
+    #
+    # Output:
+    #   final_arr: List of indices for the final arrival for each bus
+    #
+    def __genFinalArrival(self):
+        for i in range(self.A):
+            self.final_arr[i] = final(self.Gamma, i)
+
         return

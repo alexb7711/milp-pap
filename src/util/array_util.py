@@ -23,7 +23,7 @@ def first(array, element):
 # Output:
 #   The index of the last occurence of the specified element
 def final(array, element):
-    for i in range(len(array), 0, -1):
+    for i in range(len(array)-1, 0, -1):
         if array[i] == element:
             return i
 

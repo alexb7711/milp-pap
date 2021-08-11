@@ -104,3 +104,31 @@ def NQNMat(N, Q, t, vals=[]):
                 idx     += 1
 
     return mat
+
+##===============================================================================
+# Input:
+#   N   : Number of visits
+#   t   : Type of matrix (float, int, ...)
+#   idx : Array of indices to place 1's. i.e. [0, 2] will be placed as follows :
+#          [[ 1 0 0 ...]
+#           [ 0 0 0 ...]
+#           [ 0 0 2 ...]...]
+#          By default the matrix will be the identity, but you can specify the
+#          value as well
+#
+# Output:
+#   An NxN matrix with 1's values placed on the appropriate diagonal
+#
+def NMat(N, t, idx=[]):
+    if not len(idx):
+        idx = np.ones(N, dtype=t)
+
+    ones = np.zeros(N, dtype=t)
+
+    for i in range(len(idx)):
+        ones[idx[i]] == 1
+
+    inc  = len(vals)
+    mat  = ones*np.eye(N, dtype=t)
+
+    return mat
