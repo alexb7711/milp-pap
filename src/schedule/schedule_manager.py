@@ -74,7 +74,7 @@ class Schedule:
         self.Gamma = -1*np.ones(N, dtype=int)
 
         ## Index of final bus visit
-        final_arr = zeros(A, dtype=int)
+        self.final_arr = -1*np.ones(A, dtype=int)
 
         return
 

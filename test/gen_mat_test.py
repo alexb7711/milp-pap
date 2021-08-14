@@ -105,6 +105,9 @@ def test_A_dyn_ineq():
     Q     = schedule['Q']
 
     # A
+    m,n = gm.a_dyn_ineq.shape
+    assert m == 3*N
+    assert n == 2*N+N*Q
 
     # x
 

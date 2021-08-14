@@ -93,15 +93,7 @@ def NQNMat(N, Q, t, vals=[]):
     if not len(vals):
         vals = np.ones(Q, dtype=t)
 
-    inc  = len(vals)
-    mat  = np.zeros((N, N*Q), dtype=t)
-
-    for i in range(N):
-        idx = 0
-        for j in range(N*Q):
-            if j >= i*inc and j <= i*inc + inc - 1:
-                mat[i][j] = vals[idx]
-                idx     += 1
+    mat = NQMat(N, Q, t, vals)
 
     return mat
 
@@ -120,15 +112,19 @@ def NQNMat(N, Q, t, vals=[]):
 #   An NxN matrix with 1's values placed on the appropriate diagonal
 #
 def NMat(N, t, idx=[]):
+    invalid_val = -1
+
     if not len(idx):
         idx = np.ones(N, dtype=t)
 
     ones = np.zeros(N, dtype=t)
 
     for i in range(len(idx)):
-        ones[idx[i]] == 1
+        if idx[i] == invalid_val:
+            continue
 
-    inc  = len(vals)
-    mat  = ones*np.eye(N, dtype=t)
+        ones[idx[i]] = 1
+
+    mat = ones*np.eye(N, dtype=t)
 
     return mat

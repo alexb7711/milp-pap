@@ -56,6 +56,7 @@ class GenMat:
 
         ## Create A_dyanmics
         #  self.a_dyn_ineq, self.x_dyn_ineq, self.b_dyn_ineq = self.__ADynIneq()
+        self.a_dyn_ineq = self.__ADynIneq()
 
         return
 
@@ -85,6 +86,7 @@ class GenMat:
         self.kappa = schedule['kappa']
         self.l     = schedule['l']
         self.t     = schedule['t']
+        self.r     = schedule['r']
         self.xi    = schedule['xi']
 
         ## Decision Variables
@@ -361,25 +363,27 @@ class GenMat:
 
         # A_max_charge
         A_ones = -1*np.eye(N, dtype=int)
-        A_eta  = NQNMat(N, Q, int, -1*self.e)
+        A_eta  = NQNMat(N, Q, int, -1*self.r)
         A_z    = 0*np.eye(N, dtype=int)
 
         ## Combine submatrices
-        A_max_charge = np.array(A_ones, A_eta, axis=1)
-        A_max_charge = np.array(A_max_charge, A_z, axis=1)
-        A_max_charge = np.array(A_max_charge, A_z, axis=1)
+        A_max_charge = np.append(A_ones       , A_eta , axis=1)
+        A_max_charge = np.append(A_max_charge , A_z   , axis=1)
 
         # A_min_charge
         A_ones = -1*np.eye(N, dtype=int)
-        A_eta  = NQNMat(N, Q, int, -1*self.e)
+        A_r    = NQNMat(N, Q, int, -1*self.e)
         A_l    = np.eye(N, dtype=int)*self.l
-        A_z    = 0*np.eye(N, dtype=int)
 
         ## Combine submatrices
-        #  A_min_charge = np.eye(
+        A_min_charge = np.append(A_ones        , A_r , axis=1)
+        A_min_charge = np.append(A_min_charge , A_l , axis=1)
 
         # A_last_charge
+        A_last_charge = np.append(NMat(N, int, self.fa), np.zeros((N,N+N*Q), dtype=int), axis=1)
 
         # A_dyn_ineq
+        A_dyn_ineq = np.append(A_max_charge , A_min_charge  , axis=0)
+        A_dyn_ineq = np.append(A_dyn_ineq   , A_last_charge , axis=0)
 
-        return
+        return A_dyn_ineq
