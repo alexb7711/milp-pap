@@ -4,7 +4,7 @@
 import numpy as np
 
 # Developed
-from mat_util   import NQMat
+from mat_util   import *
 from array_util import *
 
 ##===============================================================================
@@ -51,10 +51,12 @@ class GenMat:
 
         # Create A_ineq
         ## Create A_pack
-        #  self.a_dyn_eq, self.x_dyn_eq, self.b_dyn_eq = self.__AdynIneq()
+        #  self.a_pack_ineq, self.x_pack_eq, self.b_pack_eq = self.__APackIneq()
+        self.a_pack_ineq = self.__APackIneq()
 
         ## Create A_dyanmics
         #  self.a_dyn_ineq, self.x_dyn_ineq, self.b_dyn_ineq = self.__ADynIneq()
+        self.a_dyn_ineq = self.__ADynIneq()
 
         return
 
@@ -74,12 +76,17 @@ class GenMat:
         self.G_idx = schedule['Gamma']
         self.N     = schedule['N']
         self.Q     = schedule['Q']
+        self.S     = schedule['S']
+        self.T     = schedule['T']
+        self.Xi    = self.N*(self.N-1)
         self.e     = schedule['e']
         self.eta   = schedule['eta']
+        self.fa    = schedule['fa']
         self.g_idx = schedule['gamma']
         self.kappa = schedule['kappa']
         self.l     = schedule['l']
         self.t     = schedule['t']
+        self.r     = schedule['r']
         self.xi    = schedule['xi']
 
         ## Decision Variables
@@ -172,11 +179,211 @@ class GenMat:
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   u     : Initial charge time for each bus visit
+    #   p     : Time on charger for each bus visit
+    #   v     : Selected queue for each bus visit
+    #   s     : Bus size of each bus visit
+    #   sigma : Matrix representation of time relative to other bus visits
+    #   detla : Matrix representation of physical space relative to other bus
+    #           visits
+    #   a     : Arrival time for each bus visit
+    #   c     : Detatch time from charger for each bus visit
+    #   t     : Time of departure from station for each bus visit
+    #   g     : Linearization term for p[i]*w[i][q]
+    #   w     : Vector representation of v
+    #
+    # Output:
+    #   A_pack_ineq, x_pack_ineq, b_pack_ineq
+    #
     def __APackIneq(self):
-        return
+        # Local variables
+        N  = self.N
+        Q  = self.Q
+        Xi = self.Xi
+        M  = self.T
+
+        # A_time
+        ## A_u
+        A_u = XiNMat(Xi, N, int)
+
+        ## A_p
+        A_p = XiNMat(Xi, N, int, [0,-1])
+
+        ## A_sigma
+        A_sigma = -self.T*np.eye(Xi, dtype=int)
+
+        ## A_ones
+        A_ones = -1*A_sigma.copy()
+
+        ## A_zeros_aft
+        A_zeros_aft = np.zeros((Xi, 2*Xi + 4*N + 3*N*Q))
+
+        ## Combine sub-matrices
+        A_time = np.append(A_u    , A_p         , axis=1)
+        A_time = np.append(A_time , A_sigma     , axis=1)
+        A_time = np.append(A_time , A_ones      , axis=1)
+        A_time = np.append(A_time , A_zeros_aft , axis=1)
+
+        # A_queue
+        ## A_zeros_bef
+        A_zeros_bef = np.zeros((Xi, 2*Xi + 2*N))
+
+        ## A_v
+        A_v = XiNMat(Xi, N, int)
+
+        ## A_s
+        A_s = XiNMat(Xi, N, int, [0,-1])
+
+        ## A_sigma
+        A_delta = -self.T*np.eye(Xi, dtype=int)
+
+        ## A_ones
+        A_ones = -1*A_sigma.copy()
+
+        ## A_zeros_aft
+        A_zeros_aft = np.zeros((Xi, 2*N + 3*N*Q), dtype=int)
+
+        ## Combine sub-matrices
+        A_queue = np.append(A_zeros_bef , A_v         , axis=1)
+        A_queue = np.append(A_queue     , A_s         , axis=1)
+        A_queue = np.append(A_queue     , A_delta     , axis=1)
+        A_queue = np.append(A_queue     , A_ones      , axis=1)
+        A_queue = np.append(A_queue     , A_zeros_aft , axis=1)
+
+        # A_sd
+        ## A_zeros_bef
+        A_zeros_bef = np.zeros((Xi,2*N), dtype=int)
+
+        ## A_zeros_int
+        A_zeros_int = np.zeros((Xi,Xi+2*N), dtype=int)
+
+        ## A_zeros_aft
+        A_zeros_aft = np.zeros((Xi, Xi + 2*N + 3*N*Q), dtype=int)
+
+        ## Combine sub-matrices
+        A_sd = np.append(A_zeros_bef , A_sigma     , axis=1)
+        A_sd = np.append(A_sd        , A_zeros_int , axis=1)
+        A_sd = np.append(A_sd        , A_delta     , axis=1)
+        A_sd = np.append(A_sd        , A_zeros_aft , axis=1)
+
+        # A_s
+        ## A_zeros_bef
+        A_zeros_bef = np.zeros((Xi,2*N), dtype=int)
+
+        ## A_zeros_aft
+        A_zeros_aft = np.zeros((Xi, 3*Xi + 4*N + 3*N*Q), dtype=int)
+
+        ## Combine sub-matrices
+        A_s = np.append(A_zeros_bef , -1*A_sigma  , axis=1)
+        A_s = np.append(A_s         , A_zeros_aft , axis=1)
+
+        # A_d
+        ## A_zeros_bef
+        A_zeros_bef = np.zeros((Xi,2*Xi+4*N), dtype=int)
+
+        ## A_zeros_aft
+        A_zeros_aft = np.zeros((Xi, Xi + 2*N + 3*N*Q), dtype=int)
+
+        ## Combine sub-matrices
+        A_d = np.append(A_zeros_bef , -1*A_delta  , axis=1)
+        A_d = np.append(A_d         , A_zeros_aft , axis=1)
+
+        # A_a
+        ## A_zeros_bef
+        A_zeros_bef = np.zeros((N,4*Xi+4*N), dtype=int)
+
+        ## A_zeros_aft
+        A_zeros_aft = np.zeros((N, N+3*N*Q), dtype=int)
+
+        ## Combine sub-matrices
+        A_a = np.append(A_zeros_bef , -1*np.eye(N , dtype=int) , axis=1)
+        A_a = np.append(A_a         , A_zeros_aft              , axis=1)
+
+        # A_c
+        ## A_zeros_bef
+        A_zeros_bef = np.zeros((N,4*Xi+5*N), dtype=int)
+
+        ## A_zeros_aft
+        A_zeros_aft = np.zeros((N, 3*N*Q), dtype=int)
+
+        ## Combine sub-matrices
+        A_c = np.append(A_zeros_bef , -1*np.eye(N,dtype=int) , axis=1)
+        A_c = np.append(A_c         , A_zeros_aft                 , axis=1)
+
+        # A_g
+        ## A_zeros_bef
+        A_zeros_bef = np.zeros((4*N,4*Xi + 6*N), dtype=int)
+
+        ## A_nqzero
+        A_nqzero = NQNMat(N, Q, int, np.zeros(Q, dtype=int))
+
+        ## A_gg
+        ## A_gp_t
+        A_gp_t = np.append(-1*NQNMat(N, Q, int), A_nqzero, axis=1)
+        A_gp_t = np.append(A_gp_t, A_nqzero, axis=1)
+
+        ## A_gg_b
+        A_gp_b = np.append(-1*NQNMat(N, Q, int), A_nqzero, axis=1)
+        A_gp_b = np.append(A_gp_b, -M*NQNMat(N, Q, int), axis=1)
+
+        ## A_gw_t
+        A_gw_t = np.append(NQNMat(N, Q, int), A_nqzero, axis=1)
+        A_gw_t = np.append(A_gw_t, A_nqzero, axis=1)
+
+        ## A_gw_b
+        A_gw_b = np.append(-1*NQNMat(N, Q, int), M*NQNMat(N, Q, int), axis=1)
+        A_gw_b = np.append(A_gw_b, A_nqzero, axis=1)
+
+        ## Combine sub-matrices
+        A_g = np.append(A_gp_t      , A_gp_b , axis=0)
+        A_g = np.append(A_g         , A_gw_t , axis=0)
+        A_g = np.append(A_g         , A_gw_b , axis=0)
+        A_g = np.append(A_zeros_bef , A_g    , axis=1)
+
+        # A_pack_ineq
+        A_pack_ineq = np.append(A_time      , A_queue , axis=0)
+        A_pack_ineq = np.append(A_pack_ineq , A_sd    , axis=0)
+        A_pack_ineq = np.append(A_pack_ineq , A_s     , axis=0)
+        A_pack_ineq = np.append(A_pack_ineq , A_d     , axis=0)
+        A_pack_ineq = np.append(A_pack_ineq , A_a     , axis=0)
+        A_pack_ineq = np.append(A_pack_ineq , A_c     , axis=0)
+        A_pack_ineq = np.append(A_pack_ineq , A_c     , axis=0)
+        A_pack_ineq = np.append(A_pack_ineq , A_g     , axis=0)
+
+        return A_pack_ineq
 
     ##---------------------------------------------------------------------------
     # Input:
     def __ADynIneq(self):
-        return
+        # Local variables
+        N  = self.N
+        Q  = self.Q
+        Xi = self.Xi
+        M  = self.T
 
+        # A_max_charge
+        A_ones = -1*np.eye(N, dtype=int)
+        A_eta  = NQNMat(N, Q, int, -1*self.r)
+        A_z    = 0*np.eye(N, dtype=int)
+
+        ## Combine submatrices
+        A_max_charge = np.append(A_ones       , A_eta , axis=1)
+        A_max_charge = np.append(A_max_charge , A_z   , axis=1)
+
+        # A_min_charge
+        A_ones = -1*np.eye(N, dtype=int)
+        A_r    = NQNMat(N, Q, int, -1*self.e)
+        A_l    = np.eye(N, dtype=int)*self.l
+
+        ## Combine submatrices
+        A_min_charge = np.append(A_ones        , A_r , axis=1)
+        A_min_charge = np.append(A_min_charge , A_l , axis=1)
+
+        # A_last_charge
+        A_last_charge = np.append(NMat(N, int, self.fa), np.zeros((N,N+N*Q), dtype=int), axis=1)
+
+        # A_dyn_ineq
+        A_dyn_ineq = np.append(A_max_charge , A_min_charge  , axis=0)
+        A_dyn_ineq = np.append(A_dyn_ineq   , A_last_charge , axis=0)
+
+        return A_dyn_ineq

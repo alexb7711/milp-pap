@@ -67,3 +67,49 @@ def test_A_dyn_eq():
     assert m == N
 
     return
+
+##===============================================================================
+#
+def test_A_pack_ineq():
+    m        = gp.Model("test")
+    s        = Schedule(m)
+    schedule = s.generate()
+    gm       = GenMat(schedule)
+
+    A     = schedule['A']
+    N     = schedule['N']
+    Q     = schedule['Q']
+    Xi    = N*(N-1)
+
+    # A
+    m,n = gm.a_pack_ineq.shape
+    assert m == 5*Xi + 7*N
+    assert n == 4*Xi + 6*N + 3*N*Q
+
+    # x
+
+    # b
+
+    return
+
+##===============================================================================
+#
+def test_A_dyn_ineq():
+    m        = gp.Model("test")
+    s        = Schedule(m)
+    schedule = s.generate()
+    gm       = GenMat(schedule)
+
+    A     = schedule['A']
+    N     = schedule['N']
+    Q     = schedule['Q']
+
+    # A
+    m,n = gm.a_dyn_ineq.shape
+    assert m == 3*N
+    assert n == 2*N+N*Q
+
+    # x
+
+    # b
+    return

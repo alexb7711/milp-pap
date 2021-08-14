@@ -15,6 +15,21 @@ def first(array, element):
     # Could not find the element
     return -1
 
+##===============================================================================
+# Input:
+#   array: An array of elements
+#   element: The element being looked for
+#
+# Output:
+#   The index of the last occurence of the specified element
+def final(array, element):
+    for i in range(len(array)-1, 0, -1):
+        if array[i] == element:
+            return i
+
+    # Could not find the element
+    return -1
+
 ##===========================================================================
 # Input:
 #   lb: Lower bound to normalize off of
