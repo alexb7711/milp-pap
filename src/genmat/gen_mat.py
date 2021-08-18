@@ -23,10 +23,11 @@ class GenMat:
     #                   * Q     : Number of chargers
     #                   * a     : List of arrival times
     #                   * e     : Cost of charger use
-    #                   * eta_A : List of initial charges
+    #                   * kappa : List of initial charges
     #                   * gamma : List of indexes for the next visit
     #                   * l     : List of amount of discharge for each route
     #                   * m     : Cost of assignment to charger
+    #                   * r     : List of charge rates
     #                   * t     : List of departure times
     #               * Decision Variables:
     #                   * u     : Initial charge time for each visit
@@ -41,24 +42,44 @@ class GenMat:
     #
     def __init__(self, schedule):
         self.__initVars(schedule)
-
-        # Create A_eq
-        ## Create A_pack
-        self.a_pack_eq, self.x_pack_eq, self.b_pack_eq = self.__APackEq()
-
-        ## Create A_dyanmics
-        self.a_dyn_eq, self.x_dyn_eq, self.b_dyn_eq = self.__ADynEq()
-
-        # Create A_ineq
-        ## Create A_pack
-        #  self.a_pack_ineq, self.x_pack_eq, self.b_pack_eq = self.__APackIneq()
-        self.a_pack_ineq = self.__APackIneq()
-
-        ## Create A_dyanmics
-        #  self.a_dyn_ineq, self.x_dyn_ineq, self.b_dyn_ineq = self.__ADynIneq()
-        self.a_dyn_ineq = self.__ADynIneq()
-
         return
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   Input from __initVars()
+    #
+    # Output:
+    #   A_eq   , x_eq   , b_eq
+    #   A_ineq , x_ineq , b_ineq
+    #
+    def genMats(self):
+        # Generate matrices
+        ## A's
+        self.A_pack_eq   = self.__APackEq()
+        self.A_dyn_eq    = self.__ADynEq()
+        self.A_pack_ineq = self.__APackIneq()
+        self.A_dyn_ineq  = self.__ADynIneq()
+
+        ## x's
+        self.x_pack_eq   = self.__xPackEq()
+        self.x_dyn_eq    = self.__xDynEq()
+        self.x_pack_ineq = self.__xPackIneq()
+        self.x_dyn_ineq  = self.__xDynIneq()
+
+        ## b's
+        self.b_pack_eq   = self.__bPackEq()
+        self.b_dyn_eq    = self.__bDynEq()
+        self.b_pack_ineq = self.__bPackIneq()
+        self.b_dyn_ineq  = self.__bDynIneq()
+
+        # Combine Matrices
+
+        # Create data structure
+        mats = \
+        {
+        }
+
+        return mats
 
     ##===========================================================================
     # PRIVATE
@@ -80,7 +101,6 @@ class GenMat:
         self.T     = schedule['T']
         self.Xi    = self.N*(self.N-1)
         self.e     = schedule['e']
-        self.eta   = schedule['eta']
         self.fa    = schedule['fa']
         self.g_idx = schedule['gamma']
         self.kappa = schedule['kappa']
@@ -135,15 +155,7 @@ class GenMat:
         A_pack_eq = np.append(A_detatch, A_w, axis=0)
         A_pack_eq = np.append(A_pack_eq, A_v, axis=0)
 
-        # x_pack_eq
-        x_pack_eq = np.append(toArr(self.p), toArr(self.u))
-        x_pack_eq = np.append(x_pack_eq, toArr(self.w))
-
-        # b_pack_eq
-        b_pack_eq = np.append(toArr(self.c), np.ones(self.N))
-        b_pack_eq = np.append(b_pack_eq, toArr(self.v))
-
-        return A_pack_eq, x_pack_eq, b_pack_eq
+        return A_pack_eq
 
     ##---------------------------------------------------------------------------
     # Input:
@@ -156,26 +168,21 @@ class GenMat:
     #   A_dyn_eq
     #
     def __ADynEq(self):
-        n_0 = np.eye(self.N, dtype=float)
+        iden = np.eye(self.N, dtype=float)
 
-        # A_dyn_eq
-        A_dyn_eq = NQMat(self.N, self.Q, float, self.e)
-        A_dyn_eq = np.append(n_0, A_dyn_eq, axis=1)
-        A_dyn_eq = np.append(A_dyn_eq, n_0, axis=1)
+        # A_init_charge
+        zeros         = np.zeros((self.N, self.N+self.N*self.Q), dtype=float)
+        A_init_charge = np.append(kappaMat(self.N, float, self.kappa), zeros, axis=1)
 
-        # x
-        x_dyn_eq = np.append(self.kappa, toArr(self.eta))
-        x_dyn_eq = np.append(x_dyn_eq, toArr(self.g))
-        x_dyn_eq = np.append(x_dyn_eq, self.l)
+        # A_next_charge
+        A_next_charge = NQMat(self.N, self.Q, float, self.r)
+        A_next_charge = np.append(iden, A_next_charge, axis=1)
+        A_next_charge = np.append(A_next_charge, iden, axis=1)
 
-        # b
-        ## Because eta has size (N-A), the index values (0-A) need to be ignored
-        ## and the values greater than A need to be normalized
-        ## (i.e. start from 0)
-        idx           = adjustArray(self.N, self.g_idx)
-        b_dyn_eq = np.array([self.eta[i] for i in idx])
+        ## Combine submatrices
+        A_dyn_eq = np.append(A_init_charge, A_next_charge, axis=0)
 
-        return A_dyn_eq, x_dyn_eq, b_dyn_eq
+        return A_dyn_eq
 
     ##---------------------------------------------------------------------------
     # Input:
@@ -354,6 +361,22 @@ class GenMat:
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   N     : Number of bus visits
+    #   Q     : Number of chargers
+    #   Xi    : N(N-1)
+    #   c     : Detatch time for each visit
+    #   eta   : Initial charge for each bus visit
+    #   g     : Linearization term for blinear values
+    #   kappa : List of initial charges
+    #   l     : List of amount of discharge for each route
+    #   p     : Time spent on charger for each bus visit
+    #   r : Charge rate for each charger
+    #   u     : Initial charge time for each visit
+    #   v     : Assigned queue for each bus visit
+    #
+    # Output:
+    #   A_dyn_ineq
+    #
     def __ADynIneq(self):
         # Local variables
         N  = self.N
@@ -372,7 +395,7 @@ class GenMat:
 
         # A_min_charge
         A_ones = -1*np.eye(N, dtype=int)
-        A_r    = NQNMat(N, Q, int, -1*self.e)
+        A_r    = NQNMat(N, Q, int, -1*self.r)
         A_l    = np.eye(N, dtype=int)*self.l
 
         ## Combine submatrices
@@ -387,3 +410,132 @@ class GenMat:
         A_dyn_ineq = np.append(A_dyn_ineq   , A_last_charge , axis=0)
 
         return A_dyn_ineq
+
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   p : Time on charger for each bus visit
+    #   u : Initial charge time for each bus visit
+    #   w : Vector representation of v
+    #
+    # Output:
+    #   x_pack_eq
+    #
+    def __xPackEq(self):
+        x_pack_eq = np.append(toArr(self.p), toArr(self.u))
+        x_pack_eq = np.append(x_pack_eq, toArr(self.w))
+        return x_pack_eq
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   eta   : Initial charge of each bus visit
+    #   g     : Linearization term for p[i]*w[i][q]
+    #   kappa : Initial charge for first bus visit for each bus
+    #   l     : Discharge amount per bus route
+    #
+    # Output:
+    #   x_dyn_eq
+    #
+    def __xDynEq(self):
+        x_dyn_eq = np.append(toArr(self.eta), toArr(self.g))
+        x_dyn_eq = np.append(x_dyn_eq, self.l)
+        return x_dyn_eq
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   a     : List of arrival times
+    #   gamma : List of indexes for the next visit
+    #   t     : List of departure times
+    #   u     : Initial charge time for each visit
+    #   v     : Assigned queue for each bus visit
+    #   c     : Detatch time for each visit
+    #   p     : Time spent on charger for each bus visit
+    #   w     : Vector representation of queue assignment
+    #   sigma : Time representation of visits
+    #   delta : Space representation of visits
+    #
+    # Output:
+    #   a_pack_ineq
+    #
+    def __xPackIneq(self):
+        print("u: ", np.array(toArr(self.u)).shape)
+        print("p: ", np.array(toArr(self.p)).shape)
+        print("sigma: ", np.array(toArr(self.sigma)).shape)
+        print("v: ", np.array(toArr(self.v)).shape)
+        print("delta: ", np.array(toArr(self.delta)).shape)
+        print("a: ", self.a.shape)
+        print("c: ", np.array(toArr(self.c)).shape)
+        print("g: ", np.array(toArr(self.g)).shape)
+        print("w: ", np.array(toArr(self.w)).shape)
+
+        x_pack_ineq = np.append(toArr(self.u) , toArr(self.p))
+        x_pack_ineq = np.append(x_pack_ineq   , toArr(self.sigma))
+        x_pack_ineq = np.append(x_pack_ineq   , np.ones(self.Xi , dtype=int ))
+        x_pack_ineq = np.append(x_pack_ineq   , toArr(self.v))
+        x_pack_ineq = np.append(x_pack_ineq   , self.S*np.ones(self.N , dtype=int ))
+        x_pack_ineq = np.append(x_pack_ineq   , toArr(self.delta))
+        x_pack_ineq = np.append(x_pack_ineq   , np.ones(self.Xi, dtype=int ))
+        x_pack_ineq = np.append(x_pack_ineq   , self.a)
+        x_pack_ineq = np.append(x_pack_ineq   , toArr(self.c))
+        x_pack_ineq = np.append(x_pack_ineq   , toArr(self.g))
+        x_pack_ineq = np.append(x_pack_ineq   , toArr(self.w))
+        x_pack_ineq = np.append(x_pack_ineq   , np.ones(self.N*self.Q, dtype=int ))
+        return x_pack_ineq
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    def __xDynIneq(self):
+        x_dyn_ineq = np.append(toArr(self.eta), toArr(self.g))
+        x_dyn_ineq = np.append(x_dyn_ineq, np.ones(self.N, dtype=float))
+        return x_dyn_ineq
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   N : Number of bus visits
+    #   c : Detatch time from charger for each bus visit
+    #   v : Selected queue for each bus visit
+    #
+    # Output:
+    #   b_pack_eq
+    #
+    def __bPackEq(self):
+        b_pack_eq = np.append(toArr(self.c), np.ones(self.N))
+        b_pack_eq = np.append(b_pack_eq, toArr(self.v))
+        return b_pack_eq
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   N   : Number of bus visits
+    #   g   : Linearization term for p[i]*w[i][q]
+    #   eta : Initial charge of each bus visit
+    #
+    # Output:
+    #   b_dyn_eq
+    #
+    # Note:
+    #   Because eta has size (N-A), the index values (0-A) need to be ignored
+    #   and the values greater than A need to be normalized
+    #   (i.e. start from 0)
+    #
+    def __bDynEq(self):
+        # b_init_charge
+        b_init_charge = np.array(toArr(self.eta))
+
+        # b_next_charge
+        idx           = adjustArray(self.N, self.g_idx)
+        b_next_charge = np.array([self.eta[i] for i in idx])
+
+        # Combine submatrices
+        b_dyn_eq = np.append(b_init_charge, b_next_charge)
+
+        return b_dyn_eq
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    def __bPackIneq(self):
+        return
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    def __bDynIneq(self):
+        return

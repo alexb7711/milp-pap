@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# Standard Lib
+import numpy as np
+
 ##===============================================================================
 # Input:
 #   array: An array of elements
@@ -60,3 +63,21 @@ def adjustArray(lb, arr):
 def toArr(garr):
     arr = garr.copy()
     return [arr[i] for i in range(arr.shape[0])]
+
+##===========================================================================
+# Input:
+#   N: Number of elements to be in the full size array
+#   t: Type of variables in array (float, int, etc...)
+#   idx: Indices of values to be set as 'value'
+#   value: The number for each index to be set to (default = 1)
+#
+# Output:
+#   Array of size N with 'value' placed in idx's locations
+#
+def toFullLen(N, t, idx, value=1):
+    arr = np.zeros(N, dtype=t)
+
+    for i in idx:
+        arr[i] = value
+
+    return arr

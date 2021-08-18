@@ -121,16 +121,16 @@ class Schedule:
         g = self.model.addMVar(shape=self.N*self.Q, vtype=GRB.CONTINUOUS, name="g")
 
         ## Initial charge
-        eta = self.model.addMVar(shape=self.N-self.A, vtype=GRB.CONTINUOUS, name="eta")
+        eta = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="eta")
 
         ## Vector representation of queue
         w = self.model.addMVar(shape=self.N*self.Q, vtype=GRB.BINARY, name="w")
 
-        ## Sigself.model.
-        sigma = self.model.addMVar(shape=self.N*self.A, vtype=GRB.BINARY, name="sigma")
+        ## Sigma
+        sigma = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.BINARY, name="sigma")
 
         ## Delta
-        delta = self.model.addMVar(shape=self.N*self.A, vtype=GRB.BINARY, name="delta")
+        delta = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.BINARY, name="delta")
 
         # Compile schedule into dictionary
         schedule = \
@@ -280,9 +280,11 @@ class Schedule:
         min = 50
         max = 99
 
-        for i in range(self.A):
-                self.kappa[i] = min + (max - min)*random.random()
+        self.kappa = np.zeros(self.N, dtype=int)
 
+        for i in range(self.A):
+                idx = first(self.Gamma, i)
+                self.kappa[idx] = min + (max - min)*random.random()
         return
 
     ##---------------------------------------------------------------------------

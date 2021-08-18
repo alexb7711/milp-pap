@@ -30,6 +30,9 @@ def main():
     # Create Matrix
     gm = GenMat(schedule)
 
+    ## Generate matrices
+    gm.genMats()
+
     # Optimize
 
     return
