@@ -128,3 +128,32 @@ def NMat(N, t, idx=[]):
     mat = ones*np.eye(N, dtype=t)
 
     return mat
+
+##===============================================================================
+# Input:
+#   N   : Number of visits
+#   t   : Type of matrix (float, int, ...)
+#   idx : Array of indices to place 1's. i.e. [0, 2] will be placed as follows :
+#          [[ 1 0 0 ...]
+#           [ 0 0 0 ...]
+#           [ 0 0 2 ...]...]
+#          By default the matrix will be the identity, but you can specify the
+#          value as well
+#
+# Output:
+#   An NxN matrix with 1's values placed on the appropriate diagonal
+#
+def kappaMat(N, t, arr):
+    invalid_val = -1
+
+    ones = np.zeros(N, dtype=t)
+
+    for i in range(len(arr)):
+        if arr[i] <= 0:
+            continue
+
+        ones[i] = 1
+
+    mat = ones*np.eye(N, dtype=t)
+
+    return mat

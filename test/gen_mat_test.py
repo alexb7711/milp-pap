@@ -26,8 +26,10 @@ def test_A_pack_eq():
     N     = schedule['N']
     Q     = schedule['Q']
 
+    gm.genMats()
+
     # A
-    m,n = gm.a_pack_eq.shape
+    m,n = gm.A_pack_eq.shape
     assert m == 3*N
     assert n == 2*N+N*Q
 
@@ -53,9 +55,11 @@ def test_A_dyn_eq():
     N     = schedule['N']
     Q     = schedule['Q']
 
+    gm.genMats()
+
     # A
-    m,n = gm.a_dyn_eq.shape
-    assert m == N
+    m,n = gm.A_dyn_eq.shape
+    assert m == 2*N
     assert n == 2*N + N*Q
 
     # x
@@ -64,7 +68,7 @@ def test_A_dyn_eq():
 
     # b
     m = gm.b_dyn_eq.shape[0]
-    assert m == N
+    assert m == 2*N
 
     return
 
@@ -81,12 +85,16 @@ def test_A_pack_ineq():
     Q     = schedule['Q']
     Xi    = N*(N-1)
 
+    gm.genMats()
+
     # A
-    m,n = gm.a_pack_ineq.shape
+    m,n = gm.A_pack_ineq.shape
     assert m == 5*Xi + 7*N
     assert n == 4*Xi + 6*N + 3*N*Q
 
     # x
+    m = gm.x_pack_ineq.shape[0]
+    assert m == 4*Xi + 6*N + 3*N*Q
 
     # b
 
@@ -104,12 +112,16 @@ def test_A_dyn_ineq():
     N     = schedule['N']
     Q     = schedule['Q']
 
+    gm.genMats()
+
     # A
-    m,n = gm.a_dyn_ineq.shape
+    m,n = gm.A_dyn_ineq.shape
     assert m == 3*N
     assert n == 2*N+N*Q
 
     # x
+    m = gm.x_dyn_ineq.shape[0]
+    assert m == 2*N + N*Q
 
     # b
     return
