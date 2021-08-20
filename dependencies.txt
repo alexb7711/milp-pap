@@ -2,3 +2,4 @@ gurobipy
 nose
 nose-cov
 numpy
+scipy

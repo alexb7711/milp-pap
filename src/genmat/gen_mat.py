@@ -73,13 +73,16 @@ class GenMat:
         self.b_dyn_ineq  = self.__bDynIneq()
 
         # Combine Matrices
+        ## A
+        self.A_eq = self.__genAEQ()
 
-        # Create data structure
-        mats = \
-        {
-        }
+        # x
+        self.x_eq = self.__genXEQ()
 
-        return mats
+        # b
+        self.b_eq = self.__genBEQ()
+
+        return
 
     ##===========================================================================
     # PRIVATE
@@ -95,6 +98,7 @@ class GenMat:
         ## Input Variables
         self.A     = schedule['A']
         self.G_idx = schedule['Gamma']
+        self.H_f   = schedule['H_f']
         self.N     = schedule['N']
         self.Q     = schedule['Q']
         self.S     = schedule['S']
@@ -458,16 +462,6 @@ class GenMat:
     #   a_pack_ineq
     #
     def __xPackIneq(self):
-        print("u: ", np.array(toArr(self.u)).shape)
-        print("p: ", np.array(toArr(self.p)).shape)
-        print("sigma: ", np.array(toArr(self.sigma)).shape)
-        print("v: ", np.array(toArr(self.v)).shape)
-        print("delta: ", np.array(toArr(self.delta)).shape)
-        print("a: ", self.a.shape)
-        print("c: ", np.array(toArr(self.c)).shape)
-        print("g: ", np.array(toArr(self.g)).shape)
-        print("w: ", np.array(toArr(self.w)).shape)
-
         x_pack_ineq = np.append(toArr(self.u) , toArr(self.p))
         x_pack_ineq = np.append(x_pack_ineq   , toArr(self.sigma))
         x_pack_ineq = np.append(x_pack_ineq   , np.ones(self.Xi , dtype=int ))
@@ -484,6 +478,13 @@ class GenMat:
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   N : Number of bus visits
+    #   eta   : Initial charge of each bus visit
+    #   g     : Linearization term for p[i]*w[i][q]
+    #
+    # Output:
+    #   x_dyn_ineq
+    #
     def __xDynIneq(self):
         x_dyn_ineq = np.append(toArr(self.eta), toArr(self.g))
         x_dyn_ineq = np.append(x_dyn_ineq, np.ones(self.N, dtype=float))
@@ -532,10 +533,96 @@ class GenMat:
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   N : Number of bus visits
+    #   T : Time horizon
+    #   c : Detatch time from charger for each bus visit
+    #   p : Time spent on charger for each bus visit
+    #
+    # Output:
+    #   b_pack_ineq
+    #
     def __bPackIneq(self):
-        return
+        # Local variables
+        N  = self.N
+        T  = self.T
+        Xi = self.Xi
+
+        xi_ones = np.ones(Xi, dtype=float)
+        n_ones  = np.ones(N, dtype=float)
+
+        b_pack_ineq = np.append(xi_ones     , xi_ones)
+        b_pack_ineq = np.append(b_pack_ineq , xi_ones)
+        b_pack_ineq = np.append(b_pack_ineq , -xi_ones)
+        b_pack_ineq = np.append(b_pack_ineq , -xi_ones)
+        b_pack_ineq = np.append(b_pack_ineq , -1.0*np.array(toArr(self.c)))
+        b_pack_ineq = np.append(b_pack_ineq , -1*(T*n_ones - toArr(self.p)))
+        b_pack_ineq = np.append(b_pack_ineq , self.t)
+        b_pack_ineq = np.append(b_pack_ineq , -1.0*np.array(toArr(self.p)))
+        b_pack_ineq = np.append(b_pack_ineq , toArr(self.p))
+        b_pack_ineq = np.append(b_pack_ineq , np.zeros(2*N, dtype=float))
+
+        return b_pack_ineq
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   N : Number of bus visits
+    #   H : Final charge percentage for each bus
+    #
+    # Output:
+    #   b_dyn_ineq
+    #
     def __bDynIneq(self):
-        return
+        # Local variables
+        N  = self.N
+
+        b_dyn_ineq = np.append(np.ones(self.N, dtype=float),\
+                np.zeros(self.N, dtype=float))
+        b_dyn_ineq = np.append(b_dyn_ineq, self.H_f*np.ones(self.N, dtype=float))
+        return b_dyn_ineq
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   A_pack_eq
+    #   A_dynamics_eq
+    #
+    # Output
+    #   A_eq
+    #
+    def __genAEQ(self):
+        Ap  = self.A_pack_eq
+        Ad  = self.A_dyn_eq
+        ztr = np.zeros((3*self.N, 2*self.N+self.N*self.Q), dtype   = float)
+        zbl = np.zeros((2*self.N, 2*self.N+self.N*self.Q), dtype   = float)
+
+        # Combine matrces
+        A_eq_top = np.append(Ap, ztr, axis=1)
+        A_eq_bot = np.append(zbl, Ad, axis=1)
+        A_eq     = np.append(A_eq_top, A_eq_bot, axis=0)
+
+        return A_eq
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   x_pack_eq
+    #   x_dynamics_eq
+    #
+    # Output
+    #   x_eq
+    #
+    def __genXEQ(self):
+        xp = self.x_pack_eq
+        xd = self.x_dyn_ineq
+        return np.append(xp, xd)
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   b_pack_eq
+    #   b_dynamics_eq
+    #
+    # Output
+    #   b_eq
+    #
+    def __genBEQ(self):
+        bp = self.b_pack_eq
+        bd = self.b_dyn_eq
+        return np.append(bp, bd)

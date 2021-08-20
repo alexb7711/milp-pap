@@ -138,19 +138,20 @@ class Schedule:
             ## Input Variables
             'A'     : self.A,
             'Gamma' : self.Gamma,
+            'H_f'   : self.H_final,       # [%]
             'N'     : self.N,
             'Q'     : self.Q,
-            'T'     : self.T,
             'S'     : 1,
+            'T'     : self.T,
             'a'     : self.a,
             'e'     : self.e,
-            'kappa' : self.kappa,
-            'xi'    : self.xi,
-            'gamma' : self.gamma,
-            'l'     : self.l,
-            't'     : self.t,
-            'r'     : self.r,
             'fa'    : self.final_arr,
+            'gamma' : self.gamma,
+            'kappa' : self.kappa,
+            'l'     : self.l,
+            'r'     : self.r,
+            't'     : self.t,
+            'xi'    : self.xi,
 
             ## Decision Variables
             'c'     : c,

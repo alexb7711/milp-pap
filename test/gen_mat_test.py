@@ -97,6 +97,10 @@ def test_A_pack_ineq():
     assert m == 4*Xi + 6*N + 3*N*Q
 
     # b
+    m = gm.b_pack_ineq.shape[0]
+    print(m)
+    print(5*Xi + 7*N)
+    assert m == 5*Xi + 7*N
 
     return
 
@@ -124,4 +128,38 @@ def test_A_dyn_ineq():
     assert m == 2*N + N*Q
 
     # b
+    m = gm.b_dyn_ineq.shape[0]
+    print(m)
+    print(3*N)
+    assert m == 3*N
+
+    return
+
+##===============================================================================
+#
+def test_A_eq():
+    m        = gp.Model("test")
+    s        = Schedule(m)
+    schedule = s.generate()
+    gm       = GenMat(schedule)
+
+    A     = schedule['A']
+    N     = schedule['N']
+    Q     = schedule['Q']
+
+    gm.genMats()
+
+    # A
+    m,n = gm.A_eq.shape
+    assert m == 5*N
+    assert n == 4*N + 2*N*Q
+
+    # x
+    m = gm.x_eq.shape[0]
+    assert m == 4*N + 2*N*Q
+
+    # b
+    m = gm.b_eq.shape[0]
+    assert m == 5*N
+
     return
