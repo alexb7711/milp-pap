@@ -75,12 +75,15 @@ class GenMat:
         # Combine Matrices
         ## A
         self.A_eq = self.__genAEQ()
+        self.A_ineq = self.__genAINEQ()
 
         # x
         self.x_eq = self.__genXEQ()
+        self.x_ineq = self.__genXINEQ()
 
         # b
         self.b_eq = self.__genBEQ()
+        self.b_ineq = self.__genBINEQ()
 
         return
 
@@ -603,6 +606,33 @@ class GenMat:
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   A_pack_ineq
+    #   A_dynamics_ineq
+    #
+    # Output
+    #   A_ineq
+    #
+    def __genAINEQ(self):
+        # Local Variables
+        N  = self.N
+        Xi = self.Xi
+        Q  = self.Q
+
+        Ap = self.A_pack_ineq
+        Ad = self.A_dyn_ineq
+        ztr = np.zeros((5*Xi + 7*N, 2*N + N*Q), dtype=float)
+        zbl = np.zeros((3*N, 4*Xi + 6*N + 3*N*Q), dtype=float)
+
+        # Combine Matrices
+        A_ineq_top = np.append(Ap, ztr, axis=1)
+        A_ineq_bot = np.append(zbl, Ad, axis=1)
+
+        A_ineq     = np.append(A_ineq_top, A_ineq_bot, axis=0)
+
+        return A_ineq
+
+    ##---------------------------------------------------------------------------
+    # Input:
     #   x_pack_eq
     #   x_dynamics_eq
     #
@@ -611,6 +641,19 @@ class GenMat:
     #
     def __genXEQ(self):
         xp = self.x_pack_eq
+        xd = self.x_dyn_eq
+        return np.append(xp, xd)
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   x_pack_ineq
+    #   x_dynamics_ineq
+    #
+    # Output
+    #   x_ineq
+    #
+    def __genXINEQ(self):
+        xp = self.x_pack_ineq
         xd = self.x_dyn_ineq
         return np.append(xp, xd)
 
@@ -625,4 +668,17 @@ class GenMat:
     def __genBEQ(self):
         bp = self.b_pack_eq
         bd = self.b_dyn_eq
+        return np.append(bp, bd)
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   b_pack_ineq
+    #   b_dynamics_ineq
+    #
+    # Output
+    #   b_ineq
+    #
+    def __genBINEQ(self):
+        bp = self.b_pack_ineq
+        bd = self.b_dyn_ineq
         return np.append(bp, bd)
