@@ -163,3 +163,33 @@ def test_A_eq():
     assert m == 5*N
 
     return
+
+##===============================================================================
+#
+def test_A_ineq():
+    m        = gp.Model("test")
+    s        = Schedule(m)
+    schedule = s.generate()
+    gm       = GenMat(schedule)
+
+    A     = schedule['A']
+    N     = schedule['N']
+    Q     = schedule['Q']
+    Xi    = N*(N-1)
+
+    gm.genMats()
+
+    # A
+    m,n = gm.A_ineq.shape
+    assert m == 5*Xi + 10*N
+    assert n == 4*Xi + 8*N + 4*N*Q
+
+    # x
+    m = gm.x_ineq.shape[0]
+    assert m == 4*Xi + 8*N + 4*N*Q
+
+    # b
+    m = gm.b_ineq.shape[0]
+    assert m == 5*Xi + 10*N
+
+    return
