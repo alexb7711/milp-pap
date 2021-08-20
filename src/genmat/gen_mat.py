@@ -74,16 +74,25 @@ class GenMat:
 
         # Combine Matrices
         ## A
-        self.A_eq = self.__genAEQ()
+        self.A_eq   = self.__genAEQ()
         self.A_ineq = self.__genAINEQ()
 
         # x
-        self.x_eq = self.__genXEQ()
+        self.x_eq   = self.__genXEQ()
         self.x_ineq = self.__genXINEQ()
 
         # b
-        self.b_eq = self.__genBEQ()
+        self.b_eq   = self.__genBEQ()
         self.b_ineq = self.__genBINEQ()
+
+        # A
+        self.A = self.__genA()
+
+        # x
+        self.x = self.__genX()
+
+        # b
+        self.b = self.__genB()
 
         return
 
@@ -682,3 +691,50 @@ class GenMat:
         bp = self.b_pack_ineq
         bd = self.b_dyn_ineq
         return np.append(bp, bd)
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   A_eq
+    #   A_ineq
+    #
+    # Output
+    #   A
+    #
+    def __genA(self):
+        # Local Variables
+        N  = self.N
+        Xi = self.Xi
+        Q  = self.Q
+
+        Aeq   = self.A_eq
+        Aineq = self.A_ineq
+        ztr   = np.zeros((5*N, 4*Xi + 8*N + 4*N*Q), dtype=float)
+        zbl   = np.zeros((5*Xi + 10*N, 4*N + 2*N*Q), dtype=float)
+
+        # Combine Matrices
+        Atop = np.append(Aeq, ztr, axis=1)
+        Abot = np.append(zbl, Aineq, axis=1)
+
+        return np.append(Atop, Abot, axis=0)
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   x_eq
+    #   x_ineq
+    #
+    # Output
+    #   x
+    #
+    def __genX(self):
+        return np.append(self.x_eq, self.x_ineq)
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   b_eq
+    #   b_ineq
+    #
+    # Output
+    #   b
+    #
+    def __genB(self):
+        return np.append(self.b_eq, self.b_ineq)
