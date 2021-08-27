@@ -17,6 +17,9 @@ from schedule_manager import Schedule
 from gen_mat          import GenMat
 from optimizer        import Optimizer
 
+## Static schedules
+from b2c1 import *
+
 ##===============================================================================
 #
 def main():
@@ -27,7 +30,8 @@ def main():
     s = Schedule(m)
 
     ## Generate the schedule
-    schedule = s.generate()
+    #  schedule = s.generate()
+    schedule = b2c1()
 
     # Create Matrix
     gm = GenMat(schedule)

@@ -141,23 +141,23 @@ class GenMat:
     #   A_pack_eq
     #
     def __APackEq(self):
-        nq_0      = np.zeros((self.N, self.N*self.Q), dtype=float)
-
         # A_pack_eq
         ## A_detatch
         A_p       = np.eye(self.N, dtype=float)
         A_u       = A_p.copy()
+        nq_0      = np.zeros((self.N, self.N*self.Q), dtype=float)
 
         A_detatch = np.append(A_p, A_u, axis=1)
         A_detatch = np.append(A_detatch, nq_0, axis=1)
 
         ## A_w
+        n2_0      = np.zeros((self.N, 2*self.N), dtype=float)
         A_w = NQMat(self.N, self.Q, float, np.ones(self.Q, dtype=float))
-        A_w = np.append(nq_0, A_w, axis=1)
+        A_w = np.append(n2_0, A_w, axis=1)
 
         ## A_v
         A_v = NQMat(self.N, self.Q, float)
-        A_v = np.append(nq_0, A_v, axis=1)
+        A_v = np.append(n2_0, A_v, axis=1)
 
         ## A_eq
         A_pack_eq = np.append(A_detatch, A_w, axis=0)
@@ -367,28 +367,28 @@ class GenMat:
 
         # A_pack_ineq
         A_pack_ineq = np.append(A_time      , A_queue , axis=0)
-        print(A_pack_ineq)
+        #  print(A_pack_ineq)
         #input("1")
         A_pack_ineq = np.append(A_pack_ineq , A_sd    , axis=0)
-        print(A_pack_ineq)
+        #  print(A_pack_ineq)
         #input("2")
         A_pack_ineq = np.append(A_pack_ineq , A_s  , axis=0)
-        print(A_pack_ineq)
+        #  print(A_pack_ineq)
         #input("3")
         A_pack_ineq = np.append(A_pack_ineq , A_d  , axis=0)
-        print(A_pack_ineq)
+        #  print(A_pack_ineq)
         #input("4")
         A_pack_ineq = np.append(A_pack_ineq , A_a  , axis=0)
-        print(A_pack_ineq)
+        #  print(A_pack_ineq)
         #input("5")
         A_pack_ineq = np.append(A_pack_ineq , A_c  , axis=0)
-        print(A_pack_ineq)
+        #  print(A_pack_ineq)
         #input("6")
         A_pack_ineq = np.append(A_pack_ineq , A_c  , axis=0)
-        print(A_pack_ineq)
+        #  print(A_pack_ineq)
         #input("7")
         A_pack_ineq = np.append(A_pack_ineq , A_g     , axis=0)
-        print(A_pack_ineq)
+        #  print(A_pack_ineq)
         #  input("8")
 
         return A_pack_ineq
@@ -552,8 +552,14 @@ class GenMat:
         b_init_charge = np.array(toArr(self.eta))
 
         # b_next_charge
-        idx           = adjustArray(self.N, self.g_idx)
-        b_next_charge = np.array([self.eta[i] for i in idx])
+        idx           = adjustArray(self.A, self.g_idx)
+        b_next_charge = []
+
+        for i in idx:
+            if i > 0:
+                b_next_charge.append(self.eta.tolist()[i])
+            else:
+                b_next_charge.append(0)
 
         # Combine submatrices
         b_dyn_eq = np.append(b_init_charge, b_next_charge)

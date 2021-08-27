@@ -14,19 +14,19 @@ from mat_util import *
 ##===============================================================================
 #
 class Optimizer:
-	##=======================================================================
-	# PUBLIC
+    ##===========================================================================
+    # PUBLIC
 
-	##-----------------------------------------------------------------------
-	# Input:
+    ##---------------------------------------------------------------------------
+    # Input:
     #	A        : A matrix
     #	b        : b vector
     #	x        : x vector
     #	schedule : All schedule variables
-	#
-	# Output:
-	#	Example: test
-	#
+    #
+    # Output:
+    #	Example: test
+    #
     def __init__(self, Aeq, Aineq, beq, bineq, xeq, xineq, schedule, mats):
         self.Aeq   = Aeq
         self.Aineq = Aineq
@@ -39,7 +39,7 @@ class Optimizer:
 
         return
 
-	##-----------------------------------------------------------------------
+    ##---------------------------------------------------------------------------
     # Input:
     #
     # Output:
@@ -69,8 +69,11 @@ class Optimizer:
         ## Equality Constraints
         m,n = Aeq.shape
 
+        ## Update model
+        model.update()
+
         for i in range(m):
-            #  print(sum(Aeq[i,:] * xeq[:]), " == ", beq[i])
+            print(sum(Aeq[i,:] * xeq[:]), " == ", beq[i])
             #  input()
             model.addConstr(sum(Aeq[i,:] * xeq[:]) == beq[i], name="eq{0}".format(i))
 
