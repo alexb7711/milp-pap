@@ -89,7 +89,7 @@ def test_A_pack_ineq():
 
     # A
     m,n = gm.A_pack_ineq.shape
-    assert m == 5*Xi + 7*N
+    assert m == 2*Xi + 10*N
     assert n == 4*Xi + 6*N + 3*N*Q
 
     # x
@@ -98,9 +98,7 @@ def test_A_pack_ineq():
 
     # b
     m = gm.b_pack_ineq.shape[0]
-    print(m)
-    print(5*Xi + 7*N)
-    assert m == 5*Xi + 7*N
+    assert m == 2*Xi + 10*N
 
     return
 
@@ -181,7 +179,7 @@ def test_A_ineq():
 
     # A
     m,n = gm.A_ineq.shape
-    assert m == 5*Xi + 10*N
+    assert m == 2*Xi + 13*N
     assert n == 4*Xi + 8*N + 4*N*Q
 
     # x
@@ -190,6 +188,6 @@ def test_A_ineq():
 
     # b
     m = gm.b_ineq.shape[0]
-    assert m == 5*Xi + 10*N
+    assert m == 2*Xi + 13*N
 
     return

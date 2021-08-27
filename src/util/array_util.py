@@ -81,3 +81,62 @@ def toFullLen(N, t, idx, value=1):
         arr[i] = value
 
     return arr
+
+##===============================================================================
+# Input:
+#   mat: matrix
+#
+# Output:
+#  vector representation of matrix
+#
+def mat2Vec(mat):
+    mat = np.array(mat)
+    m,n = mat.shape
+    vec = np.zeros(m*n)
+    i   = 0
+
+    for m in mat:
+        for n in m:
+            vec[i] = n
+            i     += 1
+
+    return vec
+
+##===============================================================================
+# Input:
+#   i: Row
+#   j: Column
+#
+# Output:
+#   Array of values corresponding to the matrix
+def sdRow(m,i,j):
+    # Generate NxN representation
+    t_mat      = np.zeros((m,m))
+    t_mat[i,j] = 1
+
+    # Remove diagonal terms
+    strided = np.lib.stride_tricks.as_strided
+    s0,s1   = t_mat.strides
+    mat     = strided(t_mat.ravel()[1:], shape = (m-1,m), strides = (s0+s1,s1)).reshape(m,-1)
+
+    return mat2Vec(mat)
+
+##===============================================================================
+# Input:
+#   i: Row
+#   j: Column
+#
+# Output:
+#   Array of values corresponding to the matrix
+def sd2Row(m,i,j):
+    # Generate NxN representation
+    t_mat      = np.zeros((m,m))
+    t_mat[i,j] = 1
+    t_mat[j,i] = 1
+
+    # Remove diagonal terms
+    strided = np.lib.stride_tricks.as_strided
+    s0,s1   = t_mat.strides
+    mat     = strided(t_mat.ravel()[1:], shape = (m-1,m), strides = (s0+s1,s1)).reshape(m,-1)
+
+    return mat2Vec(mat)

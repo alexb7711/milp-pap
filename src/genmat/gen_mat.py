@@ -2,6 +2,8 @@
 
 # Standard Lib
 import numpy as np
+large_width = 200
+np.set_printoptions(linewidth=large_width)
 
 # Developed
 from mat_util   import *
@@ -84,16 +86,6 @@ class GenMat:
         # b
         self.b_eq   = self.__genBEQ()
         self.b_ineq = self.__genBINEQ()
-
-        # A
-        self.A = self.__genA()
-
-        # x
-        self.x = self.__genX()
-
-        # b
-        self.b = self.__genB()
-
         return
 
     ##===========================================================================
@@ -233,19 +225,19 @@ class GenMat:
         A_p = XiNMat(Xi, N, int, [0,-1])
 
         ## A_sigma
-        A_sigma = -self.T*np.eye(Xi, dtype=int)
+        A_sigma = sdMat(N)
 
         ## A_ones
-        A_ones = -1*A_sigma.copy()
+        A_ones = -1*-self.T*A_sigma.copy()
 
         ## A_zeros_aft
         A_zeros_aft = np.zeros((Xi, 2*Xi + 4*N + 3*N*Q))
 
         ## Combine sub-matrices
-        A_time = np.append(A_u    , A_p         , axis=1)
-        A_time = np.append(A_time , A_sigma     , axis=1)
-        A_time = np.append(A_time , A_ones      , axis=1)
-        A_time = np.append(A_time , A_zeros_aft , axis=1)
+        A_time = np.append(A_u    , A_p             , axis=1)
+        A_time = np.append(A_time , -self.T*A_sigma , axis=1)
+        A_time = np.append(A_time , A_ones          , axis=1)
+        A_time = np.append(A_time , A_zeros_aft     , axis=1)
 
         # A_queue
         ## A_zeros_bef
@@ -257,31 +249,39 @@ class GenMat:
         ## A_s
         A_s = XiNMat(Xi, N, int, [0,-1])
 
-        ## A_sigma
-        A_delta = -self.T*np.eye(Xi, dtype=int)
+        ## A_delta
+        A_delta = sdMat(N)
 
         ## A_ones
-        A_ones = -1*A_sigma.copy()
+        A_ones = -1*-self.S*A_delta.copy()
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((Xi, 2*N + 3*N*Q), dtype=int)
+        A_zeros_aft = np.zeros((Xi, 2*N + 3*N*Q), dtype=float)
 
         ## Combine sub-matrices
-        A_queue = np.append(A_zeros_bef , A_v         , axis=1)
-        A_queue = np.append(A_queue     , A_s         , axis=1)
-        A_queue = np.append(A_queue     , A_delta     , axis=1)
-        A_queue = np.append(A_queue     , A_ones      , axis=1)
-        A_queue = np.append(A_queue     , A_zeros_aft , axis=1)
+        A_queue = np.append(A_zeros_bef , A_v             , axis=1)
+        A_queue = np.append(A_queue     , A_s             , axis=1)
+        A_queue = np.append(A_queue     , -self.S*A_delta , axis=1)
+        A_queue = np.append(A_queue     , A_ones          , axis=1)
+        A_queue = np.append(A_queue     , A_zeros_aft     , axis=1)
 
         # A_sd
+        ## A_delta
+        A_delta = sd2Mat(N)
+
+        ## A_sigma
+        A_sigma = sd2Mat(N)
+
         ## A_zeros_bef
-        A_zeros_bef = np.zeros((Xi,2*N), dtype=int)
+        A_zeros_bef = np.zeros((N,2*N), dtype=float)
 
         ## A_zeros_int
-        A_zeros_int = np.zeros((Xi,Xi+2*N), dtype=int)
+        A_zeros_int = np.zeros((N,Xi+2*N), dtype=float)
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((Xi, Xi + 2*N + 3*N*Q), dtype=int)
+        A_zeros_aft = np.zeros((N, Xi + 2*N + 3*N*Q), dtype=float)
+
+        ## A_sigma
 
         ## Combine sub-matrices
         A_sd = np.append(A_zeros_bef , A_sigma     , axis=1)
@@ -291,10 +291,10 @@ class GenMat:
 
         # A_s
         ## A_zeros_bef
-        A_zeros_bef = np.zeros((Xi,2*N), dtype=int)
+        A_zeros_bef = np.zeros((N,2*N), dtype=float)
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((Xi, 3*Xi + 4*N + 3*N*Q), dtype=int)
+        A_zeros_aft = np.zeros((N, 3*Xi + 4*N + 3*N*Q), dtype=float)
 
         ## Combine sub-matrices
         A_s = np.append(A_zeros_bef , -1*A_sigma  , axis=1)
@@ -302,10 +302,10 @@ class GenMat:
 
         # A_d
         ## A_zeros_bef
-        A_zeros_bef = np.zeros((Xi,2*Xi+4*N), dtype=int)
+        A_zeros_bef = np.zeros((N,2*Xi+4*N), dtype=float)
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((Xi, Xi + 2*N + 3*N*Q), dtype=int)
+        A_zeros_aft = np.zeros((N, Xi + 2*N + 3*N*Q), dtype=float)
 
         ## Combine sub-matrices
         A_d = np.append(A_zeros_bef , -1*A_delta  , axis=1)
@@ -313,49 +313,51 @@ class GenMat:
 
         # A_a
         ## A_zeros_bef
-        A_zeros_bef = np.zeros((N,4*Xi+4*N), dtype=int)
+        A_zeros_bef = np.zeros((N,4*Xi+4*N), dtype=float)
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((N, N+3*N*Q), dtype=int)
+        A_zeros_aft = np.zeros((N, N+3*N*Q), dtype=float)
 
         ## Combine sub-matrices
-        A_a = np.append(A_zeros_bef , -1*np.eye(N , dtype=int) , axis=1)
+        A_a = np.append(A_zeros_bef , -1*np.eye(N , dtype=float) , axis=1)
         A_a = np.append(A_a         , A_zeros_aft              , axis=1)
 
         # A_c
         ## A_zeros_bef
-        A_zeros_bef = np.zeros((N,4*Xi+5*N), dtype=int)
+        A_zeros_bef = np.zeros((N,4*Xi+5*N), dtype=float)
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((N, 3*N*Q), dtype=int)
+        A_zeros_aft = np.zeros((N, 3*N*Q), dtype=float)
 
         ## Combine sub-matrices
-        A_c = np.append(A_zeros_bef , -1*np.eye(N,dtype=int) , axis=1)
+        A_c = np.append(A_zeros_bef , -1*np.eye(N,dtype=float) , axis=1)
         A_c = np.append(A_c         , A_zeros_aft                 , axis=1)
 
         # A_g
         ## A_zeros_bef
-        A_zeros_bef = np.zeros((4*N,4*Xi + 6*N), dtype=int)
+        A_zeros_bef = np.zeros((4*N,4*Xi + 6*N), dtype=float)
 
         ## A_nqzero
-        A_nqzero = NQNMat(N, Q, int, np.zeros(Q, dtype=int))
+        A_nqzero = NQNMat(N, Q, int, np.zeros(Q, dtype=float))
 
-        ## A_gg
-        ## A_gp_t
+        ## A_gp
+        ### A_gp_t
         A_gp_t = np.append(-1*NQNMat(N, Q, int), A_nqzero, axis=1)
         A_gp_t = np.append(A_gp_t, A_nqzero, axis=1)
 
-        ## A_gg_b
-        A_gp_b = np.append(-1*NQNMat(N, Q, int), A_nqzero, axis=1)
+        ### A_gp_b
+        A_gp_b = np.append(1*NQNMat(N, Q, int), M*NQNMat(N, Q, int), axis=1)
         A_gp_b = np.append(A_gp_b, -M*NQNMat(N, Q, int), axis=1)
 
-        ## A_gw_t
-        A_gw_t = np.append(NQNMat(N, Q, int), A_nqzero, axis=1)
-        A_gw_t = np.append(A_gw_t, A_nqzero, axis=1)
+        ## A_gw
+        ### A_gw_t
+        A_gw_t = np.append(-1*NQNMat(N, Q, int), A_nqzero, axis=1)
+        A_gw_t = np.append(A_gw_t, M*NQNMat(N, Q, int), axis=1)
 
-        ## A_gw_b
-        A_gw_b = np.append(-1*NQNMat(N, Q, int), M*NQNMat(N, Q, int), axis=1)
+        ### A_gw_b
+        A_gw_b = np.append(NQNMat(N, Q, int), A_nqzero, axis=1)
         A_gw_b = np.append(A_gw_b, A_nqzero, axis=1)
+
 
         ## Combine sub-matrices
         A_g = np.append(A_gp_t      , A_gp_b , axis=0)
@@ -365,13 +367,29 @@ class GenMat:
 
         # A_pack_ineq
         A_pack_ineq = np.append(A_time      , A_queue , axis=0)
+        print(A_pack_ineq)
+        #input("1")
         A_pack_ineq = np.append(A_pack_ineq , A_sd    , axis=0)
-        A_pack_ineq = np.append(A_pack_ineq , A_s     , axis=0)
-        A_pack_ineq = np.append(A_pack_ineq , A_d     , axis=0)
-        A_pack_ineq = np.append(A_pack_ineq , A_a     , axis=0)
-        A_pack_ineq = np.append(A_pack_ineq , A_c     , axis=0)
-        A_pack_ineq = np.append(A_pack_ineq , A_c     , axis=0)
+        print(A_pack_ineq)
+        #input("2")
+        A_pack_ineq = np.append(A_pack_ineq , A_s  , axis=0)
+        print(A_pack_ineq)
+        #input("3")
+        A_pack_ineq = np.append(A_pack_ineq , A_d  , axis=0)
+        print(A_pack_ineq)
+        #input("4")
+        A_pack_ineq = np.append(A_pack_ineq , A_a  , axis=0)
+        print(A_pack_ineq)
+        #input("5")
+        A_pack_ineq = np.append(A_pack_ineq , A_c  , axis=0)
+        print(A_pack_ineq)
+        #input("6")
+        A_pack_ineq = np.append(A_pack_ineq , A_c  , axis=0)
+        print(A_pack_ineq)
+        #input("7")
         A_pack_ineq = np.append(A_pack_ineq , A_g     , axis=0)
+        print(A_pack_ineq)
+        #  input("8")
 
         return A_pack_ineq
 
@@ -401,32 +419,31 @@ class GenMat:
         M  = self.T
 
         # A_max_charge
-        A_ones = -1*np.eye(N, dtype=int)
+        A_ones = -1000*np.eye(N, dtype=float)
         A_eta  = NQNMat(N, Q, int, -1*self.r)
-        A_z    = 0*np.eye(N, dtype=int)
+        A_z    = 0*np.eye(N, dtype=float)
 
         ## Combine submatrices
         A_max_charge = np.append(A_ones       , A_eta , axis=1)
         A_max_charge = np.append(A_max_charge , A_z   , axis=1)
 
         # A_min_charge
-        A_ones = -1*np.eye(N, dtype=int)
+        A_ones = 0*np.eye(N, dtype=float)
         A_r    = NQNMat(N, Q, int, -1*self.r)
-        A_l    = np.eye(N, dtype=int)*self.l
+        A_l    = np.eye(N, dtype=float)*self.l
 
         ## Combine submatrices
-        A_min_charge = np.append(A_ones        , A_r , axis=1)
+        A_min_charge = np.append(A_ones       , A_r , axis=1)
         A_min_charge = np.append(A_min_charge , A_l , axis=1)
 
         # A_last_charge
-        A_last_charge = np.append(NMat(N, int, self.fa), np.zeros((N,N+N*Q), dtype=int), axis=1)
+        A_last_charge = np.append(NMat(N, int, self.fa), np.zeros((N,N+N*Q), dtype=float), axis=1)
 
         # A_dyn_ineq
         A_dyn_ineq = np.append(A_max_charge , A_min_charge  , axis=0)
         A_dyn_ineq = np.append(A_dyn_ineq   , A_last_charge , axis=0)
 
         return A_dyn_ineq
-
 
     ##---------------------------------------------------------------------------
     # Input:
@@ -476,16 +493,16 @@ class GenMat:
     def __xPackIneq(self):
         x_pack_ineq = np.append(toArr(self.u) , toArr(self.p))
         x_pack_ineq = np.append(x_pack_ineq   , toArr(self.sigma))
-        x_pack_ineq = np.append(x_pack_ineq   , np.ones(self.Xi , dtype=int ))
+        x_pack_ineq = np.append(x_pack_ineq   , np.ones(self.Xi , dtype=float ))
         x_pack_ineq = np.append(x_pack_ineq   , toArr(self.v))
-        x_pack_ineq = np.append(x_pack_ineq   , self.S*np.ones(self.N , dtype=int ))
+        x_pack_ineq = np.append(x_pack_ineq   , self.S*np.ones(self.N , dtype=float ))
         x_pack_ineq = np.append(x_pack_ineq   , toArr(self.delta))
-        x_pack_ineq = np.append(x_pack_ineq   , np.ones(self.Xi, dtype=int ))
+        x_pack_ineq = np.append(x_pack_ineq   , np.ones(self.Xi, dtype=float ))
         x_pack_ineq = np.append(x_pack_ineq   , self.a)
         x_pack_ineq = np.append(x_pack_ineq   , toArr(self.c))
         x_pack_ineq = np.append(x_pack_ineq   , toArr(self.g))
+        x_pack_ineq = np.append(x_pack_ineq   , np.ones(self.N*self.Q, dtype=float ))
         x_pack_ineq = np.append(x_pack_ineq   , toArr(self.w))
-        x_pack_ineq = np.append(x_pack_ineq   , np.ones(self.N*self.Q, dtype=int ))
         return x_pack_ineq
 
     ##---------------------------------------------------------------------------
@@ -563,12 +580,12 @@ class GenMat:
         n_ones  = np.ones(N, dtype=float)
 
         b_pack_ineq = np.append(xi_ones     , xi_ones)
-        b_pack_ineq = np.append(b_pack_ineq , xi_ones)
-        b_pack_ineq = np.append(b_pack_ineq , -xi_ones)
-        b_pack_ineq = np.append(b_pack_ineq , -xi_ones)
+        b_pack_ineq = np.append(b_pack_ineq , n_ones)
+        b_pack_ineq = np.append(b_pack_ineq , -n_ones)
+        b_pack_ineq = np.append(b_pack_ineq , -n_ones)
         b_pack_ineq = np.append(b_pack_ineq , -1.0*np.array(toArr(self.c)))
         b_pack_ineq = np.append(b_pack_ineq , -1*(T*n_ones - toArr(self.p)))
-        b_pack_ineq = np.append(b_pack_ineq , self.t)
+        b_pack_ineq = np.append(b_pack_ineq , -self.t)
         b_pack_ineq = np.append(b_pack_ineq , -1.0*np.array(toArr(self.p)))
         b_pack_ineq = np.append(b_pack_ineq , toArr(self.p))
         b_pack_ineq = np.append(b_pack_ineq , np.zeros(2*N, dtype=float))
@@ -587,7 +604,7 @@ class GenMat:
         # Local variables
         N  = self.N
 
-        b_dyn_ineq = np.append(np.ones(self.N, dtype=float),\
+        b_dyn_ineq = np.append(-1*np.ones(self.N, dtype=float),\
                 np.zeros(self.N, dtype=float))
         b_dyn_ineq = np.append(b_dyn_ineq, self.H_f*np.ones(self.N, dtype=float))
         return b_dyn_ineq
@@ -629,7 +646,7 @@ class GenMat:
 
         Ap = self.A_pack_ineq
         Ad = self.A_dyn_ineq
-        ztr = np.zeros((5*Xi + 7*N, 2*N + N*Q), dtype=float)
+        ztr = np.zeros((2*Xi + 10*N, 2*N + N*Q), dtype=float)
         zbl = np.zeros((3*N, 4*Xi + 6*N + 3*N*Q), dtype=float)
 
         # Combine Matrices
@@ -691,50 +708,3 @@ class GenMat:
         bp = self.b_pack_ineq
         bd = self.b_dyn_ineq
         return np.append(bp, bd)
-
-    ##---------------------------------------------------------------------------
-    # Input:
-    #   A_eq
-    #   A_ineq
-    #
-    # Output
-    #   A
-    #
-    def __genA(self):
-        # Local Variables
-        N  = self.N
-        Xi = self.Xi
-        Q  = self.Q
-
-        Aeq   = self.A_eq
-        Aineq = self.A_ineq
-        ztr   = np.zeros((5*N, 4*Xi + 8*N + 4*N*Q), dtype=float)
-        zbl   = np.zeros((5*Xi + 10*N, 4*N + 2*N*Q), dtype=float)
-
-        # Combine Matrices
-        Atop = np.append(Aeq, ztr, axis=1)
-        Abot = np.append(zbl, Aineq, axis=1)
-
-        return np.append(Atop, Abot, axis=0)
-
-    ##---------------------------------------------------------------------------
-    # Input:
-    #   x_eq
-    #   x_ineq
-    #
-    # Output
-    #   x
-    #
-    def __genX(self):
-        return np.append(self.x_eq, self.x_ineq)
-
-    ##---------------------------------------------------------------------------
-    # Input:
-    #   b_eq
-    #   b_ineq
-    #
-    # Output
-    #   b
-    #
-    def __genB(self):
-        return np.append(self.b_eq, self.b_ineq)
