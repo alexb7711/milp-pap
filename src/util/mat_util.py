@@ -221,7 +221,7 @@ def sdMat(N):
                 ### Append array to mat
                 mat.append(temp)
 
-    print(np.array(mat))
+    #  print(np.array(mat))
     #  input("Press Enter...")
 
     return np.array(mat)
@@ -259,7 +259,7 @@ def sd2Mat(N):
                 ### Append array to mat
                 mat.append(temp)
 
-    print(np.array(mat))
+    #  print(np.array(mat))
     #  input("Press Enter...")
 
     return np.array(mat)

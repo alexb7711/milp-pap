@@ -46,8 +46,8 @@ def adjustArray(lb, arr):
     norm_arr = arr.copy()
 
     for i in range(len(norm_arr)):
-        if norm_arr[i] <= lb:
-            norm_arr[i] = 0
+        if norm_arr[i] < lb:
+            norm_arr[i] = -1
         else:
             norm_arr[i] -= lb
 
@@ -62,7 +62,7 @@ def adjustArray(lb, arr):
 #   Array of gurobi values
 def toArr(garr):
     arr = garr.copy()
-    return [arr[i] for i in range(arr.shape[0])]
+    return arr.tolist()
 
 ##===========================================================================
 # Input:

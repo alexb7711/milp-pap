@@ -33,7 +33,7 @@ class Schedule:
                  N              = 3,
                  Q              = 2,
                  T              = 16,
-                 discharge_rate = np.array([2, 2, 2, 2, 2, 2], dtype=int),
+                 discharge_rate = np.array([2, 2, 2, 2, 2, 2], dtype=float),
                  e              = np.array([3, 6], dtype=int),
                  m              = np.array([5, 10], dtype=int),
                  max_route_time = 3,
@@ -236,9 +236,6 @@ class Schedule:
     #   t: List of departure times for each bus visit
     #
     def __genDepart(self):
-        # Loacal variables
-        ## Ensure that there is some time between the departure and next arrival
-
         for i in range(self.N):
             ## If the bus has another visit
             if self.gamma[i] > 0:
@@ -263,22 +260,22 @@ class Schedule:
     def __genNextVisit(self):
         # Local Variables
         ## Keep track of the previous index each bus arrived at
-        prev_idx  = np.array([first(self.Gamma, i) for i in range(self.A)], dtype=int)
+        next_idx  = np.array([final(self.Gamma, i) for i in range(self.A)], dtype=int)
 
         ## Keep track of the first instance each bus arrives
-        first_idx = prev_idx.copy()
+        last_idx = next_idx.copy()
 
         # Loop through each bus visit
-        for i in range(self.N):
+        for i in range(self.N-1, 0, -1):
             ## Make sure that the index being checked is greater than the first
             ## visit. If it is, set the previous index value equal to the current.
             ## In other words, index i's value indicates the next index the bus
             ## will visit.
-            if i > first_idx[self.Gamma[i]]:
-                self.gamma[prev_idx[self.Gamma[i]]] = i
-                prev_idx[self.Gamma[i]]             = i
+            if i < last_idx[self.Gamma[i]]:
+                self.gamma[next_idx[self.Gamma[i]]] = i
+                next_idx[self.Gamma[i]]             = i
 
-        print("gamma:\n ", self.gamma)
+        #  print("gamma:\n ", self.gamma)
         return
 
     ##---------------------------------------------------------------------------
@@ -315,7 +312,7 @@ class Schedule:
             if self.gamma[i] > 0:
                 self.l[i] = self.dis_rat[self.Gamma[i]] * (self.t[i] - self.a[i])
 
-        print("Discharge:\n ", self.l)
+        #  print("Discharge:\n ", self.l)
         return
 
     ##---------------------------------------------------------------------------
