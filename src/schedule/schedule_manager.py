@@ -26,15 +26,16 @@ class Schedule:
     #
     def __init__(self,
                  model,
-                 A              = 3,
+                 A              = 2,
                  H_final        = 0.95,
                  H_min          = 0.25,
-                 N              = 6,
+                 #  N              = 6,
+                 N              = 3,
                  Q              = 2,
                  T              = 16,
-                 discharge_rate = np.array([2, 2, 2, 2, 2], dtype=int),
+                 discharge_rate = np.array([2, 2, 2, 2, 2, 2], dtype=int),
                  e              = np.array([3, 6], dtype=int),
-                 m              = np.array([5, 5, 10], dtype=int),
+                 m              = np.array([5, 10], dtype=int),
                  max_route_time = 3,
                  r              = np.array([3, 6], dtype=int)):
 
@@ -46,6 +47,7 @@ class Schedule:
         self.T       = T              # [hr]
         self.dis_rat = discharge_rate # [kwh]
         self.e       = e
+        self.m       = m
         self.mrt     = max_route_time # [hr]
         self.r       = r              # [kwh]
 
@@ -124,13 +126,16 @@ class Schedule:
         eta = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="eta")
 
         ## Vector representation of queue
-        w = self.model.addMVar(shape=self.N*self.Q, vtype=GRB.BINARY, name="w")
+        #  w = self.model.addMVar(shape=self.N*self.Q, vtype=GRB.BINARY, name="w")
+        w = self.model.addMVar(shape=self.N*self.Q, vtype=GRB.CONTINUOUS, name="w")
 
         ## Sigma
-        sigma = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.BINARY, name="sigma")
+        #  sigma = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.BINARY, name="sigma")
+        sigma = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.CONTINUOUS, name="sigma")
 
         ## Delta
-        delta = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.BINARY, name="delta")
+        #  delta = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.BINARY, name="delta")
+        delta = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.CONTINUOUS, name="delta")
 
         # Compile schedule into dictionary
         schedule = \
@@ -149,6 +154,7 @@ class Schedule:
             'gamma' : self.gamma,
             'kappa' : self.kappa,
             'l'     : self.l,
+            'm'     : self.m,
             'r'     : self.r,
             't'     : self.t,
             'xi'    : self.xi,
@@ -163,6 +169,9 @@ class Schedule:
             'u'     : u,
             'v'     : v,
             'w'     : w,
+
+            # Model
+            'model' : self.model,
         }
 
         return schedule
@@ -236,6 +245,8 @@ class Schedule:
                 max       = abs(self.a[self.gamma[i]])
                 min       = self.a[i]
                 self.t[i] = min + (max - min)*random.random()
+            else:
+                self.t[i] = self.T
 
         print("tau:\n ", self.t)
 

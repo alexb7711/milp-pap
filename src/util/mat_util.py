@@ -3,6 +3,9 @@
 # Standard Lib
 import numpy as np
 
+# Developed
+from array_util import *
+
 ##===============================================================================
 # Input:
 #   N    : Number of visits
@@ -157,3 +160,106 @@ def kappaMat(N, t, arr):
     mat = ones*np.eye(N, dtype=t)
 
     return mat
+
+##===============================================================================
+# Input:
+#   N   : Number of visits
+#   Q   : Number of chargers
+#   t   : Type of matrix (float, int, ...)
+#   arr : vector to be reshaped
+#
+# Output:
+#   NxQ matrix made of vec values
+#
+def NQReshape(N, Q, arr):
+    # Local Vars
+    ## Matrix to be returned
+    mat = []
+
+    ## Index of array
+    idx = 0
+
+    for i in range(N):
+        temp = []
+        for j in range(Q):
+            temp.append(arr[idx])
+            idx      += 1
+
+        mat.append(temp)
+
+    return np.array(mat)
+
+##===============================================================================
+# Input:
+#   N : Number of visits
+#
+# Output:
+#   Assuming N = 3, the matrix would be of the form:
+#
+#   [[1 0 0 0 0 0],
+#    [0 1 0 0 0 0],
+#    [0 0 1 0 0 0]]
+#
+#   As to represent [i,j] and [j,i] being active at the same time
+#
+def sdMat(N):
+    Xi      = N*(N-1)
+    mat     = []
+    history = np.zeros((N,N))
+
+    # Loop through each permutation
+    for i in range(N):
+        for j in range(N):
+            ## Check if this permutation has been addressed before
+            if history[i,j] != 1 and i != j:
+                ### Update history
+                history[i,j] = 1
+
+                ### Create array
+                temp = sdRow(N,i,j)
+
+                ### Append array to mat
+                mat.append(temp)
+
+    print(np.array(mat))
+    #  input("Press Enter...")
+
+    return np.array(mat)
+
+##===============================================================================
+# Input:
+#   N : Number of visits
+#
+# Output:
+#   Assuming N = 3, the matrix would be of the form:
+#
+#   [[1 0 0 1 0 0],
+#    [0 1 0 0 1 0],
+#    [0 0 1 0 0 1]]
+#
+#   As to represent [i,j] and [j,i] being active at the same time
+#
+def sd2Mat(N):
+    Xi      = N*(N-1)
+    mat     = []
+    history = np.zeros((N,N))
+
+    # Loop through each permutation
+    for i in range(N):
+        for j in range(N):
+            ## Check if this permutation has been addressed before
+            if history[i,j] != 1 and i != j:
+                ### Update history
+                history[i,j] = 1
+                history[j,i] = 1
+
+                ### Create array
+                temp = sd2Row(N,i,j)
+
+                ### Append array to mat
+                mat.append(temp)
+
+    print(np.array(mat))
+    #  input("Press Enter...")
+
+    return np.array(mat)
