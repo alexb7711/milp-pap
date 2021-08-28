@@ -49,7 +49,7 @@ def adjustArray(lb, arr):
         if norm_arr[i] < lb:
             norm_arr[i] = -1
         else:
-            norm_arr[i] -= lb
+            norm_arr[i] = i
 
     return norm_arr
 
