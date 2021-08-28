@@ -180,7 +180,7 @@ class GenMat:
         # A_next_charge
         A_next_charge = NQMat(self.N, self.Q, float, self.r)
         A_next_charge = np.append(iden, A_next_charge, axis=1)
-        A_next_charge = np.append(A_next_charge, iden, axis=1)
+        A_next_charge = np.append(A_next_charge, -iden, axis=1)
 
         ## Combine submatrices
         A_dyn_eq = np.append(A_init_charge, A_next_charge, axis=0)
@@ -549,8 +549,8 @@ class GenMat:
         idx           = adjustArray(self.A, self.g_idx)
         b_next_charge = []
 
-        for i in idx:
-            if i > 0:
+        for i in self.g_idx:
+            if i >= 0:
                 b_next_charge.append(self.eta.tolist()[i])
             else:
                 b_next_charge.append(0)
