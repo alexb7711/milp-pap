@@ -155,13 +155,8 @@ class GenMat:
         A_w = NQMat(self.N, self.Q, float, np.ones(self.Q, dtype=float))
         A_w = np.append(n2_0, A_w, axis=1)
 
-        ## A_v
-        A_v = NQMat(self.N, self.Q, float)
-        A_v = np.append(n2_0, A_v, axis=1)
-
         ## A_eq
         A_pack_eq = np.append(A_detatch, A_w, axis=0)
-        A_pack_eq = np.append(A_pack_eq, A_v, axis=0)
 
         return A_pack_eq
 
@@ -530,7 +525,6 @@ class GenMat:
     #
     def __bPackEq(self):
         b_pack_eq = np.append(toArr(self.c), np.ones(self.N))
-        b_pack_eq = np.append(b_pack_eq, toArr(self.v))
         return b_pack_eq
 
     ##---------------------------------------------------------------------------
@@ -626,7 +620,7 @@ class GenMat:
     def __genAEQ(self):
         Ap  = self.A_pack_eq
         Ad  = self.A_dyn_eq
-        ztr = np.zeros((3*self.N, 2*self.N+self.N*self.Q), dtype   = float)
+        ztr = np.zeros((2*self.N, 2*self.N+self.N*self.Q), dtype   = float)
         zbl = np.zeros((2*self.N, 2*self.N+self.N*self.Q), dtype   = float)
 
         # Combine matrces
