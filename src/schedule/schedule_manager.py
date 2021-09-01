@@ -146,7 +146,7 @@ class Schedule:
             'H_f'   : self.H_final,       # [%]
             'N'     : self.N,
             'Q'     : self.Q,
-            'S'     : 1,
+            'S'     : 1.0,
             'T'     : self.T,
             'a'     : self.a,
             'e'     : self.e,

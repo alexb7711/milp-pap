@@ -73,7 +73,7 @@ class Optimizer:
         model.update()
 
         for i in range(m):
-            print(sum(Aeq[i,:] * xeq[:]), " == ", beq[i])
+            #  print(sum(Aeq[i,:] * xeq[:]), " == ", beq[i])
             #  input()
             model.addConstr(sum(Aeq[i,:] * xeq[:]) == beq[i], name="eq{0}".format(i))
 
@@ -81,15 +81,11 @@ class Optimizer:
         m,n = Aineq.shape
 
         for i in range(m):
-            #  print(sum(Aineq[i,:] * xineq[:]), " >= ", bineq[i])
-            #  input(i)
+            print(sum(Aineq[i,:] * xineq[:]), " >= ", bineq[i])
+            input(i)
             model.addConstr(sum(Aineq[i,:] * xineq[:]) >= bineq[i], name="ineq{0}".format(i))
 
         # Optimize
         model.optimize()
 
         return
-
-
-	##=======================================================================
-	# PRIVATE
