@@ -155,13 +155,8 @@ class GenMat:
         A_w = NQMat(self.N, self.Q, float, np.ones(self.Q, dtype=float))
         A_w = np.append(n2_0, A_w, axis=1)
 
-        ## A_v
-        A_v = NQMat(self.N, self.Q, float)
-        A_v = np.append(n2_0, A_v, axis=1)
-
         ## A_eq
         A_pack_eq = np.append(A_detatch, A_w, axis=0)
-        A_pack_eq = np.append(A_pack_eq, A_v, axis=0)
 
         return A_pack_eq
 
@@ -185,7 +180,7 @@ class GenMat:
         # A_next_charge
         A_next_charge = NQMat(self.N, self.Q, float, self.r)
         A_next_charge = np.append(iden, A_next_charge, axis=1)
-        A_next_charge = np.append(A_next_charge, iden, axis=1)
+        A_next_charge = np.append(A_next_charge, -iden, axis=1)
 
         ## Combine submatrices
         A_dyn_eq = np.append(A_init_charge, A_next_charge, axis=0)
@@ -530,7 +525,6 @@ class GenMat:
     #
     def __bPackEq(self):
         b_pack_eq = np.append(toArr(self.c), np.ones(self.N))
-        b_pack_eq = np.append(b_pack_eq, toArr(self.v))
         return b_pack_eq
 
     ##---------------------------------------------------------------------------
@@ -555,8 +549,8 @@ class GenMat:
         idx           = adjustArray(self.A, self.g_idx)
         b_next_charge = []
 
-        for i in idx:
-            if i > 0:
+        for i in self.g_idx:
+            if i >= 0:
                 b_next_charge.append(self.eta.tolist()[i])
             else:
                 b_next_charge.append(0)
@@ -626,7 +620,7 @@ class GenMat:
     def __genAEQ(self):
         Ap  = self.A_pack_eq
         Ad  = self.A_dyn_eq
-        ztr = np.zeros((3*self.N, 2*self.N+self.N*self.Q), dtype   = float)
+        ztr = np.zeros((2*self.N, 2*self.N+self.N*self.Q), dtype   = float)
         zbl = np.zeros((2*self.N, 2*self.N+self.N*self.Q), dtype   = float)
 
         # Combine matrces

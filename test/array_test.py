@@ -39,5 +39,5 @@ def test_adjust():
     arr = [1,2,3,4,5,6,7,8,9]
     lb  = 5
     print(adjustArray(lb,arr))
-    assert adjustArray(lb, arr) == [-1, -1, -1, -1, 0, 1, 2, 3, 4]
+    assert adjustArray(lb, arr) == [-1, -1, -1, -1, 4, 5, 6, 7, 8]
     return

@@ -25,7 +25,7 @@ def b2c1():
     kappa     = np.array([0.95, 0.95], dtype = float)
     l         = np.array([10, 10, 10], dtype = float)
     m         = np.array([1], dtype          = float)
-    r         = np.array([2, 4], dtype       = float)
+    r         = np.array([2], dtype       = float)
     t         = np.array([2, 4, 5], dtype    = float)
     xi        = np.array([0.95, 0.95], dtype = float)
 

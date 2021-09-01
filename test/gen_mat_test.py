@@ -30,7 +30,7 @@ def test_A_pack_eq():
 
     # A
     m,n = gm.A_pack_eq.shape
-    assert m == 3*N
+    assert m == 2*N
     assert n == 2*N+N*Q
 
     # x
@@ -39,7 +39,7 @@ def test_A_pack_eq():
 
     # b
     m = gm.b_pack_eq.shape[0]
-    assert m == 3*N
+    assert m == 2*N
 
     return
 
@@ -149,7 +149,7 @@ def test_A_eq():
 
     # A
     m,n = gm.A_eq.shape
-    assert m == 5*N
+    assert m == 4*N
     assert n == 4*N + 2*N*Q
 
     # x
@@ -158,7 +158,7 @@ def test_A_eq():
 
     # b
     m = gm.b_eq.shape[0]
-    assert m == 5*N
+    assert m == 4*N
 
     return
 
