@@ -81,8 +81,8 @@ class Optimizer:
         m,n = Aineq.shape
 
         for i in range(m):
-            print(sum(Aineq[i,:] * xineq[:]), " >= ", bineq[i])
-            input(i)
+            #  print(sum(Aineq[i,:] * xineq[:]), " >= ", bineq[i])
+            #  input(i)
             model.addConstr(sum(Aineq[i,:] * xineq[:]) >= bineq[i], name="ineq{0}".format(i))
 
         # Optimize

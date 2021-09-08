@@ -178,8 +178,13 @@ class GenMat:
         A_init_charge = np.append(kappaMat(self.N, float, self.kappa), zeros, axis=1)
 
         # A_next_charge
-        A_next_charge = NQMat(self.N, self.Q, float, self.r)
-        A_next_charge = np.append(iden, A_next_charge, axis=1)
+        for i in range(len(self.g_idx)):
+            if self.g_idx[i] <= 0:
+                iden[i][i] = 0
+
+        A_r = NQMat(self.N, self.Q, float, self.r)
+
+        A_next_charge = np.append(iden, A_r, axis=1)
         A_next_charge = np.append(A_next_charge, -iden, axis=1)
 
         ## Combine submatrices
@@ -207,10 +212,11 @@ class GenMat:
     #
     def __APackIneq(self):
         # Local variables
-        N  = self.N
-        Q  = self.Q
-        Xi = self.Xi
-        M  = self.T
+        N   = self.N
+        Q   = self.Q
+        Xi  = self.Xi
+        Psi = int(self.Xi/2)
+        M   = self.T
 
         # A_time
         ## A_u
@@ -268,15 +274,13 @@ class GenMat:
         A_sigma = sd2Mat(N)
 
         ## A_zeros_bef
-        A_zeros_bef = np.zeros((N,2*N), dtype=float)
+        A_zeros_bef = np.zeros((Psi,2*N), dtype=float)
 
         ## A_zeros_int
-        A_zeros_int = np.zeros((N,Xi+2*N), dtype=float)
+        A_zeros_int = np.zeros((Psi,Xi+2*N), dtype=float)
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((N, Xi + 2*N + 3*N*Q), dtype=float)
-
-        ## A_sigma
+        A_zeros_aft = np.zeros((Psi, Xi + 2*N + 3*N*Q), dtype=float)
 
         ## Combine sub-matrices
         A_sd = np.append(A_zeros_bef , A_sigma     , axis=1)
@@ -286,10 +290,10 @@ class GenMat:
 
         # A_s
         ## A_zeros_bef
-        A_zeros_bef = np.zeros((N,2*N), dtype=float)
+        A_zeros_bef = np.zeros((Psi,2*N), dtype=float)
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((N, 3*Xi + 4*N + 3*N*Q), dtype=float)
+        A_zeros_aft = np.zeros((Psi, 3*Xi + 4*N + 3*N*Q), dtype=float)
 
         ## Combine sub-matrices
         A_s = np.append(A_zeros_bef , -1*A_sigma  , axis=1)
@@ -297,10 +301,10 @@ class GenMat:
 
         # A_d
         ## A_zeros_bef
-        A_zeros_bef = np.zeros((N,2*Xi+4*N), dtype=float)
+        A_zeros_bef = np.zeros((Psi,2*Xi+4*N), dtype=float)
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((N, Xi + 2*N + 3*N*Q), dtype=float)
+        A_zeros_aft = np.zeros((Psi, Xi + 2*N + 3*N*Q), dtype=float)
 
         ## Combine sub-matrices
         A_d = np.append(A_zeros_bef , -1*A_delta  , axis=1)
@@ -341,8 +345,8 @@ class GenMat:
         A_gp_t = np.append(A_gp_t, A_nqzero, axis=1)
 
         ### A_gp_b
-        A_gp_b = np.append(1*NQNMat(N, Q, int), M*NQNMat(N, Q, int), axis=1)
-        A_gp_b = np.append(A_gp_b, -M*NQNMat(N, Q, int), axis=1)
+        A_gp_b = np.append(1*NQNMat(N, Q, int), -M*NQNMat(N, Q, int), axis=1)
+        A_gp_b = np.append(A_gp_b, M*NQNMat(N, Q, int), axis=1)
 
         ## A_gw
         ### A_gw_t
@@ -362,29 +366,13 @@ class GenMat:
 
         # A_pack_ineq
         A_pack_ineq = np.append(A_time      , A_queue , axis=0)
-        #  print(A_pack_ineq)
-        #input("1")
         A_pack_ineq = np.append(A_pack_ineq , A_sd    , axis=0)
-        #  print(A_pack_ineq)
-        #input("2")
         A_pack_ineq = np.append(A_pack_ineq , A_s  , axis=0)
-        #  print(A_pack_ineq)
-        #input("3")
         A_pack_ineq = np.append(A_pack_ineq , A_d  , axis=0)
-        #  print(A_pack_ineq)
-        #input("4")
         A_pack_ineq = np.append(A_pack_ineq , A_a  , axis=0)
-        #  print(A_pack_ineq)
-        #input("5")
         A_pack_ineq = np.append(A_pack_ineq , A_c  , axis=0)
-        #  print(A_pack_ineq)
-        #input("6")
         A_pack_ineq = np.append(A_pack_ineq , A_c  , axis=0)
-        #  print(A_pack_ineq)
-        #input("7")
         A_pack_ineq = np.append(A_pack_ineq , A_g     , axis=0)
-        #  print(A_pack_ineq)
-        #  input("8")
 
         return A_pack_ineq
 
@@ -414,18 +402,18 @@ class GenMat:
         M  = self.T
 
         # A_max_charge
-        A_ones = -1000*np.eye(N, dtype=float)
-        A_eta  = NQNMat(N, Q, int, -1*self.r)
+        A_ones = np.eye(N, dtype=float)
+        ## TODO: Passing in self.r does not seem right, but it works for the
+        ##       single charger case. Invstigate later.
+        A_r    = NQNMat(N, Q, int, self.r)
         A_z    = 0*np.eye(N, dtype=float)
 
         ## Combine submatrices
-        A_max_charge = np.append(A_ones       , A_eta , axis=1)
-        A_max_charge = np.append(A_max_charge , A_z   , axis=1)
+        A_max_charge = np.append(-A_ones      , -A_r , axis=1)
+        A_max_charge = np.append(A_max_charge , A_z , axis=1)
 
         # A_min_charge
-        A_ones = 0*np.eye(N, dtype=float)
-        A_r    = NQNMat(N, Q, int, -1*self.r)
-        A_l    = np.eye(N, dtype=float)*self.l
+        A_l = -1*np.eye(N, dtype=float)*self.l
 
         ## Combine submatrices
         A_min_charge = np.append(A_ones       , A_r , axis=1)
@@ -435,8 +423,8 @@ class GenMat:
         A_last_charge = np.append(NMat(N, int, self.fa), np.zeros((N,N+N*Q), dtype=float), axis=1)
 
         # A_dyn_ineq
-        A_dyn_ineq = np.append(A_max_charge , A_min_charge  , axis=0)
-        A_dyn_ineq = np.append(A_dyn_ineq   , A_last_charge , axis=0)
+        A_dyn_ineq = np.append(A_max_charge , A_min_charge        , axis=0)
+        A_dyn_ineq = np.append(A_dyn_ineq   , A_last_charge       , axis=0)
 
         return A_dyn_ineq
 
@@ -543,7 +531,19 @@ class GenMat:
     #
     def __bDynEq(self):
         # b_init_charge
-        b_init_charge = np.array(toArr(self.eta))
+        ## Find indices for initial visits
+        init_visit_idx = [first(self.G_idx, i) for i in range(self.A)]
+
+        ## Generate array to indicate first visit or not
+        eta = self.eta.tolist()
+
+        for i in range(self.N):
+            if first(init_visit_idx,i) != -1:
+                eta[i] = 1.0*eta[i]
+            else:
+                eta[i] = 0.0*eta[i]
+
+        b_init_charge = eta
 
         # b_next_charge
         idx           = adjustArray(self.A, self.g_idx)
@@ -572,17 +572,19 @@ class GenMat:
     #
     def __bPackIneq(self):
         # Local variables
-        N  = self.N
-        T  = self.T
-        Xi = self.Xi
+        N   = self.N
+        T   = self.T
+        Xi  = self.Xi
+        Psi = int(self.Xi/2)
 
-        xi_ones = np.ones(Xi, dtype=float)
-        n_ones  = np.ones(N, dtype=float)
+        xi_zeros = np.zeros(Xi, dtype=float)
+        n_ones   = np.ones(N, dtype=float)
+        psi_ones = np.ones(Psi, dtype=float)
 
-        b_pack_ineq = np.append(xi_ones     , xi_ones)
-        b_pack_ineq = np.append(b_pack_ineq , n_ones)
-        b_pack_ineq = np.append(b_pack_ineq , -n_ones)
-        b_pack_ineq = np.append(b_pack_ineq , -n_ones)
+        b_pack_ineq = np.append(xi_zeros    , xi_zeros)
+        b_pack_ineq = np.append(b_pack_ineq , psi_ones)
+        b_pack_ineq = np.append(b_pack_ineq , -psi_ones)
+        b_pack_ineq = np.append(b_pack_ineq , -psi_ones)
         b_pack_ineq = np.append(b_pack_ineq , -1.0*np.array(toArr(self.c)))
         b_pack_ineq = np.append(b_pack_ineq , -1*(T*n_ones - toArr(self.p)))
         b_pack_ineq = np.append(b_pack_ineq , -self.t)
@@ -602,11 +604,17 @@ class GenMat:
     #
     def __bDynIneq(self):
         # Local variables
-        N  = self.N
+        N               = self.N
+        temp_max_charge = 1000.0
+        final_charge    = np.zeros(N)
 
-        b_dyn_ineq = np.append(-1*np.ones(self.N, dtype=float),\
+        ## Set final charge value in correct index
+        for i in self.fa:
+            final_charge[i] = 1
+
+        b_dyn_ineq = np.append(-1*temp_max_charge*np.ones(self.N, dtype=float),\
                 np.zeros(self.N, dtype=float))
-        b_dyn_ineq = np.append(b_dyn_ineq, self.H_f*np.ones(self.N, dtype=float))
+        b_dyn_ineq = np.append(b_dyn_ineq, self.H_f*final_charge)
         return b_dyn_ineq
 
     ##---------------------------------------------------------------------------
@@ -640,20 +648,20 @@ class GenMat:
     #
     def __genAINEQ(self):
         # Local Variables
-        N  = self.N
-        Xi = self.Xi
-        Q  = self.Q
+        N   = self.N
+        Xi  = self.Xi
+        Psi = int(self.Xi/2)
+        Q   = self.Q
 
-        Ap = self.A_pack_ineq
-        Ad = self.A_dyn_ineq
-        ztr = np.zeros((2*Xi + 10*N, 2*N + N*Q), dtype=float)
-        zbl = np.zeros((3*N, 4*Xi + 6*N + 3*N*Q), dtype=float)
+        Ap  = self.A_pack_ineq
+        Ad  = self.A_dyn_ineq
+        ztr = np.zeros((2*Xi + 7*N + 3*Psi, 2*N + N*Q), dtype = float)
+        zbl = np.zeros((3*N, 4*Xi + 6*N + 3*N*Q), dtype = float)
 
         # Combine Matrices
-        A_ineq_top = np.append(Ap, ztr, axis=1)
-        A_ineq_bot = np.append(zbl, Ad, axis=1)
-
-        A_ineq     = np.append(A_ineq_top, A_ineq_bot, axis=0)
+        A_ineq_top = np.append(Ap         , ztr        , axis=1)
+        A_ineq_bot = np.append(zbl        , Ad         , axis=1)
+        A_ineq     = np.append(A_ineq_top , A_ineq_bot , axis=0)
 
         return A_ineq
 

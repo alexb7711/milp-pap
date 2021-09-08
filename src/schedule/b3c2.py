@@ -5,29 +5,29 @@ import random
 
 from gurobipy import GRB
 
-def b2c1():
+def b3c2():
     # Create Gurobi model
     model = gp.Model("2B1C")
 
     # Input Variables
-    A         = 1
+    A         = 3
     Gamma     = np.array([1,1,1,1],dtype       = int)
     H_final   = 0.98
     H_min     = 0.25
     N         = 4
     Q         = 2
-    T         = 7 
-    dis_rat   = np.array([1, 1], dtype       = float)
-    a         = np.array([1, 3, 4, 6], dtype    = float)
-    e         = np.array([1], dtype          = float)
-    final_arr = np.array([0, 1], dtype       = int)
-    gamma     = np.array([1,2,3,-1], dtype  = int)
-    kappa     = np.array([0.95], dtype = float)
+    T         = 7
+    dis_rat   = np.array([1, 1],           dtype = float)
+    a         = np.array([1, 3, 4, 6],     dtype = float)
+    e         = np.array([1],              dtype = float)
+    final_arr = np.array([0, 1],           dtype = int)
+    gamma     = np.array([1,2,3,-1],       dtype = int)
+    kappa     = np.array([0.95],           dtype = float)
     l         = np.array([10, 10, 10, 10], dtype = float)
-    m         = np.array([1], dtype          = float)
-    r         = np.array([1], dtype       = float)
-    t         = np.array([2, 4, 5,6], dtype    = float)
-    xi        = np.array([0.95], dtype = float)
+    m         = np.array([1],              dtype = float)
+    r         = np.array([1],              dtype = float)
+    t         = np.array([2, 4, 5,6],      dtype = float)
+    xi        = np.array([0.95],           dtype = float)
 
     # Input Variables
     ## Initial charge time
