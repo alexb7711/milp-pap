@@ -11,23 +11,23 @@ def b2c1():
 
     # Input Variables
     A         = 2
-    Gamma     = np.array([1,2,1],dtype       = int)
+    Gamma     = np.array([0,1,0],         dtype = int)
     H_final   = 0.98
     H_min     = 0.25
     N         = 3
     Q         = 1
     T         = 5
-    dis_rat   = np.array([1, 1], dtype       = float)
-    a         = np.array([1, 3, 4], dtype    = float)
-    e         = np.array([1], dtype          = float)
-    final_arr = np.array([0, 1], dtype       = int)
-    gamma     = np.array([2, -1, -1], dtype  = int)
-    kappa     = np.array([0.95, 0.95], dtype = float)
-    l         = np.array([10, 10, 10], dtype = float)
-    m         = np.array([1], dtype          = float)
-    r         = np.array([2], dtype       = float)
-    t         = np.array([2, 4, 5], dtype    = float)
-    xi        = np.array([0.95, 0.95], dtype = float)
+    dis_rat   = np.array([1, 1],          dtype = float)
+    a         = np.array([1, 3, 4],       dtype = float)
+    e         = np.array([1],             dtype = float)
+    final_arr = np.array([0, 2],          dtype = int)
+    gamma     = np.array([2, -1, -1],     dtype = int)
+    kappa     = np.array([0.95, 0.95],    dtype = float)
+    l         = np.array([10, 10, 10],    dtype = float)
+    m         = np.array([1],             dtype = float)
+    r         = np.array([2],             dtype = float)
+    t         = np.array([2, 4, 5],       dtype = float)
+    xi        = np.array([0.95, 0.95],    dtype = float)
 
     # Input Variables
     ## Initial charge time

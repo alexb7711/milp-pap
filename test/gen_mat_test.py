@@ -80,16 +80,17 @@ def test_A_pack_ineq():
     schedule = s.generate()
     gm       = GenMat(schedule)
 
-    A     = schedule['A']
-    N     = schedule['N']
-    Q     = schedule['Q']
-    Xi    = N*(N-1)
+    A   = schedule['A']
+    N   = schedule['N']
+    Q   = schedule['Q']
+    Xi  = N*(N-1)
+    Psi = int(Xi/2)
 
     gm.genMats()
 
     # A
     m,n = gm.A_pack_ineq.shape
-    assert m == 2*Xi + 10*N
+    assert m == 2*Xi + 7*N + 3*Psi
     assert n == 4*Xi + 6*N + 3*N*Q
 
     # x
@@ -98,7 +99,7 @@ def test_A_pack_ineq():
 
     # b
     m = gm.b_pack_ineq.shape[0]
-    assert m == 2*Xi + 10*N
+    assert m == 2*Xi + 7*N + 3*Psi
 
     return
 
@@ -127,8 +128,6 @@ def test_A_dyn_ineq():
 
     # b
     m = gm.b_dyn_ineq.shape[0]
-    print(m)
-    print(3*N)
     assert m == 3*N
 
     return
@@ -170,16 +169,17 @@ def test_A_ineq():
     schedule = s.generate()
     gm       = GenMat(schedule)
 
-    A     = schedule['A']
-    N     = schedule['N']
-    Q     = schedule['Q']
-    Xi    = N*(N-1)
+    A   = schedule['A']
+    N   = schedule['N']
+    Q   = schedule['Q']
+    Xi  = N*(N-1)
+    Psi = int(Xi/2)
 
     gm.genMats()
 
     # A
     m,n = gm.A_ineq.shape
-    assert m == 2*Xi + 13*N
+    assert m == 2*Xi + 10*N + 3*Psi
     assert n == 4*Xi + 8*N + 4*N*Q
 
     # x
@@ -188,6 +188,6 @@ def test_A_ineq():
 
     # b
     m = gm.b_ineq.shape[0]
-    assert m == 2*Xi + 13*N
+    assert m == 2*Xi + 10*N + 3*Psi
 
     return

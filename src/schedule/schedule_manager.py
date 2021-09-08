@@ -29,8 +29,8 @@ class Schedule:
                  A              = 2,
                  H_final        = 0.95,
                  H_min          = 0.25,
-                 #  N              = 6,
-                 N              = 3,
+                 N              = 6,
+                 #  N              = 3,
                  Q              = 2,
                  T              = 16,
                  discharge_rate = np.array([2, 2, 2, 2, 2, 2], dtype=float),
@@ -266,16 +266,15 @@ class Schedule:
         last_idx = next_idx.copy()
 
         # Loop through each bus visit
-        for i in range(self.N-1, 0, -1):
+        for i in range(self.N-1, -1, -1):
             ## Make sure that the index being checked is greater than the first
             ## visit. If it is, set the previous index value equal to the current.
             ## In other words, index i's value indicates the next index the bus
             ## will visit.
             if i < last_idx[self.Gamma[i]]:
-                self.gamma[next_idx[self.Gamma[i]]] = i
-                next_idx[self.Gamma[i]]             = i
+                self.gamma[i]           = next_idx[self.Gamma[i]]
+                next_idx[self.Gamma[i]] = i
 
-        #  print("gamma:\n ", self.gamma)
         return
 
     ##---------------------------------------------------------------------------
