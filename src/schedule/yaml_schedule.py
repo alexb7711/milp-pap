@@ -57,9 +57,6 @@ class YAMLSchedule:
         # beta
         self.__getFinalCharge()
 
-        # Bus Capacities
-        self.__getCapacities()
-
         # lambda
         self.__calcPowerLoss()
 
@@ -87,6 +84,9 @@ class YAMLSchedule:
         # gamma
         self.__genNextVisits()
 
+        # Bus Capacities
+        self.__getCapacities()
+
         # a
         self.__genArrivalTimes()
 
@@ -101,6 +101,7 @@ class YAMLSchedule:
             ## Input Variables
             'A'     : self.A,
             'Gamma' : self.Gamma,
+            'H_min' : self.H_min,      # [%]
             'N'     : self.N,
             'Q'     : self.Q,
             'S'     : 1.0,
@@ -189,7 +190,9 @@ class YAMLSchedule:
         for i in self.data["buses"]:
             capacities.append(i["battery"]["capacity"])
 
-        self.capacity = np.array(capacities)
+        capacity = np.array(capacities)
+
+        self.capacity = np.array([capacities[x] for x in self.Gamma])
 
         return
 

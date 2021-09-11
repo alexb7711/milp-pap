@@ -46,11 +46,11 @@ class Optimizer:
     #
     def optimize(self):
         # Local Variables
-        Aeq = self.Aeq
+        Aeq = self.Aeq.tocsc()
         xeq = self.xeq
         beq = self.beq
 
-        Aineq = self.Aineq
+        Aineq = self.Aineq.tocsc()
         xineq = self.xineq
         bineq = self.bineq
 
@@ -58,6 +58,7 @@ class Optimizer:
         model = self.s["model"]
 
         # Objective
+        print("Creating Objective...")
         w = NQReshape(self.s['N'], self.s['Q'], self.s['w'])
         g = NQReshape(self.s['N'], self.s['Q'], self.s['g'])
         m = self.s['m']
@@ -70,25 +71,29 @@ class Optimizer:
         m,n = Aeq.shape
 
         ## Update model
+        print("Updating Model...")
         model.update()
 
+        print("Adding Equaltiy Constraints...")
         for i in range(m):
-            #  print(sum(Aeq[i,:] * xeq[:]), " == ", beq[i])
+            #  print(sum(Aeq[i,:].toarray() * xeq[:]), " == ", beq[i])
             #  input(i)
-            model.addConstr(sum(Aeq[i,:] * xeq[:]) == beq[i], name="eq{0}".format(i))
+            model.addConstr(sum(Aeq[i,:].toarray()[0] * xeq[:]) == beq[i], name="eq{0}".format(i))
 
         ## Inequality Constraints
         m,n = Aineq.shape
 
+        print("Adding Inequaltiy Constraints...")
         for i in range(m):
-            #  print(sum(Aineq[i,:] * xineq[:]), " >= ", bineq[i])
+            #  print(sum(Aineq[i,:].toarray() * xineq[:]), " >= ", bineq[i])
             #  input(i)
-            model.addConstr(sum(Aineq[i,:] * xineq[:]) >= bineq[i], name="ineq{0}".format(i))
+            model.addConstr(sum(Aineq[i,:].toarray()[0] * xineq[:]) >= bineq[i], name="ineq{0}".format(i))
+
+        #  model.addConstr(Aeq.toarray()   @ xeq   == beq  , name="eq")
+        #  model.addConstr(Aineq.toarray() @ xineq == bineq, name="ineq")
 
         # Optimize
-        model.presparsify()
-        model.NodeFileStart(0.5)
-        model.Threads(1)
+        print("Optimizing...")
         model.optimize()
 
         return
