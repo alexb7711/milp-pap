@@ -16,40 +16,47 @@ class Schedule:
 
     ##---------------------------------------------------------------------------
     # Input:
-    #   T       : Time horizon
-    #   N       : Number of bus visits
-    #   A       : Amount of vehicles
-    #   Q       : Amount of chargers
-    #   H_final : Required final charge time for all buses
-    #   H_min   : Required minimum charge after each visit
-    #   model   : Gurobi model
+    #   A     : Amount of vehicles
+    #   H_min : Required minimum charge after each visit
+    #   N     : Number of bus visits
+    #   Q     : Amount of chargers
+    #   T     : Time horizon
+    #   bat   : Maximum battery charge kWh
+    #   beta  : Required final charge time for all buses
+    #   model : Gurobi model
     #
     def __init__(self,
                  model,
-                 A              = 2,
-                 H_final        = 0.95,
-                 H_min          = 0.25,
-                 N              = 6,
-                 #  N              = 3,
-                 Q              = 2,
-                 T              = 16,
-                 discharge_rate = np.array([2, 2, 2, 2, 2, 2], dtype=float),
-                 e              = np.array([3, 6], dtype=int),
-                 m              = np.array([5, 10], dtype=int),
-                 max_route_time = 3,
-                 r              = np.array([3, 6], dtype=int)):
+                 A     = 10,
+                 H_min = 0.25,
+                 N     = 50,
+                 Q     = 10,
+                 T     = 24,
+                 bat   = 1500, # [kwh]
+                 beta  = 0.95,
+                 max_route_time = 2):
 
-        self.A       = A
-        self.H_final = H_final        # [%]
-        self.H_min   = H_min          # [%]
-        self.N       = N
-        self.Q       = Q
-        self.T       = T              # [hr]
-        self.dis_rat = discharge_rate # [kwh]
-        self.e       = e
-        self.m       = m
-        self.mrt     = max_route_time # [hr]
-        self.r       = r              # [kwh]
+        discharge_rate = np.repeat([230], N)
+        r              = np.random.randint(100,high=450,size=int(Q))
+        e              = r.copy()
+        m              = 5*r.copy()
+
+        print("r:\n", r)
+        print("e:\n", e)
+        print("m:\n", m)
+
+        self.A         = A
+        self.H_min     = H_min          # [%]
+        self.N         = N
+        self.Q         = Q
+        self.T         = T              # [hr]
+        self.bat       = bat            # [kwh]
+        self.beta      = beta           # [%]
+        self.dis_rat   = discharge_rate # [kwh]
+        self.e         = e
+        self.m         = m
+        self.mrt       = max_route_time # [hr]
+        self.r         = r              # [kwh]
 
         self.model   = model
 
@@ -64,10 +71,7 @@ class Schedule:
         self.l     = np.zeros(N, dtype=float)
 
         ## Initial charge for each visit
-        self.kappa = np.zeros(A, dtype=float)
-
-        ## Minimum final charge for each visit
-        self.xi    = np.zeros(A, dtype=float)
+        self.alpha = np.zeros(A, dtype=float)
 
         ## ID of bus for each visit
         self.gamma = -1*np.ones(N, dtype=int)
@@ -126,8 +130,7 @@ class Schedule:
         eta = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="eta")
 
         ## Vector representation of queue
-        #  w = self.model.addMVar(shape=self.N*self.Q, vtype=GRB.BINARY, name="w")
-        w = self.model.addMVar(shape=self.N*self.Q, vtype=GRB.CONTINUOUS, name="w")
+        w = self.model.addMVar(shape=self.N*self.Q, vtype=GRB.BINARY, name="w")
 
         ## Sigma
         #  sigma = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.BINARY, name="sigma")
@@ -143,21 +146,20 @@ class Schedule:
             ## Input Variables
             'A'     : self.A,
             'Gamma' : self.Gamma,
-            'H_f'   : self.H_final,       # [%]
             'N'     : self.N,
             'Q'     : self.Q,
             'S'     : 1.0,
             'T'     : self.T,
             'a'     : self.a,
+            'alpha' : self.alpha,
+            'beta'  : self.beta,       # [%]
             'e'     : self.e,
             'fa'    : self.final_arr,
             'gamma' : self.gamma,
-            'kappa' : self.kappa,
             'l'     : self.l,
             'm'     : self.m,
             'r'     : self.r,
             't'     : self.t,
-            'xi'    : self.xi,
 
             ## Decision Variables
             'c'     : c,
@@ -282,17 +284,19 @@ class Schedule:
     #   A : Number of buses
     #
     # Output:
-    #   kappa[A] : Initial charges for each bus
+    #   alpha[A] : Initial charges for each bus
     #
     def __genInitCharge(self):
-        min = 50
+        min = 60
         max = 99
 
-        self.kappa = np.zeros(self.N, dtype=int)
+        self.alpha = np.zeros(self.N, dtype=int)
 
         for i in range(self.A):
                 idx = first(self.Gamma, i)
-                self.kappa[idx] = min + (max - min)*random.random()
+                self.alpha[idx] = min + (max - min)*random.random()
+
+        print("alpha:\n", self.alpha)
         return
 
     ##---------------------------------------------------------------------------

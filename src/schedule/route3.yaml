@@ -1,0 +1,186 @@
+# This simulation begins at 4:00 am
+# time between simulation steps
+# step_size: 5.0 # s
+#step_size: 60.0 # s
+step_size: 100.0 # s
+
+
+# time simulation will run for
+sim_duration: 24 # h
+
+power:
+  # the fixed power cost
+  fixed: 300.0 # kW
+
+chargers:
+  osc:
+    num: 4
+    rate: 450.0 # kW
+  depot:
+    num: 7
+    rate: 100.0 # kW
+
+buses:
+  # Route 6
+  - route:
+      starts: [   0.216, 2.466, 3.716, 4.966, 6.216, 7.466, 8.716, 9.966, 11.216, 12.466, 13.716, 14.966, 17.216, 19.716] # h
+      durations: [0.616, 0.716, 0.883, 0.883, 0.800, 0.800, 0.800, 0.800, 0.933,  0.933,  0.933,  0.800,  0.750,  0.750] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 95.0 # %
+    motor_load: 230.0 # kW
+
+  - route:
+      starts: [   0.716, 2.716, 3.966, 5.216, 6.466, 7.716, 8.966, 10.216, 11.466, 12.716, 13.966, 15.216, 17.716, 20.216] # h
+      durations: [0.616, 0.716, 0.883, 0.833, 0.800, 0.800, 0.800, 0.800,  0.933,  0.933,  0.933,  0.750,  0.750,  0.750] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 50.0 # %
+    motor_load: 230.0 # kW
+
+  - route:
+      starts: [   1.216, 2.966, 4.216, 5.466, 6.716, 7.966, 9.050, 10.466, 11.716, 12.966, 14.216, 15.716, 18.216] # h
+      durations: [0.616, 0.716, 0.883, 0.833, 0.800, 0.800, 0.800, 0.800,  0.933,  0.933,  0.800,  0.750,  0.750] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 40.0 # %
+    motor_load: 230.0 # kW
+
+  - route:
+      starts: [   1.716, 3.216, 4.466, 5.716, 6.966, 8.216, 9.466, 10.716, 11.966, 13.216, 14.466, 16.216, 18.716] # h
+      durations: [0.683, 0.883, 0.883, 0.833, 0.800, 0.800, 0.800, 0.800,  0.933,  0.933,  0.800,  0.750,  0.750] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 40.0 # %
+    motor_load: 230.0 # kW
+
+  - route:
+      starts: [  2.216,  3.466, 4.716, 5.966, 7.216, 8.466, 9.716, 10.966, 12.216, 13.466, 14.716, 16.716, 19.216] # h
+      durations: [0.716, 0.883, 0.883, 0.833, 0.800, 0.800, 0.800, 0.800,  0.933,  0.933,  0.800,  0.750,  0.750] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 40.0 # %
+    motor_load: 230.0 # kW
+  # Route 4
+  - route:
+      starts: [ 0.816, 3.4833, 6.216, 8.7166, 11, 13.76666667, 16.266] # h
+      durations: [1.5, 1.716, 1.2, 1.2, 1.766, 1.166, 1.166] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 95.0 # %
+    motor_load: 230.0 # kW
+
+  - route:
+      starts: [ 1.666, 3.9833, 6.7166, 9.2166, 11.5, 14.2666, 16.7666] # h
+      durations: [1.433, 1.716, 1.2, 1.2833, 1.7666, 1.1666, 1.1666] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 95.0 # %
+    motor_load: 230.0 # kW
+
+  - route:
+      starts: [ 2.1666, 4.7166,  7.216, 9.5, 12, 14.766666 ] # h
+      durations: [1.433, 1.2, 1.2, 1.5, 1.7666, 1.16667] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 95.0 # %
+    motor_load: 230.0 # kW
+
+  - route:
+      starts: [ 2.4833, 5.216,  7.716, 10, 12.5, 15.2666] # h
+      durations: [1.433, 1.2, 1.2, 1.5, 1.7666, 1.1666] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 95.0 # %
+    motor_load: 230.0 # kW
+
+  - route:
+      starts: [ 2.9833, 5.716, 8.216666667, 10.5, 13, 15.7666] # h
+      durations: [1.433, 1.2, 1.2, 1.7666, 1.7666, 1.1666] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 95.0 # %
+    motor_load: 230.0 # kW
+
+    # Route 3
+
+  - route:
+      starts: [ 2.1833,  4.1833, 6.1833, 8.1833, 10.183, 12.183] # h
+      durations: [1.7333, 1.7333, 1.7333, 1.7333, 1.7333, 1.7333] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 95.0 # %
+    motor_load: 230.0 # kW
+
+  - route:
+      starts: [ 3.1833,  5.1833,  7.1833, 9.18, 11.183, 13.183] # h
+      durations: [1.7333, 1.7333, 1.7333, 1.7333, 1.7333, 1.7333] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 95.0 # %
+    motor_load: 230.0 # kW
+
+    # Route 9
+  - route:
+      starts: [2.25, 6.1333, 10.1333, 14.1333] # h
+      durations: [0.5666, 0.75, 0.8333, 0.8333] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 95.0 # %
+    motor_load: 230.0 # kW
+
+  - route:
+      starts: [2.75, 6.633, 10.6333, 14.633] # h
+      durations: [0.5666, 0.75, 0.8333, 0.8333] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 95.0 # %
+    motor_load: 230.0 # kW
+
+  - route:
+      starts: [3.1666, 7.133,   11.133, 15.133] # h
+      durations: [0.6833, 0.75, 0.833,  0.8333] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 95.0 # %
+    motor_load: 230.0 # kW
+
+  - route:
+      starts: [3.666, 7.633, 11.633, 15.633] # h
+      durations: [0.6833, 0.75, 0.8333, 0.8333] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 95.0 # %
+    motor_load: 230.0 # kW
+
+  - route:
+      starts: [4.1666, 8.1333, 12.133, 16.2666] # h
+      durations: [0.6833, 0.75, 0.8333, 0.55] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 95.0 # %
+    motor_load: 230.0 # kW
+
+  - route:
+      starts: [4.666, 8.6333, 12.633, 16.766] # h
+      durations: [0.6833, 0.75, 0.833, 0.55] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 95.0 # %
+    motor_load: 230.0 # kW
+
+  - route:
+      starts: [5.1666, 9.133, 13.1333, 17.266] # h
+      durations: [0.6833, 0.75, 0.8333, 0.55] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 95.0 # %
+    motor_load: 230.0 # kW
+
+  - route:
+      starts: [5.666, 9.6333,  13.6333] # h
+      durations: [0.6833, 0.75, 0.8333] # h
+    battery:
+      capacity: 1396.8 # MJ
+      charge: 95.0 # %
+    motor_load: 230.0 # kW
