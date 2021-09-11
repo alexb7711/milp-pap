@@ -1,13 +1,17 @@
 #!/usr/bin/python
 
 # Standard Lib
-import numpy as np
-large_width = 200
-np.set_printoptions(linewidth=large_width)
+import numpy        as np
+import scipy.sparse as sp
 
 # Developed
 from mat_util   import *
 from array_util import *
+
+# Printing Parameters
+large_width = 200
+np.set_printoptions(linewidth=large_width)
+
 
 ##===============================================================================
 #
@@ -86,6 +90,7 @@ class GenMat:
         # b
         self.b_eq   = self.__genBEQ()
         self.b_ineq = self.__genBINEQ()
+
         return
 
     ##===========================================================================
@@ -102,19 +107,21 @@ class GenMat:
         ## Input Variables
         self.A     = schedule['A']
         self.G_idx = schedule['Gamma']
-        self.beta  = schedule['beta']
+        self.H_min = schedule['H_min']
         self.N     = schedule['N']
         self.Q     = schedule['Q']
         self.S     = schedule['S']
         self.T     = schedule['T']
         self.Xi    = self.N*(self.N-1)
+        self.alpha = schedule['alpha']
+        self.beta  = schedule['beta']
+        self.cap   = schedule['cap']
         self.e     = schedule['e']
         self.fa    = schedule['fa']
         self.g_idx = schedule['gamma']
-        self.alpha = schedule['alpha']
         self.l     = schedule['l']
-        self.t     = schedule['t']
         self.r     = schedule['r']
+        self.t     = schedule['t']
 
         ## Decision Variables
         self.a     = schedule['a']
@@ -142,24 +149,34 @@ class GenMat:
     def __APackEq(self):
         # A_pack_eq
         ## A_detatch
-        A_p       = np.eye(self.N, dtype=float)
-        A_u       = A_p.copy()
-        nq_0      = np.zeros((self.N, self.N*self.Q), dtype=float)
+        print("Generating A_detatch...")
 
-        A_detatch = np.append(A_p, A_u, axis=1)
-        A_detatch = np.append(A_detatch, nq_0, axis=1)
+        A_p       = sp.csr_matrix(np.eye(self.N, dtype=float))
+        A_u       = sp.csr_matrix(A_p.copy())
+        nq_0      = sp.csr_matrix(np.zeros((self.N, self.N*self.Q), dtype=float))
+
+        A_detatch = sp.hstack([A_p       , A_u ])
+        A_detatch = sp.hstack([A_detatch , nq_0])
+
+        del A_p, A_u, nq_0
 
         ## A_w
+        print("Generating A_w...")
+
         ## Create array [1 2 .. Q 1 2 ... Q ...]
         inc_arr = range(1,self.Q+1,1)
 
         n2_0 = np.zeros((self.N, 2*self.N), dtype = float)
 
-        A_w  = NQMat(self.N, self.Q, float, inc_arr)
-        A_w  = np.append(n2_0, A_w, axis = 1)
+        A_w = NQMat(self.N, self.Q, float, inc_arr)
+        A_w = np.append(n2_0, A_w, axis = 1)
+        A_w = sp.csr_matrix(A_w)
+
+        del inc_arr, n2_0
 
         ## A_eq
-        A_pack_eq = np.append(A_detatch, A_w, axis=0)
+        print("Generating A_pack_eq...")
+        A_pack_eq = sp.vstack([A_detatch, A_w])
 
         return A_pack_eq
 
@@ -174,26 +191,35 @@ class GenMat:
     #   A_dyn_eq
     #
     def __ADynEq(self):
-        iden = np.eye(self.N, dtype=float)
-
         # A_init_charge
-        zeros         = np.zeros((self.N, self.N+self.N*self.Q), dtype=float)
+        print("Generating A_init_charge...")
+
+        zeros         = sp.csr_matrix(np.zeros((self.N, self.N+self.N*self.Q), dtype=float))
         init_visit    = np.array([first(self.G_idx,i) for i in range(self.A)])
-        A_init_charge = np.append(alphaMat(self.N, float, self.alpha, init_visit), zeros, axis=1)
+
+        A_init_charge = sp.hstack([sp.csr_matrix(alphaMat(self.N, float, self.alpha, init_visit)), zeros])
+
+        del zeros, init_visit
 
         # A_next_charge
-        A_r = NQMat(self.N, self.Q, float, self.r)
+        print("Generating A_next_charge...")
+
+        A_r  = sp.csr_matrix(NQMat(self.N, self.Q, float, self.r))
+        iden = sp.csr_matrix(np.eye(self.N, dtype=float))
 
         for i in range(len(self.g_idx)):
             if self.g_idx[i] <= 0:
                 iden[i] = iden[i] * 0
                 A_r[i]  = A_r[i] * 0
 
-        A_next_charge = np.append(iden, A_r, axis=1)
-        A_next_charge = np.append(A_next_charge, -iden, axis=1)
+        A_next_charge = sp.hstack([iden          , A_r   ])
+        A_next_charge = sp.hstack([A_next_charge , -iden ])
+
+        del A_r, iden
 
         ## Combine submatrices
-        A_dyn_eq = np.append(A_init_charge, A_next_charge, axis=0)
+        print("Generating A_dyn_eq...")
+        A_dyn_eq = sp.vstack([A_init_charge, A_next_charge])
 
         return A_dyn_eq
 
@@ -224,160 +250,184 @@ class GenMat:
         M   = self.T
 
         # A_time
+        print("Generating A_time...")
         ## A_u
         A_u = XiNMat(Xi, N, int)
+        A_u = sp.csr_matrix(A_u)
 
         ## A_p
-        A_p = XiNMat(Xi, N, int, [0,-1])
+        A_p = sp.csr_matrix(XiNMat(Xi, N, int, [0,-1]))
 
         ## A_sigma
-        A_sigma = sdMat(N)
+        A_sigma = sp.csr_matrix(sdMat(N))
 
         ## A_ones
-        A_ones = -1*-self.T*A_sigma.copy()
+        A_ones = sp.csr_matrix(-1*-self.T*A_sigma.copy())
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((Xi, 2*Xi + 4*N + 3*N*Q))
+        A_zeros_aft = sp.csr_matrix(np.zeros((Xi, 2*Xi + 4*N + 3*N*Q)))
 
         ## Combine sub-matrices
-        A_time = np.append(A_u    , A_p             , axis=1)
-        A_time = np.append(A_time , -self.T*A_sigma , axis=1)
-        A_time = np.append(A_time , A_ones          , axis=1)
-        A_time = np.append(A_time , A_zeros_aft     , axis=1)
+        A_time = sp.hstack([A_u    , A_p             ])
+        A_time = sp.hstack([A_time , -self.T*A_sigma ])
+        A_time = sp.hstack([A_time , A_ones          ])
+        A_time = sp.hstack([A_time , A_zeros_aft     ])
+
+        del A_u, A_p, A_sigma, A_ones, A_zeros_aft
 
         # A_queue
+        print("Generating A_queue...")
         ## A_zeros_bef
-        A_zeros_bef = np.zeros((Xi, 2*Xi + 2*N))
+        A_zeros_bef = sp.csr_matrix(np.zeros((Xi, 2*Xi + 2*N)))
 
         ## A_v
-        A_v = XiNMat(Xi, N, int)
+        A_v = sp.csr_matrix(XiNMat(Xi, N, int))
 
         ## A_s
-        A_s = XiNMat(Xi, N, int, [0,-1])
+        A_s = sp.csr_matrix(XiNMat(Xi, N, int, [0,-1]))
 
         ## A_delta
-        A_delta = sdMat(N)
+        A_delta = sp.csr_matrix(sdMat(N))
 
         ## A_ones
-        A_ones = -1*-self.S*A_delta.copy()
+        A_ones = sp.csr_matrix(-1*-self.S*A_delta.copy())
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((Xi, 2*N + 3*N*Q), dtype=float)
+        A_zeros_aft = sp.csr_matrix(np.zeros((Xi, 2*N + 3*N*Q), dtype=float))
 
         ## Combine sub-matrices
-        A_queue = np.append(A_zeros_bef , A_v             , axis=1)
-        A_queue = np.append(A_queue     , A_s             , axis=1)
-        A_queue = np.append(A_queue     , -self.S*A_delta , axis=1)
-        A_queue = np.append(A_queue     , A_ones          , axis=1)
-        A_queue = np.append(A_queue     , A_zeros_aft     , axis=1)
+        A_queue = sp.hstack([A_zeros_bef , A_v             ])
+        A_queue = sp.hstack([A_queue     , A_s             ])
+        A_queue = sp.hstack([A_queue     , -self.S*A_delta ])
+        A_queue = sp.hstack([A_queue     , A_ones          ])
+        A_queue = sp.hstack([A_queue     , A_zeros_aft     ])
+
+        del A_v, A_s, A_delta, A_ones, A_zeros_aft
 
         # A_sd
+        print("Generating A_sd...")
         ## A_delta
-        A_delta = sd2Mat(N)
+        A_delta = sp.csr_matrix(sd2Mat(N))
 
         ## A_sigma
-        A_sigma = sd2Mat(N)
+        A_sigma = sp.csr_matrix(sd2Mat(N))
 
         ## A_zeros_bef
-        A_zeros_bef = np.zeros((Psi,2*N), dtype=float)
+        A_zeros_bef = sp.csr_matrix(np.zeros((Psi,2*N), dtype=float))
 
         ## A_zeros_int
-        A_zeros_int = np.zeros((Psi,Xi+2*N), dtype=float)
+        A_zeros_int = sp.csr_matrix(np.zeros((Psi,Xi+2*N), dtype=float))
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((Psi, Xi + 2*N + 3*N*Q), dtype=float)
+        A_zeros_aft = sp.csr_matrix(np.zeros((Psi, Xi + 2*N + 3*N*Q), dtype=float))
 
         ## Combine sub-matrices
-        A_sd = np.append(A_zeros_bef , A_sigma     , axis=1)
-        A_sd = np.append(A_sd        , A_zeros_int , axis=1)
-        A_sd = np.append(A_sd        , A_delta     , axis=1)
-        A_sd = np.append(A_sd        , A_zeros_aft , axis=1)
+        A_sd = sp.hstack([A_zeros_bef , A_sigma     ])
+        A_sd = sp.hstack([A_sd        , A_zeros_int ])
+        A_sd = sp.hstack([A_sd        , A_delta     ])
+        A_sd = sp.hstack([A_sd        , A_zeros_aft ])
+
+        del A_zeros_bef, A_zeros_int, A_zeros_aft
 
         # A_s
+        print("Generating A_s...")
         ## A_zeros_bef
-        A_zeros_bef = np.zeros((Psi,2*N), dtype=float)
+        A_zeros_bef = sp.csr_matrix(np.zeros((Psi,2*N), dtype=float))
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((Psi, 3*Xi + 4*N + 3*N*Q), dtype=float)
+        A_zeros_aft = sp.csr_matrix(np.zeros((Psi, 3*Xi + 4*N + 3*N*Q), dtype=float))
 
         ## Combine sub-matrices
-        A_s = np.append(A_zeros_bef , -1*A_sigma  , axis=1)
-        A_s = np.append(A_s         , A_zeros_aft , axis=1)
+        A_s = sp.hstack([A_zeros_bef , -1*A_sigma  ])
+        A_s = sp.hstack([A_s         , A_zeros_aft ])
+
+        del A_zeros_bef, A_zeros_aft, A_sigma
 
         # A_d
+        print("Generating A_d...")
         ## A_zeros_bef
-        A_zeros_bef = np.zeros((Psi,2*Xi+4*N), dtype=float)
+        A_zeros_bef = sp.csr_matrix(np.zeros((Psi,2*Xi+4*N), dtype=float))
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((Psi, Xi + 2*N + 3*N*Q), dtype=float)
+        A_zeros_aft = sp.csr_matrix(np.zeros((Psi, Xi + 2*N + 3*N*Q), dtype=float))
 
         ## Combine sub-matrices
-        A_d = np.append(A_zeros_bef , -1*A_delta  , axis=1)
-        A_d = np.append(A_d         , A_zeros_aft , axis=1)
+        A_d = sp.hstack([A_zeros_bef , -1*A_delta ])
+        A_d = sp.hstack([A_d         , A_zeros_aft])
+
+        del A_zeros_bef, A_zeros_aft, A_delta
 
         # A_a
+        print("Generating A_a...")
         ## A_zeros_bef
-        A_zeros_bef = np.zeros((N,4*Xi+4*N), dtype=float)
+        A_zeros_bef = sp.csr_matrix(np.zeros((N,4*Xi+4*N), dtype=float))
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((N, N+3*N*Q), dtype=float)
+        A_zeros_aft = sp.csr_matrix(np.zeros((N, N+3*N*Q), dtype=float))
 
         ## Combine sub-matrices
-        A_a = np.append(A_zeros_bef , -1*np.eye(N , dtype=float) , axis=1)
-        A_a = np.append(A_a         , A_zeros_aft              , axis=1)
+        A_a = sp.hstack([A_zeros_bef , -1*np.eye(N,dtype=float)])
+        A_a = sp.hstack([A_a         , A_zeros_aft             ])
+
+        del A_zeros_bef, A_zeros_aft
 
         # A_c
+        print("Generating A_c...")
         ## A_zeros_bef
-        A_zeros_bef = np.zeros((N,4*Xi+5*N), dtype=float)
+        A_zeros_bef = sp.csr_matrix(np.zeros((N,4*Xi+5*N), dtype=float))
 
         ## A_zeros_aft
-        A_zeros_aft = np.zeros((N, 3*N*Q), dtype=float)
+        A_zeros_aft = sp.csr_matrix(np.zeros((N, 3*N*Q), dtype=float))
 
         ## Combine sub-matrices
-        A_c = np.append(A_zeros_bef , -1*np.eye(N,dtype=float) , axis=1)
-        A_c = np.append(A_c         , A_zeros_aft                 , axis=1)
+        A_c = sp.hstack([A_zeros_bef , -1*np.eye(N,dtype=float)])
+        A_c = sp.hstack([A_c         , A_zeros_aft             ])
+
+        del A_zeros_bef, A_zeros_aft
 
         # A_g
+        print("Generating A_g...")
         ## A_zeros_bef
-        A_zeros_bef = np.zeros((4*N,4*Xi + 6*N), dtype=float)
+        A_zeros_bef = sp.csr_matrix(np.zeros((4*N,4*Xi + 6*N), dtype=float))
 
         ## A_nqzero
-        A_nqzero = NQNMat(N, Q, int, np.zeros(Q, dtype=float))
+        A_nqzero = sp.csr_matrix(NQNMat(N, Q, int, np.zeros(Q, dtype=float)))
 
         ## A_gp
         ### A_gp_t
-        A_gp_t = np.append(-1*NQNMat(N, Q, int), A_nqzero, axis=1)
-        A_gp_t = np.append(A_gp_t, A_nqzero, axis=1)
+        A_gp_t = sp.hstack([sp.csr_matrix(-1*NQNMat(N, Q, int)), A_nqzero])
+        A_gp_t = sp.hstack([A_gp_t                             , A_nqzero])
 
         ### A_gp_b
-        A_gp_b = np.append(1*NQNMat(N, Q, int), -M*NQNMat(N, Q, int), axis=1)
-        A_gp_b = np.append(A_gp_b, M*NQNMat(N, Q, int), axis=1)
+        A_gp_b = sp.hstack([sp.csr_matrix(1*NQNMat(N, Q, int)), -M*NQNMat(N, Q, int)])
+        A_gp_b = sp.hstack([A_gp_b                            ,  M*NQNMat(N, Q, int)])
 
         ## A_gw
         ### A_gw_t
-        A_gw_t = np.append(-1*NQNMat(N, Q, int), A_nqzero, axis=1)
-        A_gw_t = np.append(A_gw_t, M*NQNMat(N, Q, int), axis=1)
+        A_gw_t = sp.hstack([sp.csr_matrix(-1*NQNMat(N, Q, int)), A_nqzero])
+        A_gw_t = sp.hstack([A_gw_t, sp.csr_matrix(M*NQNMat(N, Q, int))])
 
         ### A_gw_b
-        A_gw_b = np.append(NQNMat(N, Q, int), A_nqzero, axis=1)
-        A_gw_b = np.append(A_gw_b, A_nqzero, axis=1)
+        A_gw_b = sp.hstack([sp.csr_matrix(NQNMat(N, Q, int)), A_nqzero])
+        A_gw_b = sp.hstack([A_gw_b                          , A_nqzero])
 
 
         ## Combine sub-matrices
-        A_g = np.append(A_gp_t      , A_gp_b , axis=0)
-        A_g = np.append(A_g         , A_gw_t , axis=0)
-        A_g = np.append(A_g         , A_gw_b , axis=0)
-        A_g = np.append(A_zeros_bef , A_g    , axis=1)
+        A_g = sp.vstack([A_gp_t      , A_gp_b])
+        A_g = sp.vstack([A_g         , A_gw_t])
+        A_g = sp.vstack([A_g         , A_gw_b])
+        A_g = sp.hstack([A_zeros_bef , A_g])
 
         # A_pack_ineq
-        A_pack_ineq = np.append(A_time      , A_queue , axis=0)
-        A_pack_ineq = np.append(A_pack_ineq , A_sd    , axis=0)
-        A_pack_ineq = np.append(A_pack_ineq , A_s  , axis=0)
-        A_pack_ineq = np.append(A_pack_ineq , A_d  , axis=0)
-        A_pack_ineq = np.append(A_pack_ineq , A_a  , axis=0)
-        A_pack_ineq = np.append(A_pack_ineq , A_c  , axis=0)
-        A_pack_ineq = np.append(A_pack_ineq , A_c  , axis=0)
-        A_pack_ineq = np.append(A_pack_ineq , A_g     , axis=0)
+        print("Generating A_pack_ineq...")
+        A_pack_ineq = sp.vstack([A_time      , A_queue])
+        A_pack_ineq = sp.vstack([A_pack_ineq , A_sd   ])
+        A_pack_ineq = sp.vstack([A_pack_ineq , A_s    ])
+        A_pack_ineq = sp.vstack([A_pack_ineq , A_d    ])
+        A_pack_ineq = sp.vstack([A_pack_ineq , A_a    ])
+        A_pack_ineq = sp.vstack([A_pack_ineq , A_c    ])
+        A_pack_ineq = sp.vstack([A_pack_ineq , A_c    ])
+        A_pack_ineq = sp.vstack([A_pack_ineq , A_g    ])
 
         return A_pack_ineq
 
@@ -443,6 +493,7 @@ class GenMat:
     #   x_pack_eq
     #
     def __xPackEq(self):
+        print("Generating x_pack_eq...")
         x_pack_eq = np.append(toArr(self.p), toArr(self.u))
         x_pack_eq = np.append(x_pack_eq, toArr(self.w))
         return x_pack_eq
@@ -458,6 +509,7 @@ class GenMat:
     #   x_dyn_eq
     #
     def __xDynEq(self):
+        print("Generating x_dyn_eq...")
         x_dyn_eq = np.append(toArr(self.eta), toArr(self.g))
         x_dyn_eq = np.append(x_dyn_eq, self.l)
         return x_dyn_eq
@@ -479,6 +531,7 @@ class GenMat:
     #   a_pack_ineq
     #
     def __xPackIneq(self):
+        print("Generating x_pack_ineq...")
         x_pack_ineq = np.append(toArr(self.u) , toArr(self.p))
         x_pack_ineq = np.append(x_pack_ineq   , toArr(self.sigma))
         x_pack_ineq = np.append(x_pack_ineq   , np.ones(self.Xi , dtype=float ))
@@ -503,6 +556,7 @@ class GenMat:
     #   x_dyn_ineq
     #
     def __xDynIneq(self):
+        print("Generating x_dyn_ineq...")
         x_dyn_ineq = np.append(toArr(self.eta), toArr(self.g))
         x_dyn_ineq = np.append(x_dyn_ineq, np.ones(self.N, dtype=float))
         return x_dyn_ineq
@@ -517,6 +571,7 @@ class GenMat:
     #   b_pack_eq
     #
     def __bPackEq(self):
+        print("Generating b_pack_eq...")
         b_pack_eq = np.append(self.c.tolist(), self.v.tolist())
         return b_pack_eq
 
@@ -536,6 +591,7 @@ class GenMat:
     #
     def __bDynEq(self):
         # b_init_charge
+        print("Generating b_init_charge...")
         ## Find indices for initial visits
         init_visit_idx = [first(self.G_idx, i) for i in range(self.A)]
 
@@ -551,6 +607,7 @@ class GenMat:
         b_init_charge = eta
 
         # b_next_charge
+        print("Generating b_next_charge...")
         idx           = adjustArray(self.A, self.g_idx)
         b_next_charge = []
 
@@ -561,6 +618,7 @@ class GenMat:
                 b_next_charge.append(0)
 
         # Combine submatrices
+        print("Generating b_dyn_eq...")
         b_dyn_eq = np.append(b_init_charge, b_next_charge)
 
         return b_dyn_eq
@@ -577,6 +635,7 @@ class GenMat:
     #
     def __bPackIneq(self):
         # Local variables
+        print("Generating b_pack_ineq...")
         N   = self.N
         T   = self.T
         Xi  = self.Xi
@@ -610,16 +669,16 @@ class GenMat:
     def __bDynIneq(self):
         # Local variables
         N               = self.N
-        temp_max_charge = 1000.0
         final_charge    = np.zeros(N)
 
         ## Set final charge value in correct index
         for i in self.fa:
-            final_charge[i] = self.beta
+            final_charge[i] = self.cap[i]
 
-        b_dyn_ineq = np.append(-1*temp_max_charge*np.ones(self.N, dtype=float),\
-                np.zeros(self.N, dtype=float))
-        b_dyn_ineq = np.append(b_dyn_ineq, self.beta*final_charge)
+        print("Generating b_dyn_ineq...")
+        b_dyn_ineq = np.append(-1*self.beta*self.cap, np.zeros(self.N, dtype=float))
+        b_dyn_ineq = np.append(b_dyn_ineq, self.H_min*final_charge)
+
         return b_dyn_ineq
 
     ##---------------------------------------------------------------------------
@@ -633,13 +692,14 @@ class GenMat:
     def __genAEQ(self):
         Ap  = self.A_pack_eq
         Ad  = self.A_dyn_eq
-        ztr = np.zeros((2*self.N, 2*self.N+self.N*self.Q), dtype   = float)
-        zbl = np.zeros((2*self.N, 2*self.N+self.N*self.Q), dtype   = float)
+        ztr = sp.csr_matrix(np.zeros((2*self.N, 2*self.N+self.N*self.Q), dtype   = float))
+        zbl = sp.csr_matrix(np.zeros((2*self.N, 2*self.N+self.N*self.Q), dtype   = float))
 
         # Combine matrces
-        A_eq_top = np.append(Ap, ztr, axis=1)
-        A_eq_bot = np.append(zbl, Ad, axis=1)
-        A_eq     = np.append(A_eq_top, A_eq_bot, axis=0)
+        print("Generating A_eq...")
+        A_eq_top = sp.hstack([Ap, ztr])
+        A_eq_bot = sp.hstack([zbl, Ad])
+        A_eq     = sp.vstack([A_eq_top, A_eq_bot])
 
         return A_eq
 
@@ -660,13 +720,14 @@ class GenMat:
 
         Ap  = self.A_pack_ineq
         Ad  = self.A_dyn_ineq
-        ztr = np.zeros((2*Xi + 7*N + 3*Psi, 2*N + N*Q), dtype = float)
-        zbl = np.zeros((3*N, 4*Xi + 6*N + 3*N*Q), dtype = float)
+        ztr = sp.csr_matrix(np.zeros((2*Xi + 7*N + 3*Psi, 2*N + N*Q), dtype = float))
+        zbl = sp.csr_matrix(np.zeros((3*N, 4*Xi + 6*N + 3*N*Q), dtype = float))
 
         # Combine Matrices
-        A_ineq_top = np.append(Ap         , ztr        , axis=1)
-        A_ineq_bot = np.append(zbl        , Ad         , axis=1)
-        A_ineq     = np.append(A_ineq_top , A_ineq_bot , axis=0)
+        print("Generating A_ineq...")
+        A_ineq_top = sp.hstack([Ap         , ztr])
+        A_ineq_bot = sp.hstack([zbl        , Ad ])
+        A_ineq     = sp.vstack([A_ineq_top , A_ineq_bot])
 
         return A_ineq
 

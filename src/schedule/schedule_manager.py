@@ -109,6 +109,9 @@ class Schedule:
         ## Generate the final arrival index for each bus
         self.__genFinalArrival()
 
+        ## Generate bus capacities
+        self.__genCapacities()
+
         # Generate decision variables
         # TODO: Put gurobi var generation in own function
         ## Initial charge time
@@ -146,6 +149,7 @@ class Schedule:
             ## Input Variables
             'A'     : self.A,
             'Gamma' : self.Gamma,
+            'H_min' : self.H_min,
             'N'     : self.N,
             'Q'     : self.Q,
             'S'     : 1.0,
@@ -153,6 +157,7 @@ class Schedule:
             'a'     : self.a,
             'alpha' : self.alpha,
             'beta'  : self.beta,       # [%]
+            'cap'   : self.capacity,
             'e'     : self.e,
             'fa'    : self.final_arr,
             'gamma' : self.gamma,
@@ -330,4 +335,13 @@ class Schedule:
         for i in range(self.A):
             self.final_arr[i] = final(self.Gamma, i)
 
+        return
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #
+    # Output:
+    #
+    def __genCapacities(self):
+        self.capacity = np.random.randint(200, high=500, size=self.N)
         return
