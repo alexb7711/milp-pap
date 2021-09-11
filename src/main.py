@@ -18,21 +18,27 @@ from gen_mat          import GenMat
 from optimizer        import Optimizer
 
 ## Static schedules
-from b2c1 import *
-from b3c2 import *
+from b2c1          import *
+from b3c2          import *
+from yaml_schedule import YAMLSchedule
 
 ##===============================================================================
 #
 def main():
+    save_scenario = True
+
     # Create Gurobi model
     m = gp.Model("UTAPAP")
 
     # Create schedule manager class
-    s = Schedule(m)
+    #  s = Schedule(m, save_scenario)
+    #  s = YAMLSchedule("./schedule/symmetric_route.yaml", m)
+    s = YAMLSchedule("./schedule/route3.yaml", m)
 
     ## Generate the schedule
     #  schedule = s.generate()
-    schedule = b2c1()
+    schedule = s.generate()
+    #  schedule = b2c1()
     #  schedule = b3c2()
 
     # Create Matrix
@@ -57,6 +63,7 @@ def main():
         "xdineq" : gm.x_dyn_ineq,
         "bdineq" : gm.b_dyn_ineq,
     }
+
     o = Optimizer(gm.A_eq, gm.A_ineq, gm.b_eq, gm.b_ineq, gm.x_eq, gm.x_ineq, schedule, mats)
 
     o.optimize()

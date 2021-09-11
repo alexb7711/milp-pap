@@ -45,37 +45,32 @@ def NQMat(N, Q, t, vals=[]):
 #
 # Output:
 #   An XixN matrix. The values will be placed as
-#       [[ -1  1  0  0 0 0 ...]
-#        [  1 -1  0  0 0 0 ...]
-#        [  0  0 -1  1 0 0 ...]
-#        [  0  0  1 -1 0 0 ...]
+#       [[ -1 1 0 0 0 0 ...]
+#        [ -1 0 1 0 0 0 ...]
+#        [ -1 0 1 0 0 0 ...]
+#        [ -1 0 0 1 0 0 ...]...]
 #   to loop through every combination
 #
 def XiNMat(Xi, N, t, vals=[1,-1]):
+    # Local Variables
+    history = np.zeros((N,N))
+    mat     = []
 
-    # Initialize Matrix
-    mat = np.zeros((Xi, N), dtype=t)
+    # Loop through each possibility
+    for i in range(N):
+        for j in range(N):
+            ## Check if this permutation has been addressed before
+            if history[i,j] != 1 and i != j:
+                ### Update history
+                history[i,j] = 1
 
-    # i indicates the bus visit in sigma[i][j]
-    i = 0
+                ### Create array
+                temp = np.zeros(N)
+                temp[i] = vals[1]
+                temp[j] = vals[0]
 
-    # Loop through each possible combination
-    for k in range(0,Xi,N-1):
-        for j in range(N-1):
-            ## Create a column of 1's to represent i's in matrix
-            mat[k+j,i] = vals[0]
-
-            ## If j < i, j's indexing is simply incremented from 0
-            if j < i:
-                mat[k+j,j]   = vals[1]
-            ## Otherwise the j's index must be added by 1 because the diagonal
-            ## terms are being ignored
-            else:
-                mat[k+j,j+1] = vals[1]
-
-        ## Increment i to iterate over next bus
-        i += 1
-
+                ### Append array to mat
+                mat.append(temp)
     return mat
 
 ##===============================================================================
@@ -134,27 +129,18 @@ def NMat(N, t, idx=[]):
 
 ##===============================================================================
 # Input:
-#   N   : Number of visits
-#   t   : Type of matrix (float, int, ...)
-#   idx : Array of indices to place 1's. i.e. [0, 2] will be placed as follows :
-#          [[ 1 0 0 ...]
-#           [ 0 0 0 ...]
-#           [ 0 0 2 ...]...]
-#          By default the matrix will be the identity, but you can specify the
-#          value as well
+#   N     : Number of visits
+#   t     : Type of matrix (float, int, ...)
+#   init  : Array of initial charges
+#   first : Array of initial visit indices
 #
 # Output:
 #   An NxN matrix with 1's values placed on the appropriate diagonal
 #
-def kappaMat(N, t, arr):
-    invalid_val = -1
-
+def alphaMat(N, t, init, first):
     ones = np.zeros(N, dtype=t)
 
-    for i in range(len(arr)):
-        if arr[i] <= 0:
-            continue
-
+    for i in first:
         ones[i] = 1
 
     mat = ones*np.eye(N, dtype=t)

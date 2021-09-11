@@ -74,7 +74,7 @@ class Optimizer:
 
         for i in range(m):
             #  print(sum(Aeq[i,:] * xeq[:]), " == ", beq[i])
-            #  input()
+            #  input(i)
             model.addConstr(sum(Aeq[i,:] * xeq[:]) == beq[i], name="eq{0}".format(i))
 
         ## Inequality Constraints
@@ -86,6 +86,9 @@ class Optimizer:
             model.addConstr(sum(Aineq[i,:] * xineq[:]) >= bineq[i], name="ineq{0}".format(i))
 
         # Optimize
+        model.presparsify()
+        model.NodeFileStart(0.5)
+        model.Threads(1)
         model.optimize()
 
         return

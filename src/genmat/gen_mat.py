@@ -25,7 +25,7 @@ class GenMat:
     #                   * Q     : Number of chargers
     #                   * a     : List of arrival times
     #                   * e     : Cost of charger use
-    #                   * kappa : List of initial charges
+    #                   * alpha : List of initial charges
     #                   * gamma : List of indexes for the next visit
     #                   * l     : List of amount of discharge for each route
     #                   * m     : Cost of assignment to charger
@@ -102,7 +102,7 @@ class GenMat:
         ## Input Variables
         self.A     = schedule['A']
         self.G_idx = schedule['Gamma']
-        self.H_f   = schedule['H_f']
+        self.beta  = schedule['beta']
         self.N     = schedule['N']
         self.Q     = schedule['Q']
         self.S     = schedule['S']
@@ -111,11 +111,10 @@ class GenMat:
         self.e     = schedule['e']
         self.fa    = schedule['fa']
         self.g_idx = schedule['gamma']
-        self.kappa = schedule['kappa']
+        self.alpha = schedule['alpha']
         self.l     = schedule['l']
         self.t     = schedule['t']
         self.r     = schedule['r']
-        self.xi    = schedule['xi']
 
         ## Decision Variables
         self.a     = schedule['a']
@@ -151,9 +150,13 @@ class GenMat:
         A_detatch = np.append(A_detatch, nq_0, axis=1)
 
         ## A_w
-        n2_0      = np.zeros((self.N, 2*self.N), dtype=float)
-        A_w = NQMat(self.N, self.Q, float, np.ones(self.Q, dtype=float))
-        A_w = np.append(n2_0, A_w, axis=1)
+        ## Create array [1 2 .. Q 1 2 ... Q ...]
+        inc_arr = range(1,self.Q+1,1)
+
+        n2_0 = np.zeros((self.N, 2*self.N), dtype = float)
+
+        A_w  = NQMat(self.N, self.Q, float, inc_arr)
+        A_w  = np.append(n2_0, A_w, axis = 1)
 
         ## A_eq
         A_pack_eq = np.append(A_detatch, A_w, axis=0)
@@ -175,14 +178,16 @@ class GenMat:
 
         # A_init_charge
         zeros         = np.zeros((self.N, self.N+self.N*self.Q), dtype=float)
-        A_init_charge = np.append(kappaMat(self.N, float, self.kappa), zeros, axis=1)
+        init_visit    = np.array([first(self.G_idx,i) for i in range(self.A)])
+        A_init_charge = np.append(alphaMat(self.N, float, self.alpha, init_visit), zeros, axis=1)
 
         # A_next_charge
+        A_r = NQMat(self.N, self.Q, float, self.r)
+
         for i in range(len(self.g_idx)):
             if self.g_idx[i] <= 0:
-                iden[i][i] = 0
-
-        A_r = NQMat(self.N, self.Q, float, self.r)
+                iden[i] = iden[i] * 0
+                A_r[i]  = A_r[i] * 0
 
         A_next_charge = np.append(iden, A_r, axis=1)
         A_next_charge = np.append(A_next_charge, -iden, axis=1)
@@ -199,7 +204,7 @@ class GenMat:
     #   v     : Selected queue for each bus visit
     #   s     : Bus size of each bus visit
     #   sigma : Matrix representation of time relative to other bus visits
-    #   detla : Matrix representation of physical space relative to other bus
+    #   delta : Matrix representation of physical space relative to other bus
     #           visits
     #   a     : Arrival time for each bus visit
     #   c     : Detatch time from charger for each bus visit
@@ -384,7 +389,7 @@ class GenMat:
     #   c     : Detatch time for each visit
     #   eta   : Initial charge for each bus visit
     #   g     : Linearization term for blinear values
-    #   kappa : List of initial charges
+    #   alpha : List of initial charges
     #   l     : List of amount of discharge for each route
     #   p     : Time spent on charger for each bus visit
     #   r : Charge rate for each charger
@@ -446,7 +451,7 @@ class GenMat:
     # Input:
     #   eta   : Initial charge of each bus visit
     #   g     : Linearization term for p[i]*w[i][q]
-    #   kappa : Initial charge for first bus visit for each bus
+    #   alpha : Initial charge for first bus visit for each bus
     #   l     : Discharge amount per bus route
     #
     # Output:
@@ -512,7 +517,7 @@ class GenMat:
     #   b_pack_eq
     #
     def __bPackEq(self):
-        b_pack_eq = np.append(toArr(self.c), np.ones(self.N))
+        b_pack_eq = np.append(self.c.tolist(), self.v.tolist())
         return b_pack_eq
 
     ##---------------------------------------------------------------------------
@@ -610,11 +615,11 @@ class GenMat:
 
         ## Set final charge value in correct index
         for i in self.fa:
-            final_charge[i] = 1
+            final_charge[i] = self.beta
 
         b_dyn_ineq = np.append(-1*temp_max_charge*np.ones(self.N, dtype=float),\
                 np.zeros(self.N, dtype=float))
-        b_dyn_ineq = np.append(b_dyn_ineq, self.H_f*final_charge)
+        b_dyn_ineq = np.append(b_dyn_ineq, self.beta*final_charge)
         return b_dyn_ineq
 
     ##---------------------------------------------------------------------------
