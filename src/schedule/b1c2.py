@@ -74,6 +74,7 @@ def b3c2():
                 'l'     : l,
                 'm'     : m,
                 'r'     : r,
+                's'     : np.ones(N),
                 't'     : t,
 
                 ## Decision Variables

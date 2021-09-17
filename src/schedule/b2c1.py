@@ -42,19 +42,19 @@ def b2c1():
     p = model.addMVar(shape=N, vtype=GRB.CONTINUOUS, name="p")
 
     ## Lineriztion term
-    g = model.addMVar(shape=N*Q, vtype=GRB.CONTINUOUS, name="g")
+    g = model.addMVar(shape=(N,Q), vtype=GRB.CONTINUOUS, name="g")
 
     ## Initial charge
     eta = model.addMVar(shape=N, vtype=GRB.CONTINUOUS, name="eta")
 
     ## Vector representation of queue
-    w = model.addMVar(shape=N*Q, vtype=GRB.BINARY, name="w")
+    w = model.addMVar(shape=(N,Q), vtype=GRB.BINARY, name="w")
 
     ## Sigma
-    sigma = model.addMVar(shape=N*(N-1), vtype=GRB.BINARY, name="sigma")
+    sigma = model.addMVar(shape=(N,N), vtype=GRB.BINARY, name="sigma")
 
     ## Delta
-    delta = model.addMVar(shape=N*(N-1), vtype=GRB.BINARY, name="delta")
+    delta = model.addMVar(shape=(N,N), vtype=GRB.BINARY, name="delta")
 
     schedule = \
             {
@@ -74,6 +74,7 @@ def b2c1():
                 'l'     : l,
                 'm'     : m,
                 'r'     : r,
+                's'     : np.ones(N),
                 't'     : t,
 
                 ## Decision Variables
