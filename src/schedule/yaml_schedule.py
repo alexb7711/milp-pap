@@ -11,6 +11,9 @@ from yaml import Loader
 from array_util import *
 
 ##===============================================================================
+# NOTE!!!!
+#   Currently, this module requires that all "starts" read from teh YAML are > 0.
+#   This is an assumption that will be dealt with at a later date.
 #
 class YAMLSchedule:
 
@@ -31,6 +34,7 @@ class YAMLSchedule:
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   data : YAML bus route data
     #
     # Output:
     #   Schedule: The loaded schedule from yaml file
@@ -39,26 +43,14 @@ class YAMLSchedule:
         # A
         self.__countBuses()
 
-        # N
-        self.__countVisits()
-
         # Q
         self.__countChargers()
 
-        # a
-        self.__genArivals()
-
-        # H_min
+        # nu
         self.__getMinCharge()
-
-        # alpha
-        self.__getInitCharge()
 
         # beta
         self.__getFinalCharge()
-
-        # lambda
-        self.__calcPowerLoss()
 
         # r
         self.__getChargeRates()
@@ -78,11 +70,23 @@ class YAMLSchedule:
         # t
         self.__genDepartureTimes()
 
+        # N
+        self.__countVisits()
+
         # Gamma
         self.__genBusIdx()
 
         # gamma
         self.__genNextVisits()
+
+        # s
+        self.__genSizes()
+
+        # lambda
+        self.__calcPowerLoss()
+
+        # alpha
+        self.__getInitCharge()
 
         # Bus Capacities
         self.__getCapacities()
@@ -101,21 +105,22 @@ class YAMLSchedule:
             ## Input Variables
             'A'     : self.A,
             'Gamma' : self.Gamma,
-            'H_min' : self.H_min,      # [%]
+            'nu'    : self.nu,      # [%]
             'N'     : self.N,
             'Q'     : self.Q,
-            'S'     : 1.0,
+            'S'     : 3,
             'T'     : self.T,
             'a'     : self.a,
             'alpha' : self.alpha,
             'beta'  : self.beta,       # [%]
-            'cap'   : self.capacity,   # [kwh]
+            'kappa' : self.capacity,   # [kwh]
             'e'     : self.e,
             'fa'    : self.final_arr,
             'gamma' : self.gamma,
             'l'     : self.l,
             'm'     : self.m,
             'r'     : self.r,
+            's'     : self.s,
             't'     : self.t,
 
             ## Decision Variables
@@ -140,25 +145,32 @@ class YAMLSchedule:
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   data : YAML bus route data
+    #
+    # Output:
+    #   A : Number of beses in system
+    #
     def __countBuses(self):
         self.A = len([x for x in self.data["buses"]])
         return
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   group_data: pre-processed YAML data
+    #
+    # Output:
+    #   N: NUmber of bus visits
     def __countVisits(self):
-        visit = []
-
-        for i in self.data["buses"]:
-            for j in i["route"]["durations"]:
-                visit.append(j)
-
-        self.N = len(visit)
-
+        self.N = len(self.gd)
         return
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   data: YAML bus route data
+    #
+    # Output:
+    #   Q: Number of chargers in system
+    #
     def __countChargers(self):
         chargers = self.data["chargers"]
         self.Q = chargers["osc"]["num"] + chargers["depot"]["num"]
@@ -166,29 +178,29 @@ class YAMLSchedule:
 
     ##---------------------------------------------------------------------------
     # Input:
-    def __genArivals(self):
-        starts = []
-
-        for i in self.data["buses"]:
-            starts.append(i["route"]["starts"])
-
-        self.a = np.array(starts, dtype=object)
-
-        return
-
-    ##---------------------------------------------------------------------------
-    # Input:
+    #
+    # Output:
+    #   nu: Minimum charge percentage allowed
+    #
     def __getMinCharge(self):
-        self.H_min = 0.25
+        self.nu = 0.39
         return
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   data : YAML bus route data
+    #
+    # Output:
+    #   List of bus capacities in [KJ]
+    #
     def __getCapacities(self):
         capacities = []
 
+        # Loop through each bus
         for i in self.data["buses"]:
-            capacities.append(i["battery"]["capacity"])
+            ## Store capacity in [KJ]
+            #  capacities.append(i["battery"]["capacity"]*1000)
+            capacities.append(i["battery"]["capacity"]*1.0)
 
         capacity = np.array(capacities)
 
@@ -198,22 +210,33 @@ class YAMLSchedule:
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   data: YAML bus route data
+    #
+    # Output:
+    #   l: Discharge amount per route [KJ]
+    #
     def __calcPowerLoss(self):
         l = []
 
-        for i in self.data["buses"]:
-
-            for j in range(len(i["route"]["durations"])):
-                duration   = i["route"]["durations"][j]
-                motor_load = i["motor_load"]
-
+        for i in range(self.N):
+            if self.gd[i]["start"] < 0:
+                l.append(0)
+            else:
+                motor_load = self.gd[i]["motor_load"]
+                duration   = self.gd[i]["duration"]
                 l.append(motor_load*duration)
 
         self.l = np.array(l)
+
         return
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   data: YAML bus route data
+    #
+    # Output:
+    #   r: Charge rate for each charger [kj]
+    #
     def __getChargeRates(self):
         arr = [self.data["chargers"]["osc"]["rate"]]
         cnt = self.data["chargers"]["osc"]["num"]
@@ -229,18 +252,33 @@ class YAMLSchedule:
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   r: Charge rate for each charger [kj]
+    #
+    # Output:
+    #   m: Cost of assigning bus i to charger q
+    #
     def __getAssignCosts(self):
         self.m = 2*self.r.copy()
         return
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   r: Charge rate for each charger [kj]
+    #
+    # Output:
+    #   e: Cost of assigning bus i to charger q per unit time
+    #
     def __getUseCosts(self):
         self.e = self.r.copy()
         return
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   group_data: pre-processed YAML data
+    #
+    # Output:
+    #   Gamma: ID for each bus visit
+    #
     def __genBusIdx(self):
         Gamma = []
 
@@ -263,7 +301,7 @@ class YAMLSchedule:
         # Local Variables
         ## Keep track of the previous index each bus arrived at
         next_idx = np.array([final(self.Gamma, i) for i in range(self.A)], dtype=int)
-        gamma    = np.zeros(self.N, dtype=int)
+        gamma    = -1*np.ones(self.N, dtype=int)
 
         ## Keep track of the first instance each bus arrives
         last_idx = next_idx.copy()
@@ -284,26 +322,43 @@ class YAMLSchedule:
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   data: YAML bus route data
+    #
+    # Output:
+    #   T: Time horizone of system
+    #
     def __getTimeHorizon(self):
         self.T = self.data["sim_duration"]
         return
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   data: YAML bus route data
+    #
+    # Output:
+    #   group_data: pre-processed data for easier generation of other required
+    #               input parameters
+    #
     def __groupData(self):
         group_data = []
         bus       = self.data["buses"]
         iden      = 0
 
         for i in bus:
-            for j in range(len(i["route"]["starts"])):
-                start = i["route"]["starts"][j]
-                dur   = i["route"]["durations"][j]
-                group_data.append({"id": iden, "start": start ,"duration": dur})
+            s                   = i["route"]["starts"]
+            d                   = i["route"]["durations"]
+            start, dur, arrival = self.__genData(s,d)
+
+            for j in range(len(start)):
+                group_data.append({"id"         : iden            , \
+                                   "start"      : start[j]        , \
+                                   "duration"   : dur[j]          , \
+                                   "motor_load" : i["motor_load"] , \
+                                   "arrival"    : arrival[j]})
 
             iden += 1
 
-        self.gd = np.array(sorted(group_data, key=lambda k: k["start"]))
+        self.gd = np.array(sorted(group_data, key=lambda k: k["arrival"]))
 
         return
 
@@ -316,18 +371,29 @@ class YAMLSchedule:
     #   final_arr: List of indices for the final arrival for each bus
     #
     def __genFinalArrival(self):
-        self.final_arr = np.ones(self.A, dtype=int)
+        self.final_arr = np.ones(self.N, dtype = int)
+        final_arr      = np.ones(self.A, dtype = int)
 
         for i in range(self.A):
             self.final_arr[i] = final(self.Gamma, i)
 
+        return
+        # TODO: GENERATE FINAL ARR OF SIZE N
+        #  for i in final_arr:
+
+
     ##---------------------------------------------------------------------------
     # Input:
+    #   group_data: pre-processed YAML data
+    #
+    # Output:
+    #   t: Required time of departure for each bus visit
+    #
     def __genDepartureTimes(self):
         t = []
 
         for i in self.gd:
-            t.append(i["start"] + i["duration"])
+            t.append(i["start"])
 
         self.t = np.array(t)
 
@@ -335,6 +401,20 @@ class YAMLSchedule:
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   N: Number of bus visits
+    #   Q: Number of chargers
+    #
+    # Output:
+    #   c     : Detatch time from charger
+    #   delta : Matrix representation of bus placement over space
+    #   eta   : Initial charge for each bus visit
+    #   g     : Linearization term for bilinear terms
+    #   p     : Time spent on charger
+    #   sigma : Matrix representation of bus placement over time
+    #   u     : Initial time to be charged
+    #   v     : Assigned queue
+    #   w     : Vectorization of v
+    #
     def __genDecisionVars(self):
         # Generate decision variables
         ## Initial charge time
@@ -350,49 +430,100 @@ class YAMLSchedule:
         self.p = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="p")
 
         ## Lineriztion term
-        self.g = self.model.addMVar(shape=self.N*self.Q, vtype=GRB.CONTINUOUS, name="g")
+        self.g = self.model.addMVar(shape=(self.N,self.Q), vtype=GRB.CONTINUOUS, name="g")
 
         ## Initial charge
         self.eta = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="eta")
 
         ## Vector representation of queue
-        self.w = self.model.addMVar(shape=self.N*self.Q, vtype=GRB.BINARY, name="w")
+        self.w = self.model.addMVar(shape=(self.N,self.Q), vtype=GRB.BINARY, name="w")
 
         ## Sigma
-        #  sigma = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.BINARY, name="sigma")
-        self.sigma = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.CONTINUOUS, name="sigma")
+        self.sigma = self.model.addMVar(shape=(self.N,self.N), vtype=GRB.BINARY, name="sigma")
 
         ## Delta
-        #  delta = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.BINARY, name="delta")
-        self.delta = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.CONTINUOUS, name="delta")
+        self.delta = self.model.addMVar(shape=(self.N,self.N), vtype=GRB.BINARY, name="delta")
 
         return
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   data: YAML bus route data
+    #
+    # Output
+    #   alpha: Initial charges for each bus
+    #
     def __getInitCharge(self):
         init_charge = []
 
         for i in self.data["buses"]:
-            init_charge.append(i["battery"]["charge"])
+            init_charge.append(i["battery"]["charge"]/100.0)
 
-        self.alpha = np.array(init_charge)
+        self.alpha = np.zeros(self.N)
+
+        for i in range(self.A):
+            self.alpha[first(self.Gamma, i)] = init_charge[i]
 
         return
 
     ##---------------------------------------------------------------------------
     # Input:
+    #
+    # Output:
+    #   beta: Minimum final charge percentage for each bus
     def __getFinalCharge(self):
         self.beta = 0.95
         return
 
     ##---------------------------------------------------------------------------
     # Input:
+    #   data: YAML bus route data
+    #
+    # Output:
+    #   a: Arrival times for each bus visit
+    #
     def __genArrivalTimes(self):
         a = []
         for i in self.gd:
-            a.append(i["start"])
+            a.append(i["arrival"])
 
         self.a = np.array(a)
 
         return
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #
+    # Output:
+    #   s: Sizes of each bus (1)
+    #
+    def __genSizes(self):
+        self.s = np.ones(self.N)
+        return
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   s: Start route times for bus i
+    #   d: Duration route times for bus i
+    #
+    # Output:
+    #   start   : Start route time for visit i
+    #   dur     : Duration route time for visit i
+    #   arrival : Arrival time for visit i
+    #
+    def __genData(self, s,d):
+        start   = []
+        dur     = []
+        arrival = []
+
+        for i in range(len(s)):
+            if i == 0 and s[i] != 0:
+                arrival.append(0)
+                start.append(s[i])
+                dur.append(d[i])
+            else:
+                arrival.append(s[i-1]+d[i-1])
+                start.append(s[i])
+                dur.append(d[i])
+
+        return start, dur, arrival

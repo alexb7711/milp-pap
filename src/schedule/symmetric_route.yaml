@@ -2,7 +2,7 @@
 step_size: 60.0 # s
 
 # time simulation will run for
-sim_duration: 2.0 # h
+sim_duration: 15.0 # h
 # sim_duration: 1.5 # h
 # sim_duration: 2.5 # h
 
@@ -11,19 +11,22 @@ power:
   fixed: 300.0 # kW
 
 chargers:
+  # osc:
+    # num: 1
+    # rate: 450.0 # kW
   osc:
-    num: 1
-    rate: 450.0 # kW
+    num: 0
+    rate: 0.0 # kW
   depot:
     num: 2
     rate: 100.0 # kW
 
 buses:
   - route:
-      starts: [0.0, 0.6, 1.2] # h
+      starts: [0.1, 0.6, 1.2] # h
       durations: [0.3, 0.3, 0.3] # h
     battery:
-      capacity: 500.0 # mj
+      capacity: 500.0 # MJ
       charge: 85.0 # %
     motor_load: 230.0 # kw
 

@@ -25,27 +25,27 @@ from yaml_schedule import YAMLSchedule
 ##===============================================================================
 #
 def main():
-    save_scenario = True
+    #  save_scenario = True
 
     # Create Gurobi model
     m = gp.Model()
 
     # Create schedule manager class
     #  s = Schedule(m, save_scenario)
-    s = YAMLSchedule("./schedule/symmetric_route.yaml", m)
+    #  s = YAMLSchedule("./schedule/symmetric_route.yaml", m)
+    s = YAMLSchedule("./schedule/test.yaml", m)
     #  s = YAMLSchedule("./schedule/route3.yaml", m)
 
     ## Generate the schedule
-    #  schedule = s.generate()
     schedule = s.generate()
     #  schedule = b2c1()
     #  schedule = b3c2()
 
     # Create Matrix
-    gm = GenMat(schedule)
+    #  gm = GenMat(schedule)
 
     ## Generate matrices
-    gm.genMats()
+    #  gm.genMats()
 
     # Optimize
     mats = \
@@ -64,7 +64,7 @@ def main():
         #  "bdineq" : gm.b_dyn_ineq,
     }
 
-    o = Optimizer(gm.A_eq, gm.A_ineq, gm.b_eq, gm.b_ineq, gm.x_eq, gm.x_ineq, schedule, mats)
+    o = Optimizer(schedule)
 
     o.optimize()
 
