@@ -16,6 +16,7 @@ sys.path.append("optimize/")
 from schedule_manager import Schedule
 from gen_mat          import GenMat
 from optimizer        import Optimizer
+from plot             import Plotter
 
 ## Static schedules
 from b2c1          import *
@@ -32,8 +33,8 @@ def main():
 
     # Create schedule manager class
     #  s = Schedule(m, save_scenario)
-    #  s = YAMLSchedule("./schedule/symmetric_route.yaml", m)
-    s = YAMLSchedule("./schedule/test.yaml", m)
+    s = YAMLSchedule("./schedule/symmetric_route.yaml", m)
+    #  s = YAMLSchedule("./schedule/test.yaml", m)
     #  s = YAMLSchedule("./schedule/route3.yaml", m)
 
     ## Generate the schedule
@@ -48,25 +49,15 @@ def main():
     #  gm.genMats()
 
     # Optimize
-    mats = \
-    {
-        #  "Apeq" : gm.A_pack_eq,
-        #  "xpeq" : gm.x_pack_eq,
-        #  "bpeq" : gm.b_pack_eq,
-        #  "Adeq" : gm.A_dyn_eq,
-        #  "xdeq" : gm.x_dyn_eq,
-        #  "bdeq" : gm.b_dyn_eq,
-        #  "Apineq" : gm.A_pack_ineq,
-        #  "xpineq" : gm.x_pack_ineq,
-        #  "bpineq" : gm.b_pack_ineq,
-        #  "Adineq" : gm.A_dyn_ineq,
-        #  "xdineq" : gm.x_dyn_ineq,
-        #  "bdineq" : gm.b_dyn_ineq,
-    }
+    o = Optimizer(schedule, False)
 
-    o = Optimizer(schedule)
+    results = o.optimize()
 
-    o.optimize()
+    # Plot Results
+    p = Plotter(results)
+    p.plotSchedule()
+    p.plotCharges()
+    p.plotChargerUsage()
 
     return
 
