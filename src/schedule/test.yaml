@@ -16,9 +16,6 @@ chargers:
   osc:
     num: 1
     rate: 450.0 # kW
-  # osc:
-    # num: 0
-    # rate: 0.0 # kW
   depot:
     num: 2
     rate: 100.0 # kW

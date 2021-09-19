@@ -183,7 +183,7 @@ class YAMLSchedule:
     #   nu: Minimum charge percentage allowed
     #
     def __getMinCharge(self):
-        self.nu = 0.39
+        self.nu = 0.40
         return
 
     ##---------------------------------------------------------------------------
@@ -199,8 +199,7 @@ class YAMLSchedule:
         # Loop through each bus
         for i in self.data["buses"]:
             ## Store capacity in [KJ]
-            #  capacities.append(i["battery"]["capacity"]*1000)
-            capacities.append(i["battery"]["capacity"]*1.0)
+            capacities.append(i["battery"]["capacity"]*1000)
 
         capacity = np.array(capacities)
 
