@@ -7,6 +7,7 @@ from gurobipy import GRB
 
 # Developed
 from array_util import *
+from pretty import *
 
 ##===============================================================================
 #
@@ -17,47 +18,43 @@ class Schedule:
     ##---------------------------------------------------------------------------
     # Input:
     #   A     : Amount of vehicles
-    #   H_min : Required minimum charge after each visit
     #   N     : Number of bus visits
     #   Q     : Amount of chargers
     #   T     : Time horizon
-    #   bat   : Maximum battery charge kWh
     #   beta  : Required final charge time for all buses
     #   model : Gurobi model
+    #   nu    : Required minimum charge after each visit
     #
     def __init__(self,
                  model,
-                 A     = 10,
-                 H_min = 0.25,
-                 N     = 50,
-                 Q     = 10,
-                 T     = 24,
-                 bat   = 1500, # [kwh]
-                 beta  = 0.95,
-                 max_route_time = 2):
+                 A              = 40,
+                 nu             = 0.45,
+                 N              = 80,
+                 Q              = 20,
+                 T              = 24,
+                 max_rest_time  = 0.5):
 
-        discharge_rate = np.repeat([230], N)
+        # Create list of discharge rates
+        discharge_rate = np.repeat([230], A)
+
+        # Evaluate charger parameters
         r              = np.random.randint(100,high=450,size=int(Q))
         e              = r.copy()
-        m              = 5*r.copy()
+        m              = r.copy()
 
-        print("r:\n", r)
-        print("e:\n", e)
-        print("m:\n", m)
+        # Store Input Parameters
+        self.A       = int(A)
+        self.N       = int(N)
+        self.Q       = int(Q)
+        self.T       = int(T)         # [hr]
+        self.dis_rat = discharge_rate # [kwh]
+        self.e       = e
+        self.m       = m
+        self.mrt     = max_rest_time # [hr]
+        self.nu      = nu             # [%]
+        self.r       = r
 
-        self.A         = A
-        self.H_min     = H_min          # [%]
-        self.N         = N
-        self.Q         = Q
-        self.T         = T              # [hr]
-        self.bat       = bat            # [kwh]
-        self.beta      = beta           # [%]
-        self.dis_rat   = discharge_rate # [kwh]
-        self.e         = e
-        self.m         = m
-        self.mrt       = max_route_time # [hr]
-        self.r         = r              # [kwh]
-
+        # Store Gurobi Model
         self.model   = model
 
         # Arrays to be generated
@@ -71,16 +68,16 @@ class Schedule:
         self.l     = np.zeros(N, dtype=float)
 
         ## Initial charge for each visit
-        self.alpha = np.zeros(A, dtype=float)
+        self.alpha = np.zeros(N, dtype=float)
 
         ## ID of bus for each visit
-        self.gamma = -1*np.ones(N, dtype=int)
+        self.gamma = -1*np.ones(N+A, dtype=int)
 
         ## Index of next bus visit
         self.Gamma = -1*np.ones(N, dtype=int)
 
         ## Index of final bus visit
-        self.final_arr = -1*np.ones(A, dtype=int)
+        self.beta = -1*np.ones(N, dtype=int)
 
         return
 
@@ -94,54 +91,29 @@ class Schedule:
         ## Generate ID's for bus each bus visit
         self.__genID()
 
+        ## Generate initial charges
+        self.__genInitCharge()
+
+        ## Generate bus capacities
+        self.__genCapacities()
+
+        ## Generate the final arrival index for each bus
+        self.__genFinalCharge()
+
+        # Decision Variables
+        self.__genDecisionVars()
+
+        # Add fake final state
+        self.__genFinalStates()
+
         ## Generate the next bus visit array
         self.__genNextVisit()
 
         ## Generate time of departure
         self.__genDepart()
 
-        ## Generate initial charges
-        self.__genInitCharge()
-
         ## Generate discharge amounts
         self.__genDischarge()
-
-        ## Generate the final arrival index for each bus
-        self.__genFinalArrival()
-
-        ## Generate bus capacities
-        self.__genCapacities()
-
-        # Generate decision variables
-        # TODO: Put gurobi var generation in own function
-        ## Initial charge time
-        u = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="u")
-
-        ## Assigned queue
-        v = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="v")
-
-        ## Detatch tiself.model.
-        c = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="c")
-
-        ## Charge tiself.model.
-        p = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="p")
-
-        ## Lineriztion term
-        g = self.model.addMVar(shape=self.N*self.Q, vtype=GRB.CONTINUOUS, name="g")
-
-        ## Initial charge
-        eta = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="eta")
-
-        ## Vector representation of queue
-        w = self.model.addMVar(shape=self.N*self.Q, vtype=GRB.BINARY, name="w")
-
-        ## Sigma
-        #  sigma = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.BINARY, name="sigma")
-        sigma = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.CONTINUOUS, name="sigma")
-
-        ## Delta
-        #  delta = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.BINARY, name="delta")
-        delta = self.model.addMVar(shape=self.N*(self.N-1), vtype=GRB.CONTINUOUS, name="delta")
 
         # Compile schedule into dictionary
         schedule = \
@@ -149,33 +121,33 @@ class Schedule:
             ## Input Variables
             'A'     : self.A,
             'Gamma' : self.Gamma,
-            'H_min' : self.H_min,
             'N'     : self.N,
             'Q'     : self.Q,
-            'S'     : 1.0,
+            'S'     : self.Q,
             'T'     : self.T,
             'a'     : self.a,
             'alpha' : self.alpha,
             'beta'  : self.beta,       # [%]
-            'cap'   : self.capacity,
             'e'     : self.e,
-            'fa'    : self.final_arr,
             'gamma' : self.gamma,
+            'kappa' : self.kappa,
             'l'     : self.l,
             'm'     : self.m,
+            'nu'    : self.nu,
             'r'     : self.r,
+            's'     : np.ones(self.N*self.A,dtype=int),
             't'     : self.t,
 
             ## Decision Variables
-            'c'     : c,
-            'delta' : delta,
-            'eta'   : eta,
-            'g'     : g,
-            'p'     : p,
-            'sigma' : sigma,
-            'u'     : u,
-            'v'     : v,
-            'w'     : w,
+            'c'     : self.c,
+            'delta' : self.delta,
+            'eta'   : self.eta,
+            'g'     : self.g,
+            'p'     : self.p,
+            'sigma' : self.sigma,
+            'u'     : self.u,
+            'v'     : self.v,
+            'w'     : self.w,
 
             # Model
             'model' : self.model,
@@ -188,22 +160,19 @@ class Schedule:
 
     ##---------------------------------------------------------------------------
     #
-    def __genDecisionVars(self):
-
-        return
-
-    ##---------------------------------------------------------------------------
-    #
     def __genArrival(self):
-        min = 0
+        min = 0.1
 
+        # Loop through all bus visits
         for i in range(self.N):
-            max       = \
-                (min + self.mrt) if (min+self.mrt) < self.T else self.T
-            self.a[i] = min + (max - min)*random.random()
-            min       = self.a[i]
+            if i < self.A:
+                self.a[i] = min
+            else:
+                max       = \
+                    (min + self.mrt) if (min+self.mrt) < self.T else self.T
+                self.a[i] = min + (max - min)*random.random()
+                min       = self.a[i]
 
-        print ("a: \n", self.a)
         return
 
     ##---------------------------------------------------------------------------
@@ -216,19 +185,24 @@ class Schedule:
     #
     def __genID(self):
         prev_id = None
+        skipped = np.zeros(self.A)
 
         # Generate random id's for each visit, but don't allow two of the same
         # id's in a row
         for i in range(self.N):
-            while True:
-                self.Gamma[i] = random.randint(0, self.A-1)
+            if i < self.A:
+                self.Gamma[i] = i
+            else:
+                while True:
+                    self.Gamma[i] = random.randint(0, self.A-1)
 
-                if self.Gamma[i] != prev_id:
-                    prev_id = self.Gamma[i];
+                    if self.Gamma[i] != prev_id and skipped[self.Gamma[i]] > 3:
+                            prev_id                = self.Gamma[i];
+                            skipped[self.Gamma[i]] = 0
+                    else:
+                        skipped[self.Gamma[i]] += 1
+
                     break
-
-        print("Gamma: \n", self.Gamma)
-
         return
 
     ##---------------------------------------------------------------------------
@@ -245,15 +219,12 @@ class Schedule:
     def __genDepart(self):
         for i in range(self.N):
             ## If the bus has another visit
-            if self.gamma[i] > 0:
+            if self.gamma[i] > 0 and i != lastVisit(self.Gamma, self.Gamma[i]):
                 max       = abs(self.a[self.gamma[i]])
                 min       = self.a[i]
                 self.t[i] = min + (max - min)*random.random()
             else:
                 self.t[i] = self.T
-
-        print("tau:\n ", self.t)
-
         return
 
     ##---------------------------------------------------------------------------
@@ -273,7 +244,7 @@ class Schedule:
         last_idx = next_idx.copy()
 
         # Loop through each bus visit
-        for i in range(self.N-1, -1, -1):
+        for i in range(self.N+self.A-1, -1, -1):
             ## Make sure that the index being checked is greater than the first
             ## visit. If it is, set the previous index value equal to the current.
             ## In other words, index i's value indicates the next index the bus
@@ -289,19 +260,19 @@ class Schedule:
     #   A : Number of buses
     #
     # Output:
-    #   alpha[A] : Initial charges for each bus
+    #   alpha[N] : Initial charges for each bus
     #
     def __genInitCharge(self):
         min = 60
-        max = 99
+        max = 80
 
-        self.alpha = np.zeros(self.N, dtype=int)
+        self.alpha = -1*np.ones(self.N, dtype=float)
 
         for i in range(self.A):
-                idx = first(self.Gamma, i)
-                self.alpha[idx] = min + (max - min)*random.random()
+                idx              = first(self.Gamma, i)
+                self.alpha[idx]  = min + (max - min)*random.random()
+                self.alpha[idx] /= 100.0
 
-        print("alpha:\n", self.alpha)
         return
 
     ##---------------------------------------------------------------------------
@@ -316,25 +287,29 @@ class Schedule:
     #   l: List of amount of discharge for each route
     #
     def __genDischarge(self):
+        # Loop through each visit
         for i in range(self.N):
-            if self.gamma[i] > 0:
-                self.l[i] = self.dis_rat[self.Gamma[i]] * (self.t[i] - self.a[i])
-
-        #  print("Discharge:\n ", self.l)
+            ## If the route has another visit and it isnt the last one
+            if self.gamma[i] > 0 and i != lastVisit(self.Gamma, self.Gamma[i]):
+                if prevVisit(self.Gamma, self.Gamma[i], i) == -1:
+                    self.l[i] = self.dis_rat[self.Gamma[i]] * self.a[i]
+                else:
+                    self.l[i] = self.dis_rat[self.Gamma[i]] * \
+                            (self.a[i] - self.t[prevVisit(self.Gamma, self.Gamma[i], i)])
         return
 
     ##---------------------------------------------------------------------------
     # Input:
-    #   N     : Number of visits
+    #   A     : Number of buses
     #   Gamma : List of ID'ss for each visit
     #
     # Output:
-    #   final_arr: List of indices for the final arrival for each bus
+    #   beta: List of charge values
     #
-    def __genFinalArrival(self):
+    def __genFinalCharge(self):
+        final_percent = 0.95
         for i in range(self.A):
-            self.final_arr[i] = final(self.Gamma, i)
-
+            self.beta = np.append(self.beta, final_percent)
         return
 
     ##---------------------------------------------------------------------------
@@ -343,5 +318,88 @@ class Schedule:
     # Output:
     #
     def __genCapacities(self):
-        self.capacity = np.random.randint(200, high=500, size=self.N)
+        self.kappa = np.random.randint(200, high=500, size=self.A)*10 # [MJ]
+        return
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   model: Gurobi model object
+    #
+    # Object:
+    #   The following gurobi MVars:
+    #   u     : Starting charge time
+    #   v     : Selected charging queue
+    #   c     : Detatch time fro visit i
+    #   p     : Amount of time spent on charger for visit i
+    #   g     : Linearization term for bilinear term
+    #   eta   : Initial charge for visit i
+    #   w     : Vector representation of v
+    #   sigma : u_i < u_j
+    #   delta : v_i < v_j
+    #
+    def __genDecisionVars(self):
+        # Local Variables
+        A = self.A
+        N = self.N
+
+        # Generate decision variables
+        ## Initial charge time
+        self.u = self.model.addMVar(shape=N+A, vtype=GRB.CONTINUOUS, name="u")
+
+        ## Assigned queue
+        self.v = self.model.addMVar(shape=N+A, vtype=GRB.CONTINUOUS, name="v")
+
+        ## Detatch tiself.model.
+        self.c = self.model.addMVar(shape=N+A, vtype=GRB.CONTINUOUS, name="c")
+
+        ## Charge tiself.model.
+        self.p = self.model.addMVar(shape=N+A, vtype=GRB.CONTINUOUS, name="p")
+
+        ## Lineriztion term
+        self.g = self.model.addMVar(shape=(N+A,self.Q), vtype=GRB.CONTINUOUS, name="g")
+
+        ## Initial charge
+        self.eta = self.model.addMVar(shape=N+self.A, vtype=GRB.CONTINUOUS, name="eta")
+
+        ## Vector representation of queue
+        self.w = self.model.addMVar(shape=(N+A,self.Q), vtype=GRB.BINARY, name="w")
+
+        ## Sigma
+        self.sigma = self.model.addMVar(shape=(N+A,N+A), vtype=GRB.BINARY, name="sigma")
+
+        ## Delta
+        self.delta = self.model.addMVar(shape=(N+A,N+A), vtype=GRB.BINARY, name="delta")
+
+        return
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   Gamma :
+    #   a     :
+    #   alpha :
+    #   beta  :
+    #   gamma :
+    #   l     :
+    #   t     :
+    #
+    # Output:
+    #
+    def __genFinalStates(self):
+        # Loop through each bus
+        for i in range(self.A):
+            ## Add final Gamma ID's
+            self.Gamma = np.append(self.Gamma, i)
+
+            ## Add final arrival
+            self.a = np.append(self.a, [self.T])
+
+            ## Add final alpha values
+            self.alpha = np.append(self.alpha, [-1])
+
+            ## Add final l
+            self.l = np.append(self.l, [0])
+
+            ## Add final t
+            self.t = np.append(self.t, [self.T])
+
         return

@@ -54,8 +54,16 @@ class Plotter:
     #
     def plotSchedule(self):
         fig, ax        = plt.subplots(1)
-        time, position = self.__plotResults(self.N, ax, self.a, self.u, self.v, self.c)
+        time, position = self.__plotResults(self.N+self.A, ax, self.a, self.u, self.v, self.c)
         _              = self.__makeErrorBoxes(ax, self.u, self.v, time, position)
+
+        # Configure Plot
+        plt.xlabel("Time")
+        plt.ylabel("Queue")
+
+        plt.yticks(range(self.Q))
+
+        plt.savefig('schedule.pdf')
 
         plt.show()
         return
@@ -67,10 +75,16 @@ class Plotter:
     # Plot of bus schedule
     #
     def plotCharges(self):
-        N       = self.N
+        # Local Variables
         A       = self.A
+        N       = self.N
+
         fig, ax = plt.subplots(1)
         x,y     = self.__groupChargeResults(N, A, self.Gamma, self.eta)
+
+        # Configure Plot
+        plt.xlabel("Time")
+        plt.ylabel("Charge [MJ]")
 
         for i in range(A):
             ax.plot(x, y[i])
@@ -96,6 +110,10 @@ class Plotter:
         Q = self.Q
         r = self.r
         v = self.v
+
+        # Configure Plot
+        plt.xlabel("Time")
+        plt.ylabel("Charge [MJ]")
 
         fig, ax = plt.subplots(1)
         x,y     = self.__calculateUsage(N, Q, r, v)
@@ -145,16 +163,14 @@ class Plotter:
         errorboxes = [Rectangle((x - xe[0], y - ye[0]), xe.sum(), ye.sum())
                       for x, y, xe, ye in zip(xdata, ydata, xerror.T, yerror.T)]
 
+        facecolor = ['#%06X' % np.random.randint(0, 0xFFFFFF) for i in range(self.N+self.A)]
+
         # Create patch collection with specified colour/alpha
         pc = PatchCollection(errorboxes, facecolor=facecolor, alpha=alpha,
                              edgecolor=edgecolor)
 
         # Add collection to axes
         ax.add_collection(pc)
-
-        print("Error Data")
-        print(xerror)
-        print(yerror)
 
         # Plot errorbars
         artists = ax.errorbar(xdata, ydata, xerr=xerror, yerr=yerror,
@@ -178,9 +194,9 @@ class Plotter:
 
         for i in range(A):
             last_charge = 0
-            temp = np.zeros(N)
+            temp        = np.zeros(N+A)
 
-            for j in range(self.N):
+            for j in range(N+A):
                 if Gamma[j] == i:
                         temp[j] = last_charge = eta[j]
                 else:
@@ -188,7 +204,7 @@ class Plotter:
 
             charges.append(temp)
 
-        return range(0,N,1), charges
+        return range(0,N+A,1), charges
 
     ##-------------------------------------------------------------------------------
     # Input:
