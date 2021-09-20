@@ -45,21 +45,22 @@ def test_gen_dims():
     w     = schedule['w']
 
     # Tests
-    assert G_idx.shape[0] == N
-    assert a.shape[0]     == N
-    assert c.shape[0]     == N
-    assert delta.shape[0] == N*(N-1)
+    assert G_idx.shape[0] == N+A
+    assert a.shape[0]     == N+A
+    assert c.shape[0]     == N+A
+    assert delta.shape[0] == (N+A)
     assert e.shape[0]     == Q
-    assert eta.shape[0]   == N
-    assert g.shape[0]     == N*Q
-    assert g_idx.shape[0] == N
-    assert l.shape[0]     == N
-    assert p.shape[0]     == N
+    assert eta.shape[0]   == N+A
+    assert g.shape[0]     == (N+A)
+    assert g_idx.shape[0] == N+A
+    assert l.shape[0]     == N+A
+    assert p.shape[0]     == N+A
     assert r.shape[0]     == Q
-    assert sigma.shape[0] == N*(N-1)
-    assert t.shape[0]     == N
-    assert u.shape[0]     == N
-    assert v.shape[0]     == N
-    assert w.shape[0]     == N*Q
+    assert sigma.shape[0] == (N+A)
+    assert t.shape[0]     == N+A
+    assert u.shape[0]     == N+A
+    assert v.shape[0]     == N+A
+    assert w.shape[0]     == (N+A)
+    assert w.shape[1]     == Q
 
     return

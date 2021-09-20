@@ -11,12 +11,9 @@ power:
   fixed: 300.0 # kW
 
 chargers:
-  # osc:
-    # num: 1
-    # rate: 450.0 # kW
   osc:
-    num: 0
-    rate: 0.0 # kW
+    num: 1
+    rate: 450.0 # kW
   depot:
     num: 2
     rate: 100.0 # kW
@@ -26,16 +23,16 @@ buses:
       durations: [0.3, 0.3, 0.3] # h
     battery:
       capacity: 500.0 # MJ
-      charge: 85.0 # %
+      charge: 40.0 # %
     motor_load: 230.0 # kw
 
   - route:
-      starts: [0.2, 1.0] # h
-      durations: [0.5, 0.5] # h
+      starts: [0.2, 1.0] #h
+      durations: [0.5, 0.5] #h
     battery:
-      capacity: 200.0 # MJ
-      charge: 50.0 # %
-    motor_load: 230.0 # kW
+      capacity: 200.0 #MJ
+      charge: 60.0 #%
+    motor_load: 230.0 #kW
 
   - route:
       starts: [0.5] # h

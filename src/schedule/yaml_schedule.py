@@ -12,7 +12,7 @@ from array_util import *
 
 ##===============================================================================
 # NOTE!!!!
-#   Currently, this module requires that all "starts" read from teh YAML are > 0.
+#   Currently, this module requires that all "starts" read from the YAML are > 0.
 #   This is an assumption that will be dealt with at a later date.
 #
 class YAMLSchedule:
@@ -49,9 +49,6 @@ class YAMLSchedule:
         # nu
         self.__getMinCharge()
 
-        # beta
-        self.__getFinalCharge()
-
         # r
         self.__getChargeRates()
 
@@ -73,6 +70,9 @@ class YAMLSchedule:
         # N
         self.__countVisits()
 
+        # beta
+        self.__getFinalCharge()
+
         # Gamma
         self.__genBusIdx()
 
@@ -93,6 +93,9 @@ class YAMLSchedule:
 
         # a
         self.__genArrivalTimes()
+
+        # Add fake final state
+        self.__genFinalStates()
 
         # final arrivals
         self.__genFinalArrival()
@@ -183,7 +186,7 @@ class YAMLSchedule:
     #   nu: Minimum charge percentage allowed
     #
     def __getMinCharge(self):
-        self.nu = 0.40
+        self.nu = 0.35
         return
 
     ##---------------------------------------------------------------------------
@@ -198,12 +201,14 @@ class YAMLSchedule:
 
         # Loop through each bus
         for i in self.data["buses"]:
-            ## Store capacity in [KJ]
-            capacities.append(i["battery"]["capacity"]*1000)
+            ## Store capacity in [MJ]
+            capacities.append(i["battery"]["capacity"]*10)
+            #  capacities.append(i["battery"]["capacity"]*1000)
+            #  capacities.append(i["battery"]["capacity"]*1.5)
 
-        capacity = np.array(capacities)
+        self.capacity = np.array(capacities)
 
-        self.capacity = np.array([capacities[x] for x in self.Gamma])
+        #  self.capacity = np.array([capacities[x] for x in self.Gamma])
 
         return
 
@@ -284,6 +289,10 @@ class YAMLSchedule:
         for i in self.gd:
             Gamma.append(i["id"])
 
+        for i in range(self.A):
+            ## Add final Gamma ID's
+            Gamma = np.append(Gamma, i)
+
         self.Gamma = np.array(Gamma)
 
         return
@@ -300,13 +309,13 @@ class YAMLSchedule:
         # Local Variables
         ## Keep track of the previous index each bus arrived at
         next_idx = np.array([final(self.Gamma, i) for i in range(self.A)], dtype=int)
-        gamma    = -1*np.ones(self.N, dtype=int)
+        gamma    = -1*np.ones(self.N+self.A, dtype=int)
 
         ## Keep track of the first instance each bus arrives
         last_idx = next_idx.copy()
 
         # Loop through each bus visit
-        for i in range(self.N-1, -1, -1):
+        for i in range(self.N+self.A-1, -1, -1):
             ## Make sure that the index being checked is greater than the first
             ## visit. If it is, set the previous index value equal to the current.
             ## In other words, index i's value indicates the next index the bus
@@ -394,6 +403,10 @@ class YAMLSchedule:
         for i in self.gd:
             t.append(i["start"])
 
+        for i in range(len(t)):
+            if t[i] == -1:
+                t[i] = self.T
+
         self.t = np.array(t)
 
         return
@@ -415,33 +428,37 @@ class YAMLSchedule:
     #   w     : Vectorization of v
     #
     def __genDecisionVars(self):
+        # Local Variables
+        A = self.A
+        N = self.N
+
         # Generate decision variables
         ## Initial charge time
-        self.u = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="u")
+        self.u = self.model.addMVar(shape=N+A, vtype=GRB.CONTINUOUS, name="u")
 
         ## Assigned queue
-        self.v = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="v")
+        self.v = self.model.addMVar(shape=N+A, vtype=GRB.CONTINUOUS, name="v")
 
         ## Detatch tiself.model.
-        self.c = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="c")
+        self.c = self.model.addMVar(shape=N+A, vtype=GRB.CONTINUOUS, name="c")
 
         ## Charge tiself.model.
-        self.p = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="p")
+        self.p = self.model.addMVar(shape=N+A, vtype=GRB.CONTINUOUS, name="p")
 
         ## Lineriztion term
-        self.g = self.model.addMVar(shape=(self.N,self.Q), vtype=GRB.CONTINUOUS, name="g")
+        self.g = self.model.addMVar(shape=(N+A,self.Q), vtype=GRB.CONTINUOUS, name="g")
 
         ## Initial charge
-        self.eta = self.model.addMVar(shape=self.N, vtype=GRB.CONTINUOUS, name="eta")
+        self.eta = self.model.addMVar(shape=N+self.A, vtype=GRB.CONTINUOUS, name="eta")
 
         ## Vector representation of queue
-        self.w = self.model.addMVar(shape=(self.N,self.Q), vtype=GRB.BINARY, name="w")
+        self.w = self.model.addMVar(shape=(N+A,self.Q), vtype=GRB.BINARY, name="w")
 
         ## Sigma
-        self.sigma = self.model.addMVar(shape=(self.N,self.N), vtype=GRB.BINARY, name="sigma")
+        self.sigma = self.model.addMVar(shape=(N+A,N+A), vtype=GRB.BINARY, name="sigma")
 
         ## Delta
-        self.delta = self.model.addMVar(shape=(self.N,self.N), vtype=GRB.BINARY, name="delta")
+        self.delta = self.model.addMVar(shape=(N+A,N+A), vtype=GRB.BINARY, name="delta")
 
         return
 
@@ -458,7 +475,7 @@ class YAMLSchedule:
         for i in self.data["buses"]:
             init_charge.append(i["battery"]["charge"]/100.0)
 
-        self.alpha = np.zeros(self.N)
+        self.alpha = -1*np.ones(self.N)
 
         for i in range(self.A):
             self.alpha[first(self.Gamma, i)] = init_charge[i]
@@ -471,7 +488,11 @@ class YAMLSchedule:
     # Output:
     #   beta: Minimum final charge percentage for each bus
     def __getFinalCharge(self):
-        self.beta = 0.95
+        final_percent = 0.95
+        self.beta     = np.zeros(self.N)
+
+        for i in range(self.A):
+            self.beta = np.append(self.beta, final_percent)
         return
 
     ##---------------------------------------------------------------------------
@@ -497,7 +518,7 @@ class YAMLSchedule:
     #   s: Sizes of each bus (1)
     #
     def __genSizes(self):
-        self.s = np.ones(self.N)
+        self.s = np.ones(self.N+self.A)
         return
 
     ##---------------------------------------------------------------------------
@@ -520,9 +541,42 @@ class YAMLSchedule:
                 arrival.append(0)
                 start.append(s[i])
                 dur.append(d[i])
+            elif i == len(s)-1:
+                arrival.append(s[i]+d[i])
+                start.append(-1)
+                dur.append(-1)
             else:
                 arrival.append(s[i-1]+d[i-1])
                 start.append(s[i])
                 dur.append(d[i])
 
         return start, dur, arrival
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   Gamma :
+    #   a     :
+    #   alpha :
+    #   beta  :
+    #   gamma :
+    #   l     :
+    #   t     :
+    #
+    # Output:
+    #
+    def __genFinalStates(self):
+        # Loop through each bus
+        for i in range(self.A):
+            ## Add final arrival
+            self.a = np.append(self.a, [self.T])
+
+            ## Add final alpha values
+            self.alpha = np.append(self.alpha, [-1])
+
+            ## Add final l
+            self.l = np.append(self.l, [0])
+
+            ## Add final t
+            self.t = np.append(self.t, [self.T])
+
+        return

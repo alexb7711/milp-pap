@@ -26,14 +26,15 @@ from yaml_schedule import YAMLSchedule
 ##===============================================================================
 #
 def main():
-    #  save_scenario = True
+    load_from_file = True
 
     # Create Gurobi model
-    m = gp.Model()
+    m                  = gp.Model()
+    m.Params.TimeLimit = 900
 
     # Create schedule manager class
-    #  s = Schedule(m, save_scenario)
-    s = YAMLSchedule("./schedule/symmetric_route.yaml", m)
+    s = Schedule(m)
+    #  s = YAMLSchedule("./schedule/symmetric_route.yaml", m)
     #  s = YAMLSchedule("./schedule/test.yaml", m)
     #  s = YAMLSchedule("./schedule/route3.yaml", m)
 
@@ -49,7 +50,7 @@ def main():
     #  gm.genMats()
 
     # Optimize
-    o = Optimizer(schedule, False)
+    o = Optimizer(schedule, load_from_file)
 
     results = o.optimize()
 

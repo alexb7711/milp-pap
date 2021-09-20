@@ -33,6 +33,43 @@ def final(array, element):
     # Could not find the element
     return -1
 
+##===============================================================================
+# Input:
+#   array: An array of elements
+#   element: The element being looked for
+#
+# Output:
+#   The index of the last actual visit of the bus
+#
+def lastVisit(array, element):
+    found = False
+    for i in range(len(array)-1, 0, -1):
+        if array[i] == element:
+            if found:
+                return i
+            else:
+                found = True
+
+    # Could not find the element
+    return -1
+
+##===============================================================================
+# Input:
+#   array   : An array of elements
+#   element : The element being looked for
+#   idx     : Index to start looking from
+#
+# Output:
+#   The index of the last actual visit of the bus
+#
+def prevVisit(array, element, idx):
+    for i in range(idx-1, -1, -1):
+        if array[i] == element:
+            return i
+
+    # Could not find the element
+    return -1
+
 ##===========================================================================
 # Input:
 #   lb: Lower bound to normalize off of
