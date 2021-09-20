@@ -28,17 +28,18 @@ class Schedule:
     def __init__(self,
                  model,
                  A              = 40,
-                 nu             = 0.45,
-                 N              = 80,
-                 Q              = 20,
+                 nu             = 0.25,
+                 N              = 220,
+                 Q              = 9,
                  T              = 24,
-                 max_rest_time  = 0.5):
+                 max_rest_time  = 0.25):
 
         # Create list of discharge rates
-        discharge_rate = np.repeat([230], A)
+        discharge_rate = np.repeat([5], A)
 
         # Evaluate charger parameters
-        r              = np.random.randint(100,high=450,size=int(Q))
+        #  r              = np.random.randint(100,high=450,size=int(Q))
+        r              = np.array([100, 100, 100, 100, 100, 450, 450, 450, 450])
         e              = r.copy()
         m              = r.copy()
 
@@ -196,7 +197,7 @@ class Schedule:
                 while True:
                     self.Gamma[i] = random.randint(0, self.A-1)
 
-                    if self.Gamma[i] != prev_id and skipped[self.Gamma[i]] > 3:
+                    if self.Gamma[i] != prev_id and skipped[self.Gamma[i]] > 2:
                             prev_id                = self.Gamma[i];
                             skipped[self.Gamma[i]] = 0
                     else:
@@ -220,8 +221,10 @@ class Schedule:
         for i in range(self.N):
             ## If the bus has another visit
             if self.gamma[i] > 0 and i != lastVisit(self.Gamma, self.Gamma[i]):
-                max       = abs(self.a[self.gamma[i]])
-                min       = self.a[i]
+                #  max       = self.a[i+1]
+                max       = self.a[self.gamma[i]]
+                min       = (self.a[i] + self.a[i+1])/2
+                #  min       = self.a[i]
                 self.t[i] = min + (max - min)*random.random()
             else:
                 self.t[i] = self.T
@@ -263,8 +266,8 @@ class Schedule:
     #   alpha[N] : Initial charges for each bus
     #
     def __genInitCharge(self):
-        min = 60
-        max = 80
+        min = 90
+        max = 90
 
         self.alpha = -1*np.ones(self.N, dtype=float)
 
@@ -318,7 +321,10 @@ class Schedule:
     # Output:
     #
     def __genCapacities(self):
-        self.kappa = np.random.randint(200, high=500, size=self.A)*10 # [MJ]
+        mj2kwh     = 0.277778
+        #  self.kappa = np.random.randint(1396, high=1396, size=self.A)*mj2kwh # [kwh]
+        self.kappa = np.repeat([1396], self.A)*mj2kwh # [kwh]
+
         return
 
     ##---------------------------------------------------------------------------
