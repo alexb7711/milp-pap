@@ -53,17 +53,47 @@ class Plotter:
     # Plot of bus schedule
     #
     def plotSchedule(self):
-        fig, ax        = plt.subplots(1)
-        time, position = self.__plotResults(self.N+self.A, ax, self.a, self.u, self.v, self.c)
-        _              = self.__makeErrorBoxes(ax, self.u, self.v, time, position)
-
         # Configure Plot
+        fig, ax = plt.subplots(2)
+        a100    = []
+        c100    = []
+        u100    = []
+        v100    = []
+
+        a400    = []
+        c400    = []
+        u400    = []
+        v400    = []
+
+        for i in range(self.A+self.N):
+            if self.v[i] <= 4:
+                a100.append(self.a[i])
+                c100.append(self.c[i])
+                u100.append(self.u[i])
+                v100.append(self.v[i])
+            else:
+                a400.append(self.a[i])
+                c400.append(self.c[i])
+                u400.append(self.u[i])
+                v400.append(self.v[i])
+
+        time100, position100 = self.__plotResults(len(v100), ax[0], a100, u100, v100, c100)
+        _                    = self.__makeErrorBoxes(ax[0], u100, v100, time100, position100)
+
+        time400, position400 = self.__plotResults(len(v400), ax[1], a400, u400, v400, c400)
+        _                    = self.__makeErrorBoxes(ax[1], u400, v400, time400, position400)
+
+        ax[0].set_title("Slow Chargers")
+        ax[1].set_title("Fast Chargers")
+
         plt.xlabel("Time [hr]")
         plt.ylabel("Queue")
 
-        plt.yticks(range(self.Q))
+        gs = GridShader(ax[0], facecolor="lightgrey", first=False, alpha=0.7)
+        gs = GridShader(ax[1], facecolor="lightgrey", first=False, alpha=0.7)
 
-        plt.savefig('schedule.pdf')
+        fig.set_size_inches(25,10)
+        plt.savefig('schedule.pdf', dpi=100)
 
         plt.show()
         return
@@ -89,7 +119,10 @@ class Plotter:
         for i in range(A):
             ax.plot(x[i], y[i])
 
+        gs = GridShader(ax, facecolor="lightgrey", first=False, alpha=0.7)
+
         plt.savefig('charges.pdf')
+
 
         plt.show()
 
@@ -122,6 +155,7 @@ class Plotter:
         plt.ylabel("Charge [kwh]")
 
         ax.plot(x, y)
+        gs = GridShader(ax, facecolor="lightgrey", first=False, alpha=0.7)
 
         plt.savefig('usage.pdf')
 
@@ -241,3 +275,53 @@ class Plotter:
             usage[i] = usage[i-1] + r[charger]
 
         return range(0,N,1), usage
+
+##===============================================================================
+# https://stackoverflow.com/questions/54652114/matplotlib-how-can-i-add-an-alternating-background-color-when-i-have-dates-on-t
+class GridShader():
+	##=======================================================================
+	# PUBLIC
+
+    ##-------------------------------------------------------------------------------
+    # Input:
+    def __init__(self, ax, first      = True, **kwargs):
+        self.spans                    = []
+        self.sf                       = first
+        self.ax                       = ax
+        self.kw                       = kwargs
+
+        #  self.ax.autoscale(False, axis = "x")
+
+        self.cid = self.ax.callbacks.connect('xlim_changed', self.__shade)
+
+        self.__shade()
+        return
+
+    ##=======================================================================
+	# PRIVATE
+
+    ##-------------------------------------------------------------------------------
+    # Input:
+    def __clear(self):
+        for span in self.spans:
+            try:
+                span.remove()
+            except:
+                pass
+
+    ##-------------------------------------------------------------------------------
+    # Input:
+    def __shade(self, evt=None):
+        self.__clear()
+
+        xticks = self.ax.get_xticks()
+        xlim   = self.ax.get_xlim()
+        xticks = xticks[(xticks > xlim[0]) & (xticks < xlim[-1])]
+        locs   = np.concatenate(([[xlim[0]], xticks, [xlim[-1]]]))
+
+        start = locs[1-int(self.sf)::2]
+        end = locs[2-int(self.sf)::2]
+
+        for s, e in zip(start, end):
+            self.spans.append(self.ax.axvspan(s, e, zorder=0, **self.kw))
+        return
