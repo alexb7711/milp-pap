@@ -58,7 +58,7 @@ class Plotter:
         _              = self.__makeErrorBoxes(ax, self.u, self.v, time, position)
 
         # Configure Plot
-        plt.xlabel("Time")
+        plt.xlabel("Time [hr]")
         plt.ylabel("Queue")
 
         plt.yticks(range(self.Q))
@@ -79,17 +79,20 @@ class Plotter:
         A       = self.A
         N       = self.N
 
+        # Configure Plot
         fig, ax = plt.subplots(1)
         x,y     = self.__groupChargeResults(N, A, self.Gamma, self.eta)
 
-        # Configure Plot
         plt.xlabel("Time")
-        plt.ylabel("Charge [MJ]")
+        plt.ylabel("Charge [kwh]")
 
         for i in range(A):
-            ax.plot(x, y[i])
+            ax.plot(x[i], y[i])
+
+        plt.savefig('charges.pdf')
 
         plt.show()
+
 
         return
 
@@ -107,20 +110,22 @@ class Plotter:
         # Local Variables
         A = self.A
         N = self.N
-        Q = self.Q
+        p = self.p
         r = self.r
         v = self.v
 
         # Configure Plot
-        plt.xlabel("Time")
-        plt.ylabel("Charge [MJ]")
-
         fig, ax = plt.subplots(1)
-        x,y     = self.__calculateUsage(N, Q, r, v)
+        x,y     = self.__calculateUsage(N, p, r, v)
+
+        plt.xlabel("Time [hr]")
+        plt.ylabel("Charge [kwh]")
 
         ax.plot(x, y)
-        plt.show()
 
+        plt.savefig('usage.pdf')
+
+        plt.show()
         return
 
 	##=======================================================================
@@ -191,39 +196,47 @@ class Plotter:
     #
     def __groupChargeResults(self, N, A, Gamma, eta):
         charges = []
+        idx     = []
 
         for i in range(A):
             last_charge = 0
-            temp        = np.zeros(N+A)
+            tempx       = []
+            tempy       = []
 
             for j in range(N+A):
                 if Gamma[j] == i:
-                        temp[j] = last_charge = eta[j]
+                        tempx.append(j)
+                        tempy.append(eta[j])
+                        last_charge = eta[j]
+                elif last_charge == 0:
+                    continue
                 else:
-                    temp[j] = last_charge
+                    tempx.append(j)
+                    tempy.append(last_charge)
 
-            charges.append(temp)
+            idx.append(tempx)
+            charges.append(tempy)
 
-        return range(0,N+A,1), charges
+        return idx, charges
 
     ##-------------------------------------------------------------------------------
     # Input:
-    #   N : Number of bus visits
-    #   Q : Number of chargers
-    #   r : Charger rates
-    #   v : Assigned charger for each visit
+    #   N     : Number of bus visits
+    #   p     : Time spent on charger for each visit
+    #   r     : Charger rates
+    #   v     : Assigned charger for each visit
     #
     # Output:
     #   x : Array of incrementing values from 1 to N
     #   y : Array of total charger usage at each bus visit
     #
-    def __calculateUsage(self,N, Q, r, v):
+    def __calculateUsage(self,N, p, r, v):
         usage = np.zeros(N)
 
         for i in range(N):
             charger = int(v[i] - 1)
             if i == 0:
-                usage[i] = r[charger]
+                usage[i] = r[charger]*p[i]
 
             usage[i] = usage[i-1] + r[charger]
 
