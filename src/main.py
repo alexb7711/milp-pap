@@ -26,7 +26,7 @@ from yaml_schedule import YAMLSchedule
 ##===============================================================================
 #
 def main():
-    load_from_file = True
+    load_from_file = False
 
     # Create Gurobi model
     m                  = gp.Model()
