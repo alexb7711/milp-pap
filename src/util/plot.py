@@ -86,8 +86,8 @@ class Plotter:
         ax[0].set_title("Slow Chargers")
         ax[1].set_title("Fast Chargers")
 
-        plt.xlabel("Time [hr]")
-        plt.ylabel("Queue")
+        ax[0].set(xlabel="Time [hr]", ylabel="Queue")
+        ax[1].set(xlabel="Time [hr]", ylabel="Queue")
 
         gs = GridShader(ax[0], facecolor="lightgrey", first=False, alpha=0.7)
         gs = GridShader(ax[1], facecolor="lightgrey", first=False, alpha=0.7)
@@ -147,17 +147,55 @@ class Plotter:
         r = self.r
         v = self.v
 
+        v100    = []
+        v400    = []
+
         # Configure Plot
-        fig, ax = plt.subplots(1)
-        x,y     = self.__calculateUsage(N, p, r, v)
+        fig, ax = plt.subplots(2)
 
-        plt.xlabel("Time [hr]")
-        plt.ylabel("Charge [kwh]")
+        for i in range(self.A+self.N):
+            if self.v[i] <= 4:
+                v100.append(self.v[i])
+            else:
+                v400.append(self.v[i])
 
-        ax.plot(x, y)
-        gs = GridShader(ax, facecolor="lightgrey", first=False, alpha=0.7)
+        # Create arrays to count usages
+        ## Unique chargers used
+        u100   = len(set(v100))
+        u400   = len(set(v400))
 
-        plt.savefig('usage.pdf')
+        ## Create matricies to count uses
+        use100 = np.zeros((u100,self.A+self.N), dtype=int)
+        use400 = np.zeros((u400,self.A+self.N), dtype=int)
+
+        for i in range(self.A+self.Q):
+            idx = int(v[i]-1)
+            if v[i] <= u100:
+                use100[idx,i:] += 1
+            else:
+                use400[idx-u100,i:] += 1
+
+        ax[0].set_title("Slow Chargers")
+        ax[1].set_title("Fast Chargers")
+        ax[0].set(xlabel="Time [hr]", ylabel="Times Used")
+        ax[1].set(xlabel="Time [hr]", ylabel="Times Used")
+
+        # Plot restults
+        n = 1.0/10
+
+        for i in range(u100):
+            ran = range(len(use100[i]))
+            ax[0].plot([x*n for x in ran], use100[i])
+
+        for i in range(u400):
+            ran = range(len(use400[i]))
+            ax[1].plot([x*n for x in ran], use400[i])
+
+        gs = GridShader(ax[0], facecolor="lightgrey", first=False, alpha=0.7)
+        gs = GridShader(ax[1], facecolor="lightgrey", first=False, alpha=0.7)
+
+        fig.set_size_inches(25,25)
+        plt.savefig('usage.pdf', dpi=100)
 
         plt.show()
         return
@@ -239,9 +277,9 @@ class Plotter:
 
             for j in range(N+A):
                 if Gamma[j] == i:
-                        tempx.append(j)
-                        tempy.append(eta[j])
-                        last_charge = eta[j]
+                    tempx.append(j)
+                    tempy.append(eta[j])
+                    last_charge = eta[j]
                 elif last_charge == 0:
                     continue
                 else:
@@ -251,30 +289,9 @@ class Plotter:
             idx.append(tempx)
             charges.append(tempy)
 
+        idx = [[x*(1.0/10) for x in y] for y in idx]
+
         return idx, charges
-
-    ##-------------------------------------------------------------------------------
-    # Input:
-    #   N     : Number of bus visits
-    #   p     : Time spent on charger for each visit
-    #   r     : Charger rates
-    #   v     : Assigned charger for each visit
-    #
-    # Output:
-    #   x : Array of incrementing values from 1 to N
-    #   y : Array of total charger usage at each bus visit
-    #
-    def __calculateUsage(self,N, p, r, v):
-        usage = np.zeros(N)
-
-        for i in range(N):
-            charger = int(v[i] - 1)
-            if i == 0:
-                usage[i] = r[charger]*p[i]
-
-            usage[i] = usage[i-1] + r[charger]
-
-        return range(0,N,1), usage
 
 ##===============================================================================
 # https://stackoverflow.com/questions/54652114/matplotlib-how-can-i-add-an-alternating-background-color-when-i-have-dates-on-t
