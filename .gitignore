@@ -1,3 +1,5 @@
+*.npy
+*.pdf
 *.pyc
 __init__.py
 __pycache__/

@@ -9,7 +9,6 @@ from gurobipy import GRB
 np.set_printoptions(threshold=sys.maxsize)
 
 # Developed Modules
-from mat_util import *
 from pretty import *
 
 ##===============================================================================
@@ -78,8 +77,8 @@ class Optimizer:
             # Gurobi Model
             model = self.sc["model"]
 
-            pretty(self.sc)
-            input("Enter to continue...")
+            #  pretty(self.sc)
+            #  input("Enter to continue...")
 
             # Objective
             print("Creating Objective...")

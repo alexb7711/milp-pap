@@ -9,12 +9,10 @@ from gurobipy import GRB
 # Include in path
 sys.path.append("util/")
 sys.path.append("schedule/")
-sys.path.append("genmat/")
 sys.path.append("optimize/")
 
 # Developed
 from schedule_manager import Schedule
-from gen_mat          import GenMat
 from optimizer        import Optimizer
 from plot             import Plotter
 
@@ -26,7 +24,7 @@ from yaml_schedule import YAMLSchedule
 ##===============================================================================
 #
 def main():
-    load_from_file = True
+    load_from_file = False
 
     # Create Gurobi model
     m                  = gp.Model()
