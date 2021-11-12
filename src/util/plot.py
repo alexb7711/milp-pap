@@ -25,6 +25,7 @@ class Plotter:
         self.A     = data['A']
         self.N     = data['N']
         self.Q     = data['Q']
+        self.T     = data['T']
 
         # Input Vars
         self.a     = data['a']
@@ -77,11 +78,15 @@ class Plotter:
                 u400.append(self.u[i])
                 v400.append(self.v[i])
 
+        # Create a unique color for each bus
+        color     = ['#%06X' % np.random.randint(0, 0xFFFFFF) for i in range(self.A)]
+        facecolor = [color[self.Gamma[x]] for x in range(self.A+self.N)]
+
         time100, position100 = self.__plotResults(len(v100), ax[0], a100, u100, v100, c100)
-        _                    = self.__makeErrorBoxes(ax[0], u100, v100, time100, position100)
+        _                    = self.__makeErrorBoxes(ax[0], u100, v100, time100, position100, facecolor)
 
         time400, position400 = self.__plotResults(len(v400), ax[1], a400, u400, v400, c400)
-        _                    = self.__makeErrorBoxes(ax[1], u400, v400, time400, position400)
+        _                    = self.__makeErrorBoxes(ax[1], u400, v400, time400, position400, facecolor)
 
         ax[0].set_title("Slow Chargers")
         ax[1].set_title("Fast Chargers")
@@ -96,6 +101,16 @@ class Plotter:
         plt.savefig('schedule.pdf', dpi=100)
 
         plt.show()
+
+
+        fig, ax = plt.subplots(1)
+        time100, position100 = self.__plotResults(len(v100), ax, a100, u100, v100, c100)
+        _                    = self.__makeErrorBoxes(ax, u100, v100, time100, position100, facecolor)
+
+        fig.set_size_inches(25,10)
+
+        plt.show()
+
         return
 
     ##-------------------------------------------------------------------------------
@@ -146,6 +161,11 @@ class Plotter:
         p = self.p
         r = self.r
         v = self.v
+        u = self.u
+        c = self.c
+
+        v100    = []
+        v400    = []
 
         v100    = []
         v400    = []
@@ -164,16 +184,19 @@ class Plotter:
         u100   = len(set(v100))
         u400   = len(set(v400))
 
-        ## Create matricies to count uses
-        use100 = np.zeros((u100,self.A+self.N), dtype=int)
-        use400 = np.zeros((u400,self.A+self.N), dtype=int)
+        ## Create array to count uses
+        use100 = np.zeros(len(np.linspace(0,self.T,1000)), dtype=int)
+        use400 = np.zeros(len(np.linspace(0,self.T,1000)), dtype=int)
 
-        for i in range(self.A+self.Q):
-            idx = int(v[i]-1)
-            if v[i] <= u100:
-                use100[idx,i:] += 1
-            else:
-                use400[idx-u100,i:] += 1
+        idx = 0
+        for i in np.linspace(0,self.T,1000):
+            for j in range(self.A+self.N):
+                if u[j] <= i and c[j] >= i:
+                    if v[j] <= u100:
+                        use100[idx] += 1
+                    else:
+                        use400[idx] += 1
+            idx += 1
 
         ax[0].set_title("Slow Chargers")
         ax[1].set_title("Fast Chargers")
@@ -181,21 +204,19 @@ class Plotter:
         ax[1].set(xlabel="Time [hr]", ylabel="Times Used")
 
         # Plot restults
-        n = 1.0/10
+        n = 1.0/100
 
-        for i in range(u100):
-            ran = range(len(use100[i]))
-            ax[0].plot([x*n for x in ran], use100[i])
+        ran = range(len(use100)-1)
+        ax[0].plot([x*n for x in ran], use100[0:len(use100)-1])
 
-        for i in range(u400):
-            ran = range(len(use400[i]))
-            ax[1].plot([x*n for x in ran], use400[i])
+        ran = range(len(use400)-1)
+        ax[1].plot([x*n for x in ran], use400[0:len(use400)-1])
 
         gs = GridShader(ax[0], facecolor="lightgrey", first=False, alpha=0.7)
         gs = GridShader(ax[1], facecolor="lightgrey", first=False, alpha=0.7)
 
-        fig.set_size_inches(25,25)
-        plt.savefig('usage.pdf', dpi=100)
+        fig.set_size_inches(5,10)
+        plt.savefig('usage.pdf')
 
         plt.show()
         return
@@ -240,7 +261,7 @@ class Plotter:
         errorboxes = [Rectangle((x - xe[0], y - ye[0]), xe.sum(), ye.sum())
                       for x, y, xe, ye in zip(xdata, ydata, xerror.T, yerror.T)]
 
-        facecolor = ['#%06X' % np.random.randint(0, 0xFFFFFF) for i in range(self.N+self.A)]
+        #  facecolor = ['#%06X' % np.random.randint(0, 0xFFFFFF) for i in range(self.N+self.A)]
 
         # Create patch collection with specified colour/alpha
         pc = PatchCollection(errorboxes, facecolor=facecolor, alpha=alpha,
