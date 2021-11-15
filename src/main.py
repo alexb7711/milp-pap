@@ -21,6 +21,9 @@ from schedule_manager import Schedule
 from optimizer        import Optimizer
 from plot             import Plotter
 
+# Objective
+from min_time_objectives import MinTimeObjective
+
 # Constraints
 ## Packing
 from charge_duration      import ChargeDuration
@@ -50,14 +53,66 @@ from yaml_schedule import YAMLSchedule
 
 ##===============================================================================
 #
-def initialize(constraints, model, params, d_var):
+def setupObjective(o, m, params, d_var):
+	objectives = \
+	[
+		MinTimeObjective("min_time_objective")
+	]
+	
+	objectives[0].initialize(m, params, d_var)
+	o.subscribeObjective(objectives[0])
+
+	return
+
+##===============================================================================
+#
+def setupConstraints(o, m, params, d_var):
+	# Local Variables
+	A = params['A']
+	N = params['N']
+
+	# Set the number of visists
+	o.setIterations(N+A)
+
+	## List of constraints to optimize over
+	constraints = \
+	[
+		### Packing
+		ChargeDuration("charge_duration"),
+		Delta("delta", N+A),
+		Sigma("sigma", N+A),
+		SigmaDelta("sigma_delta", N+A),
+		SpaceBigO("space_big_o", N+A),
+		TimeBigO("time_big_o", N+A),
+		ValidDepartureTime("valid_departure_time"),
+		ValidEndTime("valid_end_time"),
+		ValidInitialTime("valid_initial_time"),
+
+		### Dynamic
+		BilinearLinearization("bilinera_linearization"),
+		ChargePropagation("charge_propagation"),
+		FinalCharge("final_charge"),
+		InitialCharge("initial_charge"),
+		MaxChargePropagation("max_charge_propagation"),
+		MinChargePropagation("min_charge_propagation"),
+		ScalarToVectorQueue("scalar_to_vector_queue"),
+		ValidQueueVector("valid_queue_vector")
+	]
+
+	initializeConstr(constraints, m, params, d_var)
+	subscribeConstr(constraints, o)
+	return
+
+##===============================================================================
+#
+def initializeConstr(constraints, model, params, d_var):
 	for c in constraints:
 		c.initialize(model, params, d_var)
 	return
 
 ##===============================================================================
 #
-def subscribe(constraints, optimizer_obj):
+def subscribeConstr(constraints, optimizer_obj):
 	for c in constraints:
 		optimizer_obj.subscribeConstraint(c)
 	return
@@ -126,37 +181,9 @@ def main():
 
 	# Optimize
 	o = Optimizer(m, params, d_var, load_from_file)
-
-	## Set the number of buses
-	o.setIterations(schedule['N']+schedule['A'])
-
-	## List of constraints to optimize over
-	constraints = \
-	{
-		### Packing
-		ChargeDuration(),
-		Delta(),
-		Sigma(),
-		SigmaDelta(),
-		SpaceBigO(),
-		TimeBigO(),
-		ValidDepartureTime(),
-		ValidEndTime(),
-		ValidInitialTime(),
-
-		### Dynamic
-		BilinearLinearization(),
-		ChargePropagation(),
-		FinalCharge(),
-		InitialCharge(),
-		MaxChargePropagation(),
-		MinChargePropagation(),
-		ScalarToVectorQueue(),
-		ValidQueueVector()
-	}
-
-	initialize(constraints, m, params, d_var)
-	subscribe(constraints, o)
+	
+	setupObjective(o, m, params, d_var)
+	setupConstraints(o, m, params, d_var)
 
 	results = o.optimize()
 

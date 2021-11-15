@@ -16,7 +16,9 @@ class Constraint(ABC):
 	# Output:
 	#			Example: test
 	#
-	def __init__(self):
+	def __init__(self, name, iterations=1):
+		self._name       = name
+		self._iterations = iterations
 		return
 
 	##-----------------------------------------------------------------------------
@@ -28,6 +30,7 @@ class Constraint(ABC):
 	def addConstr(self, i):
 		for j in range(self._iterations):
 			self.constraint(self.model, self.params, self.d_var, i, j)
+		return
 
 	##-----------------------------------------------------------------------------
 	# Input:

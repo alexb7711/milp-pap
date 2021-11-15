@@ -11,17 +11,6 @@ class ChargePropagation(Constraint):
 
 	##-----------------------------------------------------------------------
 	# Input:
-	#	Example: test
-	#
-	# Output:
-	#	Example: test
-	#
-	def __init__(self):
-		self.name = "charge_propagation"
-		return
-
-	##-----------------------------------------------------------------------
-	# Input:
 	#			m     : Gurobi model
 	#			params: Model parameters
 	#			d_var : Model decision variables

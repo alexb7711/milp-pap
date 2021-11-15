@@ -11,17 +11,6 @@ class ScalarToVectorQueue(Constraint):
 
 	##-----------------------------------------------------------------------
 	# Input:
-	#	Example: test
-	#
-	# Output:
-	#	Example: test
-	#
-	def __init__(self):
-		self.name = "scalar_to_vector_queue"
-		return
-
-	##-----------------------------------------------------------------------
-	# Input:
 	#			m     : Gurobi model
 	#			params: Model parameters
 	#			d_var : Model decision variables

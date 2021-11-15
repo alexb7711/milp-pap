@@ -11,17 +11,6 @@ class ValidInitialTime(Constraint):
 
 	##-----------------------------------------------------------------------
 	# Input:
-	#	Example: test
-	#
-	# Output:
-	#	Example: test
-	#
-	def __init__(self):
-		self.name = "valid_initial_time"
-		return
-
-	##-----------------------------------------------------------------------
-	# Input:
 	#			m     : Gurobi model
 	#			params: Model parameters
 	#			d_var : Model decision variables

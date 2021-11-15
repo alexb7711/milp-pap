@@ -11,17 +11,6 @@ class InitialCharge(Constraint):
 
 	##-----------------------------------------------------------------------
 	# Input:
-	#	Example: test
-	#
-	# Output:
-	#	Example: test
-	#
-	def __init__(self):
-		self.name = "initial_charge"
-		return
-
-	##-----------------------------------------------------------------------
-	# Input:
 	#			m     : Gurobi model
 	#			params: Model parameters
 	#			d_var : Model decision variables

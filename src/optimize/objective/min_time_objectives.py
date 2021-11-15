@@ -1,11 +1,12 @@
 # System Modules
+from gurobipy import GRB
 
 # Developed Modules
-from constraint import Constraint
+from objective import Objective
 
 ##===============================================================================
 #
-class TimeBigO(Constraint):
+class MinTimeObjective(Objective):
 	##=======================================================================
 	# PUBLIC
 
@@ -19,16 +20,17 @@ class TimeBigO(Constraint):
 	# Output:
 	#			NONE
 	#
-	def constraint(self, model, params, d_var, i, j):
+	def objective(self, model, params, d_var):
 		# Extract parameters
-		T = params['T']
+		N = params['N']
+		Q = params['Q']
+		e = params['e']
+		m = params['m']
 
 		# Extract decision vars
-		sigma = self.d_var['sigma']
-		p     = self.d_var['p']
-		u     = self.d_var['u']
+		g = self.d_var['g']
+		w = self.d_var['w']
 
-		if i != j:
-			model.addConstr(u[j] - u[i] - p[i] - (sigma[i][j] - 1)*T >= 0, \
-											name="{0}_{1}".format(self.name,i))
+		model.setObjective(sum(w[i][j]*m[j] + g[i][j]*e[j] for i in range(N) for j in range(Q)), GRB.MINIMIZE)
 		return
+
