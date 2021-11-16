@@ -86,32 +86,32 @@ class Optimizer:
 			# Save Results
 			results = \
 			{
- #         ## Constants
-				#  "A"     : A,
-				#  "N"     : N,
-				#  "Q"     : Q,
-				#  "T"     : T,
+				## Constants
+				"A"     : self.params['A'],
+				"N"     : self.params['N'],
+				"Q"     : self.params['Q'],
+				"T"     : self.params['T'],
 
-				#  ## Input Vars
-				#  "Gamma" : G,
-				#  "a"     : a,
-				#  "alpha" : alpha,
-				#  "beta"  : beta,
-				#  "gamma" : gam,
-				#  "l"     : l,
-				#  "r"     : r,
-				#  "t"     : t,
+				## Input Vars
+				"Gamma" : self.params['Gamma'],
+				"a"     : self.params['a'],
+				"alpha" : self.params['alpha'],
+				"beta"  : self.params['beta'],
+				"gamma" : self.params['gamma'],
+				"l"     : self.params['l'],
+				"r"     : self.params['r'],
+				"t"     : self.params['t'],
 
-				#  ## Decision Vars
-				#  "c"     : c.X,
-				#  "delta" : delta.X,
-				#  "eta"   : eta.X,
-				#  "p"     : p.X,
-				#  "sigma" : sigma.X,
-				#  "u"     : u.X,
-				#  "v"     : v.X,
-				#  "w"     : w.X,
-				#  "g"     : g.X,
+				## Decision Vars
+				"c"     : self.d_var['c'].X,
+				"delta" : self.d_var['delta'].X,
+				"eta"   : self.d_var['eta'].X,
+				"p"     : self.d_var['p'].X,
+				"sigma" : self.d_var['sigma'].X,
+				"u"     : self.d_var['u'].X,
+				"v"     : self.d_var['v'].X,
+				"w"     : self.d_var['w'].X,
+				"g"     : self.d_var['g'].X,
 			}
 
 			np.save('results.npy', results)

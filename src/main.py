@@ -188,10 +188,10 @@ def main():
 	results = o.optimize()
 
 	# Plot Results
-	#  p = Plotter(results)
-	#  p.plotSchedule()
-	#  p.plotCharges()
-	#  p.plotChargerUsage()
+	p = Plotter(results)
+	p.plotSchedule()
+	p.plotCharges()
+	p.plotChargerUsage()
 
 	return
 

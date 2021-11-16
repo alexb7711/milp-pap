@@ -23,7 +23,7 @@ class Sigma(Constraint):
 		# Extract parameters
 
 		# Extract decision vars
-		sigma = self.d_var['delta']
+		sigma = self.d_var['sigma']
 
 		if i != j:
 			model.addConstr(sigma[i][j] + sigma[j][i] <= 1, \
