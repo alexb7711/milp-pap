@@ -27,9 +27,9 @@ class Schedule:
     #
     def __init__(self,
                  model,
-                 A              = 40,
+                 A              = 2,
                  nu             = 0.25,
-                 N              = 240,
+                 N              = 9,
                  Q              = 9,
                  T              = 24,
                  max_rest_time  = 0.25):

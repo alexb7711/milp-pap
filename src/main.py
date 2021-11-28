@@ -12,6 +12,8 @@ sys.path.append("optimize/constraint/")
 sys.path.append("optimize/constraint/dynamics/")
 sys.path.append("optimize/constraint/packing/")
 sys.path.append("optimize/objective/")
+sys.path.append("plot/")
+sys.path.append("plot/plots/")
 sys.path.append("schedule/generate/")
 sys.path.append("schedule/load/")
 sys.path.append("util/")
@@ -19,7 +21,6 @@ sys.path.append("util/")
 # Developed
 from schedule_manager import Schedule
 from optimizer        import Optimizer
-from plot             import Plotter
 
 # Objective
 from min_time_objectives import MinTimeObjective
@@ -46,10 +47,33 @@ from min_charge_propagation import MinChargePropagation
 from scalar_to_vector_queue import ScalarToVectorQueue
 from valid_queue_vector     import ValidQueueVector
 
+# Plots
+from plot               import Plotter
+from charge_plot        import ChargePlot
+from charger_usage_plot import ChargerUsagePlot
+from schedule_plot      import SchedulePlot
+
 ## Static schedules
 from b2c1          import *
 from b3c2          import *
 from yaml_schedule import YAMLSchedule
+
+##===============================================================================
+#
+def plot(results):
+	plots = \
+	[
+		SchedulePlot("schedule"),
+		ChargePlot("charge"),
+		ChargerUsagePlot("charger_usage"),
+	]
+
+	Plotter.initialize(results)
+
+	for p in plots:
+		p.plot()
+
+	return
 
 ##===============================================================================
 #
@@ -188,10 +212,7 @@ def main():
 	results = o.optimize()
 
 	# Plot Results
-	p = Plotter(results)
-	p.plotSchedule()
-	p.plotCharges()
-	p.plotChargerUsage()
+	plot(results)
 
 	return
 
