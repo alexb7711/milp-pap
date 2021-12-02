@@ -19,8 +19,8 @@ class ChargerUsagePlot(Plotter):
 	# Output:
 	#	Example: test
 	#
-	def __init__(self, name):
-		self._name = name
+	def __init__(self):
+		self._name = "charger_usage"
 		return
 	
 	##-----------------------------------------------------------------------
