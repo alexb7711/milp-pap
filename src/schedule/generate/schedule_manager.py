@@ -2,6 +2,7 @@
 import gurobipy as gp
 import numpy as np
 import random
+import yaml
 
 from gurobipy import GRB
 
@@ -25,34 +26,40 @@ class Schedule:
     #   model : Gurobi model
     #   nu    : Required minimum charge after each visit
     #
-    def __init__(self,
-                 model,
-                 A              = 2,
-                 nu             = 0.25,
-                 N              = 9,
-                 Q              = 9,
-                 T              = 24,
-                 max_rest_time  = 0.25):
+    def __init__(self, model):
+
+        self.init = {}
+        with open(r'./schedule/generate/schedule.yaml') as f:
+                self.init = yaml.load(f, Loader=yaml.FullLoader)
 
         # Create list of discharge rates
-        discharge_rate = np.repeat([5], A)
+        discharge_rate = np.repeat([self.init['buses']['dis_rate']],
+                                    self.init['buses']['num_bus'])
 
         # Evaluate charger parameters
-        #  r              = np.random.randint(100,high=450,size=int(Q))
-        r              = np.array([100, 100, 100, 100, 100, 450, 450, 450, 450])
-        e              = r.copy()
-        m              = r.copy()
+        #  r = np.random.randint(100,high=450,size=int(Q))
+        #  r = np.array([100, 100, 100, 100, 100, 450, 450, 450, 450])
+        slow_chargers = np.array(np.repeat([self.init['chargers']['slow']['rate']],
+                                 int(self.init['chargers']['slow']['num'])),
+                                 dtype=int)
+        fast_chargers = np.array(np.repeat([self.init['chargers']['fast']['rate']],
+                                 int(self.init['chargers']['fast']['num'])),
+                                 dtype=int)
+        r = np.concatenate((slow_chargers, fast_chargers))
+        e = r.copy()
+        m = r.copy()
 
         # Store Input Parameters
-        self.A       = int(A)
-        self.N       = int(N)
-        self.Q       = int(Q)
-        self.T       = int(T)         # [hr]
+        self.A       = self.init['buses']['num_bus']
+        self.N       = self.init['buses']['num_visit']
+        self.Q       = self.init['chargers']['slow']['num'] + \
+                       self.init['chargers']['fast']['num']
+        self.T       = self.init['time_horizon']
         self.dis_rat = discharge_rate # [kwh]
         self.e       = e
         self.m       = m
-        self.mrt     = max_rest_time # [hr]
-        self.nu      = nu             # [%]
+        self.mrt     = self.init['buses']['max_rest']   # [hr]
+        self.nu      = self.init['buses']['min_charge'] # [%]
         self.r       = r
 
         # Store Gurobi Model
@@ -266,15 +273,14 @@ class Schedule:
     #   alpha[N] : Initial charges for each bus
     #
     def __genInitCharge(self):
-        min = 90
-        max = 90
+        min = self.init['initial_charge']['max']
+        max = self.init['initial_charge']['min']
 
         self.alpha = -1*np.ones(self.N, dtype=float)
 
         for i in range(self.A):
                 idx              = first(self.Gamma, i)
                 self.alpha[idx]  = min + (max - min)*random.random()
-                self.alpha[idx] /= 100.0
 
         return
 
@@ -310,7 +316,7 @@ class Schedule:
     #   beta: List of charge values
     #
     def __genFinalCharge(self):
-        final_percent = 0.95
+        final_percent = self.init['final_charge']
         for i in range(self.A):
             self.beta = np.append(self.beta, final_percent)
         return

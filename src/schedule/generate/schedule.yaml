@@ -1,0 +1,19 @@
+time_horizon: 24 # [hr]
+buses:
+  num_bus: 2
+  num_visit: 9
+  max_charge: 1    # [0-1] NOTE: Not implemented
+  min_charge: 0.25 # [0-1]
+  dis_rate: 5      # [Kw]
+  max_rest: 0.25   # [hr]
+initial_charge:
+  max: 0.95        # [0-1]
+  min: 0.95        # [0-1]
+final_charge: 0.95 # [0-1]
+chargers:
+  slow:
+    num: 4
+    rate: 100 # [Kw]
+  fast:
+    num: 4
+    rate: 400 # [Kw]
