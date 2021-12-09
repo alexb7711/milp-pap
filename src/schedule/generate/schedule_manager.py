@@ -67,25 +67,25 @@ class Schedule:
 
         # Arrays to be generated
         ## Arrival time
-        self.a     = np.zeros(N, dtype=float)
+        self.a     = np.zeros(self.N, dtype=float)
 
         ## Departure time
-        self.t     = -1*np.ones(N, dtype=float)
+        self.t     = -1*np.ones(self.N, dtype=float)
 
         ## Discharge for route i
-        self.l     = np.zeros(N, dtype=float)
+        self.l     = np.zeros(self.N, dtype=float)
 
         ## Initial charge for each visit
-        self.alpha = np.zeros(N, dtype=float)
+        self.alpha = np.zeros(self.N, dtype=float)
 
         ## ID of bus for each visit
-        self.gamma = -1*np.ones(N+A, dtype=int)
+        self.gamma = -1*np.ones(self.N+self.A, dtype=int)
 
         ## Index of next bus visit
-        self.Gamma = -1*np.ones(N, dtype=int)
+        self.Gamma = -1*np.ones(self.N, dtype=int)
 
         ## Index of final bus visit
-        self.beta = -1*np.ones(N, dtype=int)
+        self.beta = -1*np.ones(self.N, dtype=int)
 
         return
 
