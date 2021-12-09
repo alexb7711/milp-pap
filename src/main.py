@@ -95,7 +95,7 @@ def setupObjective(o, m, params, d_var):
     objectives = \
     [
         MinTimeObjective("min_time_objective"),
-        MinPowerObjective("min_power_objective"),
+        #  MinPowerObjective("min_power_objective"),
     ]
 
     objectives[0].initialize(m, params, d_var)
@@ -140,7 +140,7 @@ def setupConstraints(o, m, params, d_var):
 
         ### Power
         DiscretePowerUsage("discrete_power_usage", Q),
-        BilinearDiscretePower("biliner_discrete_power", Q),
+        #  BilinearDiscretePower("biliner_discrete_power", Q),
     ]
 
     initializeConstr(constraints, m, params, d_var)
@@ -172,9 +172,11 @@ def schedule2PAndD(schedule):
         'Q'     : schedule['Q'],
         'S'     : schedule['Q'],
         'T'     : schedule['T'],
+        'K'     : schedule['K'],
         'a'     : schedule['a'],
         'alpha' : schedule['alpha'],
         'beta'  : schedule['beta'],       # [%]
+        'dt'    : schedule['dt'],
         'e'     : schedule['e'],
         'gamma' : schedule['gamma'],
         'kappa' : schedule['kappa'],

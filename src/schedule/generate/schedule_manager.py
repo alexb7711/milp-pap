@@ -27,105 +27,113 @@ class Schedule:
     #   nu    : Required minimum charge after each visit
     #
     def __init__(self, model):
-
         self.init = {}
         with open(r'./schedule/generate/schedule.yaml') as f:
                 self.init = yaml.load(f, Loader=yaml.FullLoader)
 
-        # Create list of discharge rates
-        discharge_rate = np.repeat([self.init['buses']['dis_rate']],
-                                    self.init['buses']['num_bus'])
-
-        # Evaluate charger parameters
-        slow_chargers = np.array(np.repeat([self.init['chargers']['slow']['rate']],
-                                 int(self.init['chargers']['slow']['num'])),
-                                 dtype=int)
-        fast_chargers = np.array(np.repeat([self.init['chargers']['fast']['rate']],
-                                 int(self.init['chargers']['fast']['num'])),
-                                 dtype=int)
-        r = np.concatenate((slow_chargers, fast_chargers))
-        e = r.copy()
-        m = r.copy()
-
-        self.dt      = self.init['time']['dt']/60
-
-        # Store Input Parameters
-        self.A       = self.init['buses']['num_bus']
-        self.N       = self.init['buses']['num_visit']
-        self.Q       = self.init['chargers']['slow']['num'] + \
-                       self.init['chargers']['fast']['num']
-        self.T       = self.init['time']['time_horizon']
-        self.K       = int(self.T/(self.dt))
-        self.dis_rat = discharge_rate # [kwh]
-        self.e       = e
-        self.m       = m
-        self.mrt     = self.init['buses']['max_rest']   # [hr]
-        self.nu      = self.init['buses']['min_charge'] # [%]
-        self.r       = r
-
         # Store Gurobi Model
         self.model   = model
 
-        # Arrays to be generated
-        ## Arrival time
-        self.a     = np.zeros(self.N, dtype=float)
+        if self.init['run_prev'] <= 0:
+            # Create list of discharge rates
+            discharge_rate = np.repeat([self.init['buses']['dis_rate']],
+                                        self.init['buses']['num_bus'])
 
-        ## Departure time
-        self.t     = -1*np.ones(self.N, dtype=float)
+            # Evaluate charger parameters
+            slow_chargers = np.array(np.repeat([self.init['chargers']['slow']['rate']],
+                                     int(self.init['chargers']['slow']['num'])),
+                                     dtype=int)
+            fast_chargers = np.array(np.repeat([self.init['chargers']['fast']['rate']],
+                                     int(self.init['chargers']['fast']['num'])),
+                                     dtype=int)
+            r = np.concatenate((slow_chargers, fast_chargers))
+            e = r.copy()
+            m = r.copy()
 
-        ## Discharge for route i
-        self.l     = np.zeros(self.N, dtype=float)
+            self.dt      = self.init['time']['dt']/60
 
-        ## Initial charge for each visit
-        self.alpha = np.zeros(self.N, dtype=float)
+            # Store Input Parameters
+            self.A       = self.init['buses']['num_bus']
+            self.N       = self.init['buses']['num_visit']
+            self.Q       = self.init['chargers']['slow']['num'] + \
+                           self.init['chargers']['fast']['num']
+            self.T       = self.init['time']['time_horizon']
+            self.K       = int(self.T/(self.dt))
+            self.dis_rat = discharge_rate # [kwh]
+            self.e       = e
+            self.m       = m
+            self.mrt     = self.init['buses']['max_rest']   # [hr]
+            self.nu      = self.init['buses']['min_charge'] # [%]
+            self.r       = r
 
-        ## ID of bus for each visit
-        self.gamma = -1*np.ones(self.N+self.A, dtype=int)
+            # Arrays to be generated
+            ## Arrival time
+            self.a     = np.zeros(self.N, dtype=float)
 
-        ## Index of next bus visit
-        self.Gamma = -1*np.ones(self.N, dtype=int)
+            ## Departure time
+            self.t     = -1*np.ones(self.N, dtype=float)
 
-        ## Index of final bus visit
-        self.beta = -1*np.ones(self.N, dtype=int)
+            ## Discharge for route i
+            self.l     = np.zeros(self.N, dtype=float)
 
-        ## Discrete time steps
-        self.tk   = np.array([i*self.dt for i in range(0,self.K)]);
+            ## Initial charge for each visit
+            self.alpha = np.zeros(self.N, dtype=float)
+
+            ## ID of bus for each visit
+            self.gamma = -1*np.ones(self.N+self.A, dtype=int)
+
+            ## Index of next bus visit
+            self.Gamma = -1*np.ones(self.N, dtype=int)
+
+            ## Index of final bus visit
+            self.beta = -1*np.ones(self.N, dtype=int)
+
+            ## Discrete time steps
+            self.tk   = np.array([i*self.dt for i in range(0,self.K)]);
 
         return
 
     ##---------------------------------------------------------------------------
     #
     def generate(self):
-        # Generate Input Variables
-        ## Generate arrival times
-        self.__genArrival()
+        if self.init['run_prev'] <= 0:
+            # Generate Input Variables
+            ## Generate arrival times
+            self.__genArrival()
 
-        ## Generate ID's for bus each bus visit
-        self.__genID()
+            ## Generate ID's for bus each bus visit
+            self.__genID()
 
-        ## Generate initial charges
-        self.__genInitCharge()
+            ## Generate initial charges
+            self.__genInitCharge()
 
-        ## Generate bus capacities
-        self.__genCapacities()
+            ## Generate bus capacities
+            self.__genCapacities()
 
-        ## Generate the final arrival index for each bus
-        self.__genFinalCharge()
+            ## Generate the final arrival index for each bus
+            self.__genFinalCharge()
 
-        # Decision Variables
-        self.__genDecisionVars()
+            # Decision Variables
+            self.__genDecisionVars()
 
-        # Add fake final state
-        self.__genFinalStates()
+            # Add fake final state
+            self.__genFinalStates()
 
-        ## Generate the next bus visit array
-        self.__genNextVisit()
+            ## Generate the next bus visit array
+            self.__genNextVisit()
 
-        ## Generate time of departure
-        self.__genDepart()
+            ## Generate time of departure
+            self.__genDepart()
 
-        ## Generate discharge amounts
-        self.__genDischarge()
+            ## Generate discharge amounts
+            self.__genDischarge()
+
+            # Save data
+            self.__saveParams()
+        else:
+            temp = np.load('input_vars.npy', allow_pickle='TRUE').item()
+            self.__applyLoadedVars(temp)
+            self.__genDecisionVars()
 
         # Compile schedule into dictionary
         schedule = \
@@ -135,7 +143,6 @@ class Schedule:
             'Gamma' : self.Gamma,
             'N'     : self.N,
             'Q'     : self.Q,
-            'S'     : self.Q,
             'T'     : self.T,
             'K'     : self.K,
             'a'     : self.a,
@@ -149,7 +156,6 @@ class Schedule:
             'm'     : self.m,
             'nu'    : self.nu,
             'r'     : self.r,
-            's'     : np.ones(self.N*self.A,dtype=int),
             't'     : self.t,
             'tk'    : self.tk,
 
@@ -174,6 +180,30 @@ class Schedule:
 
     ##===========================================================================
     # PRIVATE
+
+    ##---------------------------------------------------------------------------
+    #
+    def __applyLoadedVars(self, vars):
+        self.A     = vars['A']
+        self.Gamma = vars['Gamma']
+        self.N     = vars['N']
+        self.Q     = vars['Q']
+        self.T     = vars['T']
+        self.K     = vars['K']
+        self.a     = vars['a']
+        self.alpha = vars['alpha']
+        self.beta  = vars['beta']
+        self.dt    = vars['dt']
+        self.e     = vars['e']
+        self.gamma = vars['gamma']
+        self.kappa = vars['kappa']
+        self.l     = vars['l']
+        self.m     = vars['m']
+        self.nu    = vars['nu']
+        self.r     = vars['r']
+        self.t     = vars['t']
+        self.tk    = vars['tk']
+        return
 
     ##---------------------------------------------------------------------------
     #
@@ -431,4 +461,37 @@ class Schedule:
             ## Add final t
             self.t = np.append(self.t, [self.T])
 
+        return
+
+    ##---------------------------------------------------------------------------
+    #
+    def __saveParams(self):
+        # Save data for furture runs
+        input_vars = \
+        {
+            ## Input Variables
+            'A'     : self.A,
+            'Gamma' : self.Gamma,
+            'N'     : self.N,
+            'Q'     : self.Q,
+            'S'     : self.Q,
+            'T'     : self.T,
+            'K'     : self.K,
+            'a'     : self.a,
+            'alpha' : self.alpha,
+            'beta'  : self.beta,       # [%]
+            'dt'    : self.dt,
+            'e'     : self.e,
+            'gamma' : self.gamma,
+            'kappa' : self.kappa,
+            'l'     : self.l,
+            'm'     : self.m,
+            'nu'    : self.nu,
+            'r'     : self.r,
+            's'     : np.ones(self.N*self.A,dtype=int),
+            't'     : self.t,
+            'tk'    : self.tk
+        }
+
+        np.save('input_vars.npy', input_vars)
         return

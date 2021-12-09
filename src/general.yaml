@@ -1,8 +1,11 @@
 # Number of processes to input values
-jobs: 4
+jobs: 8
 
 # 1: True; 0: False
 plot: 1
 
 # Generate new schedule
 load_from_file: 0
+
+# Verbose
+verbose: 0

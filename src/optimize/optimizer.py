@@ -40,9 +40,11 @@ class Optimizer:
         self.objective  = []
         self.iterations = 1
         self.jobs       = 0
+        self.verbose    = 1
         with open(r'./general.yaml') as f:
-                self.jobs      = yaml.load(f, Loader=yaml.FullLoader)['jobs']
-
+                file           = yaml.load(f, Loader=yaml.FullLoader)
+                self.jobs      = file['jobs']
+                self.verbose   = file['verbose']
         return
 
     ##---------------------------------------------------------------------------
@@ -84,12 +86,14 @@ class Optimizer:
                 "N"     : self.params['N'],
                 "Q"     : self.params['Q'],
                 "T"     : self.params['T'],
+                "K"     : self.params['K'],
 
                 ## Input Vars
                 "Gamma" : self.params['Gamma'],
                 "a"     : self.params['a'],
                 "alpha" : self.params['alpha'],
                 "beta"  : self.params['beta'],
+                "dt"    : self.params['dt'],
                 "gamma" : self.params['gamma'],
                 "l"     : self.params['l'],
                 "r"     : self.params['r'],
@@ -159,7 +163,8 @@ class Optimizer:
     #
     def __inputObjectives(self):
         for o in self.objective:
-            print("Adding {0}...".format(o.name))
+            if self.verbose > 0:
+                print("Adding {0}...".format(o.name))
             o.addObjective()
         return
 
@@ -175,7 +180,8 @@ class Optimizer:
             print("Iteration {0}".format(i))
 
             for c in self.constr: 
-                    print("Adding {0}...".format(c.name))
+                    if self.verbose > 0:
+                        print("Adding {0}...".format(c.name))
                     c.addConstr(i)
 
             t1 = time.time()
