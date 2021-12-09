@@ -6,7 +6,7 @@ from objective import Objective
 
 ##===============================================================================
 #
-class MinPowerUsage(Objective):
+class MinPowerObjective(Objective):
     ##=======================================================================
     # PUBLIC
 
@@ -22,15 +22,19 @@ class MinPowerUsage(Objective):
     #
     def objective(self, model, params, d_var):
         # Extract parameters
-        N = params['N']
-        Q = params['Q']
-        e = params['e']
-        m = params['m']
+        N  = params['N']
+        Q  = params['Q']
+        K  = params['K']
+        r  = params['r']
+        dt = params['dt']
 
         # Extract decision vars
-        g = self.d_var['g']
-        w = self.d_var['w']
+        xi  = self.d_var['xi']
+        rho = self.d_var['rho']
 
-        model.setObjectiveN(sum(w[i][j]*m[j] + g[i][j]*e[j] for i in range(N) for j in range(Q)), GRB.MINIMIZE)
+        model.setObjectiveN(sum(dt*r[q]*rho[i][q][k] + (1-xi[i][q][k])
+                                for i in range(N)
+                                for q in range(Q)
+                                for k in range(K)), GRB.MINIMIZE)
         return
 

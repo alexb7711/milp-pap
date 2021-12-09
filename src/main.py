@@ -29,6 +29,7 @@ from optimizer        import Optimizer
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Objective
 from min_time_objectives import MinTimeObjective
+from min_power_objective import MinPowerObjective
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Constraints
@@ -93,7 +94,8 @@ def plot(results):
 def setupObjective(o, m, params, d_var):
     objectives = \
     [
-        MinTimeObjective("min_time_objective")
+        MinTimeObjective("min_time_objective"),
+        MinPowerObjective("min_power_objective"),
     ]
 
     objectives[0].initialize(m, params, d_var)
@@ -189,6 +191,7 @@ def schedule2PAndD(schedule):
     {
         'c'     : schedule['c'],
         'delta' : schedule['delta'],
+        'dt'    : schedule['dt'],
         'eta'   : schedule['eta'],
         'g'     : schedule['g'],
         'p'     : schedule['p'],

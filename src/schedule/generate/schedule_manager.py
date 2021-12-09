@@ -47,7 +47,7 @@ class Schedule:
         e = r.copy()
         m = r.copy()
 
-        dt = self.init['time']['dt']/60
+        self.dt      = self.init['time']['dt']/60
 
         # Store Input Parameters
         self.A       = self.init['buses']['num_bus']
@@ -55,7 +55,7 @@ class Schedule:
         self.Q       = self.init['chargers']['slow']['num'] + \
                        self.init['chargers']['fast']['num']
         self.T       = self.init['time']['time_horizon']
-        self.K       = int(self.T/(dt))
+        self.K       = int(self.T/(self.dt))
         self.dis_rat = discharge_rate # [kwh]
         self.e       = e
         self.m       = m
@@ -89,7 +89,7 @@ class Schedule:
         self.beta = -1*np.ones(self.N, dtype=int)
 
         ## Discrete time steps
-        self.tk   = np.array([i*dt for i in range(0,self.K)]);
+        self.tk   = np.array([i*self.dt for i in range(0,self.K)]);
 
         return
 
@@ -141,6 +141,7 @@ class Schedule:
             'a'     : self.a,
             'alpha' : self.alpha,
             'beta'  : self.beta,       # [%]
+            'dt'    : self.dt,
             'e'     : self.e,
             'gamma' : self.gamma,
             'kappa' : self.kappa,

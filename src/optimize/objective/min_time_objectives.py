@@ -31,6 +31,8 @@ class MinTimeObjective(Objective):
         g = self.d_var['g']
         w = self.d_var['w']
 
-        model.setObjectiveN(sum(w[i][j]*m[j] + g[i][j]*e[j] for i in range(N) for j in range(Q)), GRB.MINIMIZE)
+        model.setObjectiveN(sum(w[i][j]*m[j] + g[i][j]*e[j] 
+                            for i in range(N) 
+                            for j in range(Q)), GRB.MINIMIZE)
         return
 
