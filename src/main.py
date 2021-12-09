@@ -3,6 +3,7 @@
 # Standard Lib
 import gurobipy as gp
 import sys
+import yaml
 
 from gurobipy import GRB
 
@@ -187,6 +188,10 @@ def schedule2PAndD(schedule):
 #
 def main():
 	load_from_file = False
+	with open(r'./general.yaml') as f:
+		lff = yaml.load(f, Loader=yaml.FullLoader)['load_from_file']
+		if lff >= 1:
+			load_from_file = True
 
 	# Create Gurobi model
 	m = gp.Model()
