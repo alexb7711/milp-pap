@@ -7,11 +7,13 @@ import yaml
 
 from gurobipy import GRB
 
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Include in path
 sys.path.append("optimize/")
 sys.path.append("optimize/constraint/")
 sys.path.append("optimize/constraint/dynamics/")
 sys.path.append("optimize/constraint/packing/")
+sys.path.append("optimize/constraint/power/")
 sys.path.append("optimize/objective/")
 sys.path.append("plot/")
 sys.path.append("plot/plots/")
@@ -19,13 +21,16 @@ sys.path.append("schedule/generate/")
 sys.path.append("schedule/load/")
 sys.path.append("util/")
 
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Developed
 from schedule_manager import Schedule
 from optimizer        import Optimizer
 
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Objective
 from min_time_objectives import MinTimeObjective
 
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Constraints
 ## Packing
 from charge_duration      import ChargeDuration
@@ -48,6 +53,11 @@ from min_charge_propagation import MinChargePropagation
 from scalar_to_vector_queue import ScalarToVectorQueue
 from valid_queue_vector     import ValidQueueVector
 
+## Dynamic
+from discrete_power_usage    import DiscretePowerUsage
+from bilinear_discrete_power import BilinearDiscretePower
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plots
 from plot               import Plotter
 from charge_plot        import ChargePlot
@@ -63,167 +73,175 @@ from yaml_schedule import YAMLSchedule
 ##===============================================================================
 #
 def plot(results):
-	plots = \
-	[
-		SchedulePlot(),
-		ChargePlot(),
-		ChargerUsagePlot(),
-		PowerUsagePlot(),
-	]
+    plots = \
+    [
+        SchedulePlot(),
+        ChargePlot(),
+        ChargerUsagePlot(),
+        PowerUsagePlot(),
+    ]
 
-	Plotter.initialize(results)
+    Plotter.initialize(results)
 
-	for p in plots:
-		p.plot()
+    for p in plots:
+        p.plot()
 
-	return
+    return
 
 ##===============================================================================
 #
 def setupObjective(o, m, params, d_var):
-	objectives = \
-	[
-		MinTimeObjective("min_time_objective")
-	]
-	
-	objectives[0].initialize(m, params, d_var)
-	o.subscribeObjective(objectives[0])
+    objectives = \
+    [
+        MinTimeObjective("min_time_objective")
+    ]
 
-	return
+    objectives[0].initialize(m, params, d_var)
+    o.subscribeObjective(objectives[0])
+
+    return
 
 ##===============================================================================
 #
 def setupConstraints(o, m, params, d_var):
-	# Local Variables
-	A = params['A']
-	N = params['N']
+    # Local Variables
+    A = params['A']
+    N = params['N']
+    Q = params['Q']
 
-	# Set the number of visists
-	o.setIterations(N+A)
+    # Set the number of visists
+    o.setIterations(N+A)
 
-	## List of constraints to optimize over
-	constraints = \
-	[
-		### Packing
-		ChargeDuration("charge_duration"),
-		Delta("delta", N+A),
-		Sigma("sigma", N+A),
-		SigmaDelta("sigma_delta", N+A),
-		SpaceBigO("space_big_o", N+A),
-		TimeBigO("time_big_o", N+A),
-		ValidDepartureTime("valid_departure_time"),
-		ValidEndTime("valid_end_time"),
-		ValidInitialTime("valid_initial_time"),
+    ## List of constraints to optimize over
+    constraints = \
+    [
+        ### Packing
+        ChargeDuration("charge_duration"),
+        Delta("delta", N+A),
+        Sigma("sigma", N+A),
+        SigmaDelta("sigma_delta", N+A),
+        SpaceBigO("space_big_o", N+A),
+        TimeBigO("time_big_o", N+A),
+        ValidDepartureTime("valid_departure_time"),
+        ValidEndTime("valid_end_time"),
+        ValidInitialTime("valid_initial_time"),
 
-		### Dynamic
-		BilinearLinearization("bilinera_linearization"),
-		ChargePropagation("charge_propagation"),
-		FinalCharge("final_charge"),
-		InitialCharge("initial_charge"),
-		MaxChargePropagation("max_charge_propagation"),
-		MinChargePropagation("min_charge_propagation"),
-		ScalarToVectorQueue("scalar_to_vector_queue"),
-		ValidQueueVector("valid_queue_vector")
-	]
+        ### Dynamic
+        BilinearLinearization("bilinera_linearization"),
+        ChargePropagation("charge_propagation"),
+        FinalCharge("final_charge"),
+        InitialCharge("initial_charge"),
+        MaxChargePropagation("max_charge_propagation"),
+        MinChargePropagation("min_charge_propagation"),
+        ScalarToVectorQueue("scalar_to_vector_queue"),
+        ValidQueueVector("valid_queue_vector"),
 
-	initializeConstr(constraints, m, params, d_var)
-	subscribeConstr(constraints, o)
-	return
+        ### Power
+        DiscretePowerUsage("discrete_power_usage", Q),
+        BilinearDiscretePower("biliner_discrete_power", Q),
+    ]
+
+    initializeConstr(constraints, m, params, d_var)
+    subscribeConstr(constraints, o)
+    return
 
 ##===============================================================================
 #
 def initializeConstr(constraints, model, params, d_var):
-	for c in constraints:
-		c.initialize(model, params, d_var)
-	return
+    for c in constraints:
+        c.initialize(model, params, d_var)
+    return
 
 ##===============================================================================
 #
 def subscribeConstr(constraints, optimizer_obj):
-	for c in constraints:
-		optimizer_obj.subscribeConstraint(c)
-	return
+    for c in constraints:
+        optimizer_obj.subscribeConstraint(c)
+    return
 
 ##===============================================================================
 #
 def schedule2PAndD(schedule):
-	params = \
-	{
-		'A'     : schedule['A'],
-		'Gamma' : schedule['Gamma'],
-		'N'     : schedule['N'],
-		'Q'     : schedule['Q'],
-		'S'     : schedule['Q'],
-		'T'     : schedule['T'],
-		'a'     : schedule['a'],
-		'alpha' : schedule['alpha'],
-		'beta'  : schedule['beta'],       # [%]
-		'e'     : schedule['e'],
-		'gamma' : schedule['gamma'],
-		'kappa' : schedule['kappa'],
-		'l'     : schedule['l'],
-		'm'     : schedule['m'],
-		'nu'    : schedule['nu'],
-		'r'     : schedule['r'],
-		's'     : np.ones(schedule['N']*schedule['A'],dtype=int),
-		't'     : schedule['t'],
-	}
+    params = \
+    {
+        'A'     : schedule['A'],
+        'Gamma' : schedule['Gamma'],
+        'N'     : schedule['N'],
+        'Q'     : schedule['Q'],
+        'S'     : schedule['Q'],
+        'T'     : schedule['T'],
+        'a'     : schedule['a'],
+        'alpha' : schedule['alpha'],
+        'beta'  : schedule['beta'],       # [%]
+        'e'     : schedule['e'],
+        'gamma' : schedule['gamma'],
+        'kappa' : schedule['kappa'],
+        'l'     : schedule['l'],
+        'm'     : schedule['m'],
+        'nu'    : schedule['nu'],
+        'r'     : schedule['r'],
+        's'     : np.ones(schedule['N']*schedule['A'],dtype=int),
+        't'     : schedule['t'],
+        'tk'    : schedule['tk'],
+    }
 
-	d_var = \
-	{
-		'c'     : schedule['c'],
-		'delta' : schedule['delta'],
-		'eta'   : schedule['eta'],
-		'g'     : schedule['g'],
-		'p'     : schedule['p'],
-		'sigma' : schedule['sigma'],
-		'u'     : schedule['u'],
-		'v'     : schedule['v'],
-		'w'     : schedule['w'],
-	}
+    d_var = \
+    {
+        'c'     : schedule['c'],
+        'delta' : schedule['delta'],
+        'eta'   : schedule['eta'],
+        'g'     : schedule['g'],
+        'p'     : schedule['p'],
+        'rho'   : schedule['rho'],
+        'sigma' : schedule['sigma'],
+        'u'     : schedule['u'],
+        'v'     : schedule['v'],
+        'w'     : schedule['w'],
+        'xi'    : schedule['xi'],
+    }
 
-	return params, d_var
+    return params, d_var
 
 ##===============================================================================
 #
 def main():
-	load_from_file = False
-	with open(r'./general.yaml') as f:
-		lff = yaml.load(f, Loader=yaml.FullLoader)['load_from_file']
-		if lff >= 1:
-			load_from_file = True
+    load_from_file = False
+    with open(r'./general.yaml') as f:
+        lff = yaml.load(f, Loader=yaml.FullLoader)['load_from_file']
+        if lff >= 1:
+            load_from_file = True
 
-	# Create Gurobi model
-	m = gp.Model()
+    # Create Gurobi model
+    m = gp.Model()
 
-	# Create schedule manager class
-	s = Schedule(m)
-	#  s = YAMLSchedule("./schedule/symmetric_route.yaml", m)
-	#  s = YAMLSchedule("./schedule/test.yaml", m)
-	#  s = YAMLSchedule("./schedule/route3.yaml", m)
+    # Create schedule manager class
+    s = Schedule(m)
+    #  s = YAMLSchedule("./schedule/symmetric_route.yaml", m)
+    #  s = YAMLSchedule("./schedule/test.yaml", m)
+    #  s = YAMLSchedule("./schedule/route3.yaml", m)
 
-	## Generate the schedule
-	schedule = s.generate()
-	#  schedule = b2c1()
-	#  schedule = b3c2()
+    ## Generate the schedule
+    schedule = s.generate()
+    #  schedule = b2c1()
+    #  schedule = b3c2()
 
-	# Separate decision variables from parameters
-	params, d_var = schedule2PAndD(schedule)
+    # Separate decision variables from parameters
+    params, d_var = schedule2PAndD(schedule)
 
-	# Optimize
-	o = Optimizer(m, params, d_var, load_from_file)
-	
-	setupObjective(o, m, params, d_var)
-	setupConstraints(o, m, params, d_var)
+    # Optimize
+    o = Optimizer(m, params, d_var, load_from_file)
 
-	results = o.optimize()
+    setupObjective(o, m, params, d_var)
+    setupConstraints(o, m, params, d_var)
 
-	# Plot Results
-	plot(results)
+    results = o.optimize()
 
-	return
+    # Plot Results
+    plot(results)
+
+    return
 
 ##===============================================================================
 #
 if __name__ == "__main__":
-	main()
+    main()

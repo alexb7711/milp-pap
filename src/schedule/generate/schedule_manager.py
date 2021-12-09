@@ -37,8 +37,6 @@ class Schedule:
                                     self.init['buses']['num_bus'])
 
         # Evaluate charger parameters
-        #  r = np.random.randint(100,high=450,size=int(Q))
-        #  r = np.array([100, 100, 100, 100, 100, 450, 450, 450, 450])
         slow_chargers = np.array(np.repeat([self.init['chargers']['slow']['rate']],
                                  int(self.init['chargers']['slow']['num'])),
                                  dtype=int)
@@ -49,12 +47,15 @@ class Schedule:
         e = r.copy()
         m = r.copy()
 
+        dt = self.init['time']['dt']/60
+
         # Store Input Parameters
         self.A       = self.init['buses']['num_bus']
         self.N       = self.init['buses']['num_visit']
         self.Q       = self.init['chargers']['slow']['num'] + \
                        self.init['chargers']['fast']['num']
-        self.T       = self.init['time_horizon']
+        self.T       = self.init['time']['time_horizon']
+        self.K       = int(self.T/(dt))
         self.dis_rat = discharge_rate # [kwh]
         self.e       = e
         self.m       = m
@@ -86,6 +87,9 @@ class Schedule:
 
         ## Index of final bus visit
         self.beta = -1*np.ones(self.N, dtype=int)
+
+        ## Discrete time steps
+        self.tk   = np.array([i*dt for i in range(0,self.K)]);
 
         return
 
@@ -133,6 +137,7 @@ class Schedule:
             'Q'     : self.Q,
             'S'     : self.Q,
             'T'     : self.T,
+            'K'     : self.K,
             'a'     : self.a,
             'alpha' : self.alpha,
             'beta'  : self.beta,       # [%]
@@ -145,6 +150,7 @@ class Schedule:
             'r'     : self.r,
             's'     : np.ones(self.N*self.A,dtype=int),
             't'     : self.t,
+            'tk'    : self.tk,
 
             ## Decision Variables
             'c'     : self.c,
@@ -152,10 +158,12 @@ class Schedule:
             'eta'   : self.eta,
             'g'     : self.g,
             'p'     : self.p,
+            'rho'   : self.rho,
             'sigma' : self.sigma,
             'u'     : self.u,
             'v'     : self.v,
             'w'     : self.w,
+            'xi'    : self.xi,
 
             # Model
             'model' : self.model,
@@ -353,6 +361,8 @@ class Schedule:
         # Local Variables
         A = self.A
         N = self.N
+        K = self.K
+        Q = self.Q
 
         # Generate decision variables
         ## Initial charge time
@@ -368,19 +378,25 @@ class Schedule:
         self.p = self.model.addMVar(shape=N+A, vtype=GRB.CONTINUOUS, name="p")
 
         ## Lineriztion term
-        self.g = self.model.addMVar(shape=(N+A,self.Q), vtype=GRB.CONTINUOUS, name="g")
+        self.g = self.model.addMVar(shape=(N+A,Q), vtype=GRB.CONTINUOUS, name="g")
 
         ## Initial charge
-        self.eta = self.model.addMVar(shape=N+self.A, vtype=GRB.CONTINUOUS, name="eta")
+        self.eta = self.model.addMVar(shape=N+A, vtype=GRB.CONTINUOUS, name="eta")
 
         ## Vector representation of queue
-        self.w = self.model.addMVar(shape=(N+A,self.Q), vtype=GRB.BINARY, name="w")
+        self.w = self.model.addMVar(shape=(N+A,Q), vtype=GRB.BINARY, name="w")
 
         ## Sigma
         self.sigma = self.model.addMVar(shape=(N+A,N+A), vtype=GRB.BINARY, name="sigma")
 
         ## Delta
         self.delta = self.model.addMVar(shape=(N+A,N+A), vtype=GRB.BINARY, name="delta")
+
+        ## Xi
+        self.xi    = self.model.addMVar(shape=(N+A, Q, K), vtype=GRB.BINARY, name="xi")
+
+        ## Rho
+        self.rho   = self.model.addMVar(shape=(N+A, Q, K), vtype=GRB.BINARY, name="rho")
 
         return
 

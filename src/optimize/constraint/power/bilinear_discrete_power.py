@@ -5,7 +5,7 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class ChargeDuration(Constraint):
+class BilinearDiscretePower(Constraint):
     ##=======================================================================
     # PUBLIC
 
@@ -21,12 +21,17 @@ class ChargeDuration(Constraint):
     #
     def constraint(self, model, params, d_var, i, j):
         # Extract parameters
-        a = self.params['a']
+        T  = self.params['T']
+        tk = self.params['tk']
 
         # Extract decision vars
-        c = self.d_var['c']
-        u = self.d_var['u']
-        p = self.d_var['p']
+        xi  = self.d_var['xi']
+        w   = self.d_var['w']
+        rho = self.d_var['rho']
 
-        self.model.addConstr(p[i] + u[i] == c[i], name="{0}_{1}".format(self.name,i))
+        for k in range(0, len(tk)):
+            self.model.addConstr(rho[i][j][k] - xi[i][j][k] <= 0               , name="{0}_{1}_{2}_{3}".format(self.name , i , j , k))
+            self.model.addConstr(rho[i][j][k] - w[i][j]     <= 0               , name="{0}_{1}_{2}_{3}".format(self.name , i , j , k))
+            self.model.addConstr(rho[i][j][k] - w[i][j] - xi[i][j][k] + 1 >= 0 , name="{0}_{1}_{2}_{3}".format(self.name , i , j , k))
+
         return

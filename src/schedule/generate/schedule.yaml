@@ -1,4 +1,6 @@
-time_horizon: 24 # [hr]
+time:
+  time_horizon: 24 # [hr]
+  dt: 5            # [min]
 buses:
   num_bus: 2
   num_visit: 9
@@ -7,8 +9,8 @@ buses:
   dis_rate: 5      # [Kw]
   max_rest: 0.25   # [hr]
 initial_charge:
-  max: 0.95        # [0-1]
-  min: 0.95        # [0-1]
+  max: 0.90        # [0-1]
+  min: 0.90        # [0-1]
 final_charge: 0.95 # [0-1]
 chargers:
   slow:

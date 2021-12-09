@@ -7,30 +7,30 @@ from objective import Objective
 ##===============================================================================
 #
 class MinTimeObjective(Objective):
-	##=======================================================================
-	# PUBLIC
+    ##=======================================================================
+    # PUBLIC
 
-	##-----------------------------------------------------------------------
-	# Input:
-	#			m     : Gurobi model
-	#			params: Model parameters
-	#			d_var : Model decision variables
-	#			i     : constraint id
-	#
-	# Output:
-	#			NONE
-	#
-	def objective(self, model, params, d_var):
-		# Extract parameters
-		N = params['N']
-		Q = params['Q']
-		e = params['e']
-		m = params['m']
+    ##-----------------------------------------------------------------------
+    # Input:
+    #           m     : Gurobi model
+    #           params: Model parameters
+    #           d_var : Model decision variables
+    #           i     : constraint id
+    #
+    # Output:
+    #           NONE
+    #
+    def objective(self, model, params, d_var):
+        # Extract parameters
+        N = params['N']
+        Q = params['Q']
+        e = params['e']
+        m = params['m']
 
-		# Extract decision vars
-		g = self.d_var['g']
-		w = self.d_var['w']
+        # Extract decision vars
+        g = self.d_var['g']
+        w = self.d_var['w']
 
-		model.setObjective(sum(w[i][j]*m[j] + g[i][j]*e[j] for i in range(N) for j in range(Q)), GRB.MINIMIZE)
-		return
+        model.setObjectiveN(sum(w[i][j]*m[j] + g[i][j]*e[j] for i in range(N) for j in range(Q)), GRB.MINIMIZE)
+        return
 
