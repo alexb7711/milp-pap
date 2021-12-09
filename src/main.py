@@ -52,6 +52,7 @@ from plot               import Plotter
 from charge_plot        import ChargePlot
 from charger_usage_plot import ChargerUsagePlot
 from schedule_plot      import SchedulePlot
+from power_usage_plot   import PowerUsagePlot
 
 ## Static schedules
 from b2c1          import *
@@ -63,9 +64,10 @@ from yaml_schedule import YAMLSchedule
 def plot(results):
 	plots = \
 	[
-		SchedulePlot("schedule"),
-		ChargePlot("charge"),
-		ChargerUsagePlot("charger_usage"),
+		SchedulePlot(),
+		ChargePlot(),
+		ChargerUsagePlot(),
+		PowerUsagePlot(),
 	]
 
 	Plotter.initialize(results)
