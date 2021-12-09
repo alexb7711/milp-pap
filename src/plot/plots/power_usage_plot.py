@@ -40,45 +40,33 @@ class PowerUsagePlot(Plotter):
 		u = self.u
 		c = self.c
 
-		# Configure Plot
-		fig, ax = plt.subplots(2)
+		v100 = []
+		v400 = []
 
-		self.__countCharger()
-		# Create arrays to count usages
-		## Unique chargers used
-		u100   = len(set(v100))
-		u400   = len(set(v400))
+		# Configure Plot
+		fig, ax = plt.subplots(1)
 
 		## Create array to count uses
-		use100 = np.zeros(len(np.linspace(0,self.T,1000)), dtype=int)
-		use400 = np.zeros(len(np.linspace(0,self.T,1000)), dtype=int)
+		usage = np.zeros(len(np.linspace(0,self.T,1000)), dtype=int)
+		dt = self.T/1000
 
 		idx = 0
 		for i in np.linspace(0,self.T,1000):
 			for j in range(self.A+self.N):
 				if u[j] <= i and c[j] >= i:
-					if v[j] <= u100:
-						use100[idx] += 1
-					else:
-						use400[idx] += 1
+					usage[j] += r[int(v[j])]*dt
 			idx += 1
 
-		ax[0].set_title("Slow Chargers")
-		ax[1].set_title("Fast Chargers")
-		ax[0].set(xlabel="Time [hr]", ylabel="Times Used")
-		ax[1].set(xlabel="Time [hr]", ylabel="Times Used")
+		ax.set_title("Power Usage")
+		ax.set(xlabel="Time [hr]", ylabel="Usage [KWh]")
 
 		# Plot restults
 		n = 1.0/100
 
-		ran = range(len(use100)-1)
-		ax[0].plot([x*n for x in ran], use100[0:len(use100)-1])
+		ran = range(len(usage)-1)
+		ax.plot([x*n for x in ran], usage[0:len(usage)-1])
 
-		ran = range(len(use400)-1)
-		ax[1].plot([x*n for x in ran], use400[0:len(use400)-1])
-
-		gs = GridShader(ax[0], facecolor="lightgrey", first=False, alpha=0.7)
-		gs = GridShader(ax[1], facecolor="lightgrey", first=False, alpha=0.7)
+		gs = GridShader(ax, facecolor="lightgrey", first=False, alpha=0.7)
 
 		fig.set_size_inches(5,10)
 		plt.savefig('power_usage.pdf')
