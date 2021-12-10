@@ -1,6 +1,6 @@
 time:
   time_horizon: 24 # [hr]
-  dt: 5            # [min]
+  dt: 1        # [min]
 buses:
   num_bus: 40
   num_visit: 240

@@ -139,7 +139,7 @@ def setupConstraints(o, m, params, d_var):
         ValidQueueVector("valid_queue_vector"),
 
         ### Power
-        DiscretePowerUsage("discrete_power_usage", Q),
+        #  DiscretePowerUsage("discrete_power_usage", Q),
         #  BilinearDiscretePower("biliner_discrete_power", Q),
     ]
 

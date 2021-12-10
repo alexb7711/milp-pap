@@ -44,18 +44,18 @@ class PowerUsagePlot(Plotter):
         fig, ax = plt.subplots(1)
 
         ## Create array to count uses
-        usage = np.zeros(len(np.linspace(0,self.T, 1000)), dtype=int)
+        usage = np.zeros(len(np.linspace(0,self.T, self.K)), dtype=int)
         dt = self.dt
 
         idx = 0
-        for i in np.linspace(0,self.T,1000):
+        for i in np.linspace(0,self.T,self.K):
             for j in range(self.A+self.N):
                 if u[j] <= i and c[j] >= i:
-                    usage[idx] += r[int(v[j])]*dt
+                    usage[idx] += r[int(v[j])]
             idx += 1
 
         ax.set_title("Power Usage")
-        ax.set(xlabel="Time [hr]", ylabel="Usage [KWh]")
+        ax.set(xlabel="Time [hr]", ylabel="Usage [KW]")
 
         # Plot restults
         n = 1.0/100

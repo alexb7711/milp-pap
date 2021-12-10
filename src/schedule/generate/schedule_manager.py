@@ -89,7 +89,7 @@ class Schedule:
             self.beta = -1*np.ones(self.N, dtype=int)
 
             ## Discrete time steps
-            self.tk   = np.array([i*self.dt for i in range(0,self.K)]);
+            self.tk   = np.array([i*self.dt for i in range(0,T,self.K)]);
 
         return
 
@@ -193,7 +193,6 @@ class Schedule:
         self.a     = vars['a']
         self.alpha = vars['alpha']
         self.beta  = vars['beta']
-        self.dt    = vars['dt']
         self.e     = vars['e']
         self.gamma = vars['gamma']
         self.kappa = vars['kappa']
@@ -202,7 +201,13 @@ class Schedule:
         self.nu    = vars['nu']
         self.r     = vars['r']
         self.t     = vars['t']
-        self.tk    = vars['tk']
+
+        with open(r'./schedule/generate/schedule.yaml') as f:
+            self.init = yaml.load(f, Loader=yaml.FullLoader)
+            self.dt    = self.init['time']['dt']/60
+            self.K     = int(self.T/(self.dt))
+            self.tk    = np.array([i*self.dt for i in range(0,self.T,self.K)]);
+
         return
 
     ##---------------------------------------------------------------------------
@@ -476,11 +481,9 @@ class Schedule:
             'Q'     : self.Q,
             'S'     : self.Q,
             'T'     : self.T,
-            'K'     : self.K,
             'a'     : self.a,
             'alpha' : self.alpha,
             'beta'  : self.beta,       # [%]
-            'dt'    : self.dt,
             'e'     : self.e,
             'gamma' : self.gamma,
             'kappa' : self.kappa,
@@ -490,7 +493,6 @@ class Schedule:
             'r'     : self.r,
             's'     : np.ones(self.N*self.A,dtype=int),
             't'     : self.t,
-            'tk'    : self.tk
         }
 
         np.save('input_vars.npy', input_vars)
