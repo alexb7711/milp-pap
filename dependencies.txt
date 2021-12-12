@@ -1,4 +1,5 @@
 gurobipy
+joblib
 nose
 nose-cov
 numpy
