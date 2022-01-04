@@ -182,6 +182,7 @@ class Optimizer:
             for c in self.constr: 
                     if self.verbose > 0:
                         print("Adding {0}...".format(c.name))
+
                     c.addConstr(i)
 
             t1 = time.time()

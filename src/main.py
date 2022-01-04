@@ -56,7 +56,6 @@ from valid_queue_vector     import ValidQueueVector
 
 ## Dynamic
 from discrete_power_usage    import DiscretePowerUsage
-from bilinear_discrete_power import BilinearDiscretePower
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plots
@@ -95,7 +94,7 @@ def setupObjective(o, m, params, d_var):
     objectives = \
     [
         MinTimeObjective("min_time_objective"),
-        #  MinPowerObjective("min_power_objective"),
+        MinPowerObjective("min_power_objective"),
     ]
 
     objectives[0].initialize(m, params, d_var)
@@ -139,8 +138,7 @@ def setupConstraints(o, m, params, d_var):
         ValidQueueVector("valid_queue_vector"),
 
         ### Power
-        #  DiscretePowerUsage("discrete_power_usage", Q),
-        #  BilinearDiscretePower("biliner_discrete_power", Q),
+        DiscretePowerUsage("discrete_power_usage", Q),
     ]
 
     initializeConstr(constraints, m, params, d_var)
@@ -197,7 +195,7 @@ def schedule2PAndD(schedule):
         'eta'   : schedule['eta'],
         'g'     : schedule['g'],
         'p'     : schedule['p'],
-        'rho'   : schedule['rho'],
+        'psi'   : schedule['psi'],
         'sigma' : schedule['sigma'],
         'u'     : schedule['u'],
         'v'     : schedule['v'],

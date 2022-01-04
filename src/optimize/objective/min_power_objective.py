@@ -30,13 +30,14 @@ class MinPowerObjective(Objective):
         dt = params['dt']
 
         # Extract decision vars
-        #  xi  = self.d_var['xi']
-        rho = self.d_var['rho']
-        w = self.d_var['w']
+        psi = self.d_var['psi']
+        w   = self.d_var['w']
+        xi  = self.d_var['xi']
 
-        model.setObjectiveN(sum(dt*r[q]*rho[i][j][k]
-                                for i in range(N)
-                                for q in range(Q)
-                                for k in range(0,T,K)), GRB.MINIMIZE)
+        model.setObjectiveN(sum(50*r[q]*(1-w[i][j]) *
+                           (1 - (xi[i][j][k] + psi[i][j][k] - xi[i][j][k]*psi[i][j][k]))
+                            for i in range(N)
+                            for q in range(Q)
+                            for k in range(0,T,K)), GRB.MINIMIZE)
         return
 

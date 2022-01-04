@@ -1,6 +1,8 @@
 gurobipy
 joblib
+matplotlib
 nose
 nose-cov
 numpy
+pyyaml
 scipy

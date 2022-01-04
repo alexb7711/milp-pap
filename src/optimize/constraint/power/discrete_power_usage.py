@@ -26,14 +26,15 @@ class DiscretePowerUsage(Constraint):
         tk = self.params['tk']
 
         # Extract decision vars
-        c  = self.d_var['c']
-        u  = self.d_var['u']
-        xi = self.d_var['xi']
+        c   = self.d_var['c']
+        psi = self.d_var['psi']
+        u   = self.d_var['u']
+        xi  = self.d_var['xi']
 
         for k in range(0,T,K):
-            self.model.addConstr(u[i] - tk[k] <= T*xi[i][j][k] , name="{0}_{1}_{2}_{3}".format(self.name , i , j , k))
-            self.model.addConstr(tk[k] - c[i] <= T*xi[i][j][k] , name="{0}_{1}_{2}_{3}".format(self.name , i , j , k))
-            self.model.addConstr(T*(1-xi[i][j][k])  >= 0       , name="{0}_{1}_{2}_{3}".format(self.name , i , j , k))
-            self.model.addConstr(T*(1-xi[i][j][k])  >= 0       , name="{0}_{1}_{2}_{3}".format(self.name , i , j , k))
+            self.model.addConstr(u[i]  - tk[k] <= T*xi[i][j][k]        , name="{0}_{1}_{2}_{3}".format(self.name , i , j , k))
+            self.model.addConstr(tk[k] - u[i]  <= T*(1-xi[i][j][k])    , name="{0}_{1}_{2}_{3}".format(self.name , i , j , k))
+            self.model.addConstr(tk[k] - c[i]  <= T*psi[i][j][k]       , name="{0}_{1}_{2}_{3}".format(self.name , i , j , k))
+            self.model.addConstr(c[i]  - tk[k] <= T*(1 - psi[i][j][k]) , name="{0}_{1}_{2}_{3}".format(self.name , i , j , k))
 
         return

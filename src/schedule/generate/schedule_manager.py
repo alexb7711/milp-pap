@@ -165,7 +165,7 @@ class Schedule:
             'eta'   : self.eta,
             'g'     : self.g,
             'p'     : self.p,
-            'rho'   : self.rho,
+            'psi'   : self.psi,
             'sigma' : self.sigma,
             'u'     : self.u,
             'v'     : self.v,
@@ -431,8 +431,8 @@ class Schedule:
         ## Xi
         self.xi    = self.model.addMVar(shape=(N+A, Q, K), vtype=GRB.BINARY, name="xi")
 
-        ## Rho
-        self.rho   = self.model.addMVar(shape=(N+A, Q, K), vtype=GRB.BINARY, name="rho")
+        ## Psi
+        self.psi   = self.model.addMVar(shape=(N+A, Q, K), vtype=GRB.BINARY, name="psi")
 
         return
 

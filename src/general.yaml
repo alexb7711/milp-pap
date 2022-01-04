@@ -1,5 +1,5 @@
 # Number of processes to input values
-jobs: 8
+jobs: 1
 
 # 1: True; 0: False
 plot: 1
