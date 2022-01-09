@@ -45,7 +45,6 @@ class PowerUsagePlot(Plotter):
 
         ## Create array to count uses
         usage = np.zeros(len(np.linspace(0,self.T, self.K)), dtype=int)
-        dt = self.dt
 
         idx = 0
         for i in np.linspace(0,self.T,self.K):
@@ -58,7 +57,7 @@ class PowerUsagePlot(Plotter):
         ax.set(xlabel="Time [hr]", ylabel="Usage [KW]")
 
         # Plot restults
-        n = 1.0/100
+        n = self.dt
 
         ran = range(len(usage)-1)
         ax.plot([x*n for x in ran], usage[0:len(usage)-1])

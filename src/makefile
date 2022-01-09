@@ -13,3 +13,5 @@ install:
 run:
 	$(BIN)/python main.py
 
+debug:
+	$(BIN)/python -m pudb main.py

@@ -4,5 +4,6 @@ matplotlib
 nose
 nose-cov
 numpy
+pudb
 pyyaml
 scipy

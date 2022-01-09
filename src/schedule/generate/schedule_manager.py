@@ -58,7 +58,7 @@ class Schedule:
             self.Q       = self.init['chargers']['slow']['num'] + \
                            self.init['chargers']['fast']['num']
             self.T       = self.init['time']['time_horizon']
-            self.K       = int(self.T/(self.dt))
+            self.K       = int(self.T/self.dt)
             self.dis_rat = discharge_rate # [kwh]
             self.e       = e
             self.m       = m

@@ -22,7 +22,7 @@ class ChargerUsagePlot(Plotter):
     def __init__(self):
         self._name = "charger_usage"
         return
-    
+
     ##-----------------------------------------------------------------------
     # Input:
     #           NONE
@@ -58,11 +58,11 @@ class ChargerUsagePlot(Plotter):
         u400   = len(set(v400))
 
         ## Create array to count uses
-        use100 = np.zeros(len(np.linspace(0,self.T,1000)), dtype=int)
-        use400 = np.zeros(len(np.linspace(0,self.T,1000)), dtype=int)
+        use100 = np.zeros(len(np.linspace(0,self.T,self.K)), dtype=int)
+        use400 = np.zeros(len(np.linspace(0,self.T,self.K)), dtype=int)
 
         idx = 0
-        for i in np.linspace(0,self.T,1000):
+        for i in np.linspace(0,self.T,self.K):
             for j in range(self.A+self.N):
                 if u[j] <= i and c[j] >= i:
                     if v[j] <= u100:
@@ -77,7 +77,7 @@ class ChargerUsagePlot(Plotter):
         ax[1].set(xlabel="Time [hr]", ylabel="Times Used")
 
         # Plot restults
-        n = 1.0/100
+        n = self.dt
 
         ran = range(len(use100)-1)
         ax[0].plot([x*n for x in ran], use100[0:len(use100)-1])
