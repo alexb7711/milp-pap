@@ -69,7 +69,9 @@ class Optimizer:
             print("====================================================================")
             print("Adding Constraints")
             print("====================================================================")
-            Parallel(n_jobs=self.jobs, backend='threading')(delayed(self.__inputConstraints)(i) for i in range(self.iterations))
+            #  Parallel(n_jobs=self.jobs, backend='threading')(delayed(self.__inputConstraints)(i) for i in range(self.iterations))
+            for i in range(self.iterations):
+                self.__inputConstraints(i)
 
             # Uncomment to print model to disk
             #  model.write("model.lp")
@@ -179,7 +181,7 @@ class Optimizer:
             t0 = time.time()
             print("Iteration {0}".format(i))
 
-            for c in self.constr: 
+            for c in self.constr:
                     if self.verbose > 0:
                         print("Adding {0}...".format(c.name))
 
