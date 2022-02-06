@@ -28,7 +28,7 @@ class Schedule:
     #
     def __init__(self, model):
         self.init = {}
-        with open(r'./schedule/generate/schedule.yaml') as f:
+        with open(r'config/schedule.yaml') as f:
                 self.init = yaml.load(f, Loader=yaml.FullLoader)
 
         # Store Gurobi Model
@@ -131,7 +131,7 @@ class Schedule:
             # Save data
             self.__saveParams()
         else:
-            temp = np.load('input_vars.npy', allow_pickle='TRUE').item()
+            temp = np.load('data/input_vars.npy', allow_pickle='TRUE').item()
             self.__applyLoadedVars(temp)
             self.__genDecisionVars()
 
@@ -202,7 +202,7 @@ class Schedule:
         self.r     = vars['r']
         self.t     = vars['t']
 
-        with open(r'./schedule/generate/schedule.yaml') as f:
+        with open(r'config/schedule.yaml') as f:
             self.init = yaml.load(f, Loader=yaml.FullLoader)
             self.dt    = self.init['time']['dt']/60
             self.K     = int(self.T/(self.dt))

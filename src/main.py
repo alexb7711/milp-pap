@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 # Standard Lib
+import numpy as np
 import gurobipy as gp
 import sys
 import yaml
@@ -17,8 +18,7 @@ sys.path.append("optimize/constraint/power/")
 sys.path.append("optimize/objective/")
 sys.path.append("plot/")
 sys.path.append("plot/plots/")
-sys.path.append("schedule/generate/")
-sys.path.append("schedule/load/")
+sys.path.append("schedule/")
 sys.path.append("util/")
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,11 +64,6 @@ from charge_plot        import ChargePlot
 from charger_usage_plot import ChargerUsagePlot
 from schedule_plot      import SchedulePlot
 from power_usage_plot   import PowerUsagePlot
-
-## Static schedules
-from b2c1          import *
-from b3c2          import *
-from yaml_schedule import YAMLSchedule
 
 ##===============================================================================
 #
@@ -209,7 +204,7 @@ def schedule2PAndD(schedule):
 #
 def main():
     load_from_file = False
-    with open(r'./general.yaml') as f:
+    with open(r'config/general.yaml') as f:
         lff = yaml.load(f, Loader=yaml.FullLoader)['load_from_file']
         if lff >= 1:
             load_from_file = True
@@ -219,14 +214,9 @@ def main():
 
     # Create schedule manager class
     s = Schedule(m)
-    #  s = YAMLSchedule("./schedule/symmetric_route.yaml", m)
-    #  s = YAMLSchedule("./schedule/test.yaml", m)
-    #  s = YAMLSchedule("./schedule/route3.yaml", m)
 
     ## Generate the schedule
     schedule = s.generate()
-    #  schedule = b2c1()
-    #  schedule = b3c2()
 
     # Separate decision variables from parameters
     params, d_var = schedule2PAndD(schedule)

@@ -9,86 +9,86 @@ from grid_shader import GridShader
 ##===============================================================================
 #
 class ChargePlot(Plotter):
-	##=======================================================================
-	# PUBLIC
+    ##=======================================================================
+    # PUBLIC
 
-	##-----------------------------------------------------------------------
-	# Input:
-	#			name: Name of the plot
-	#
-	# Output:
-	#	Example: test
-	#
-	def __init__(self):
-		self._name = "charge"
-		return
-	
-	##-----------------------------------------------------------------------
-	# Input:
-	#			NONE
-	#
-	# Output:
-	#			Plot of bus schedule
-	#
-	def plot(self):
-		# Local Variables
-		A       = self.A
-		N       = self.N
+    ##-----------------------------------------------------------------------
+    # Input:
+    #           name: Name of the plot
+    #
+    # Output:
+    #   Example: test
+    #
+    def __init__(self):
+        Plotter.__init__(self, "charge")
+        return
 
-		# Configure Plot
-		fig, ax = plt.subplots(1)
-		x,y     = self.__groupChargeResults(N, A, self.Gamma, self.eta)
+    ##-----------------------------------------------------------------------
+    # Input:
+    #           NONE
+    #
+    # Output:
+    #           Plot of bus schedule
+    #
+    def plot(self):
+        # Local Variables
+        A       = self.A
+        N       = self.N
 
-		plt.xlabel("Time")
-		plt.ylabel("Charge [kwh]")
+        # Configure Plot
+        fig, ax = plt.subplots(1)
+        x,y     = self.__groupChargeResults(N, A, self.Gamma, self.eta)
 
-		for i in range(A):
-			ax.plot(x[i], y[i])
+        plt.xlabel("Time")
+        plt.ylabel("Charge [kwh]")
 
-		gs = GridShader(ax, facecolor="lightgrey", first=False, alpha=0.7)
+        for i in range(A):
+            ax.plot(x[i], y[i])
 
-		plt.savefig('charges.pdf')
+        gs = GridShader(ax, facecolor="lightgrey", first=False, alpha=0.7)
 
-		plt.show()
-		return
+        plt.savefig(self.outdir+'charges.pdf')
 
-	##=======================================================================
-	# PRIVATE
+        plt.show()
+        return
 
-	##-----------------------------------------------------------------------------
-	# Input:
-	#   N     : Number of bus visits
-	#   A     : Number of buses
-	#   Gamma : Array of bus ID's
-	#   eta   : Array of bus charges
-	#
-	# Output:
-	#   x : Array of incrementing values from 1 to N
-	#   y : Array of charges for each bus
-	#
-	def __groupChargeResults(self, N, A, Gamma, eta):
-		charges = []
-		idx     = []
+    ##=======================================================================
+    # PRIVATE
 
-		for i in range(A):
-			last_charge = 0
-			tempx       = []
-			tempy       = []
+    ##-----------------------------------------------------------------------------
+    # Input:
+    #   N     : Number of bus visits
+    #   A     : Number of buses
+    #   Gamma : Array of bus ID's
+    #   eta   : Array of bus charges
+    #
+    # Output:
+    #   x : Array of incrementing values from 1 to N
+    #   y : Array of charges for each bus
+    #
+    def __groupChargeResults(self, N, A, Gamma, eta):
+        charges = []
+        idx     = []
 
-			for j in range(N+A):
-				if Gamma[j] == i:
-					tempx.append(j)
-					tempy.append(eta[j])
-					last_charge = eta[j]
-				elif last_charge == 0:
-					continue
-				else:
-					tempx.append(j)
-					tempy.append(last_charge)
+        for i in range(A):
+            last_charge = 0
+            tempx       = []
+            tempy       = []
 
-			idx.append(tempx)
-			charges.append(tempy)
+            for j in range(N+A):
+                if Gamma[j] == i:
+                    tempx.append(j)
+                    tempy.append(eta[j])
+                    last_charge = eta[j]
+                elif last_charge == 0:
+                    continue
+                else:
+                    tempx.append(j)
+                    tempy.append(last_charge)
 
-		idx = [[x*(1.0/10) for x in y] for y in idx]
+            idx.append(tempx)
+            charges.append(tempy)
 
-		return idx, charges
+        idx = [[x*(1.0/10) for x in y] for y in idx]
+
+        return idx, charges

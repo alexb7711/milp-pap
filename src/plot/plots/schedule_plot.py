@@ -12,137 +12,138 @@ from grid_shader import GridShader
 ##===============================================================================
 #
 class SchedulePlot(Plotter):
-	##=======================================================================
-	# PUBLIC
+    ##=======================================================================
+    # PUBLIC
 
-	##-----------------------------------------------------------------------
-	# Input:
-	#			name: Name of the plot
-	#
-	# Output:
-	#	Example: test
-	#
-	def __init__(self):
-		self._name = "schedule"
-		return
-	
-	##-----------------------------------------------------------------------
-	# Input:
-	#			name: Name of the plot
-	#
-	# Output:
-	#	Example: test
-	#
-	def plot(self):
-		# Configure Plot
-		fig, ax = plt.subplots(2)
-		a100    = []
-		c100    = []
-		u100    = []
-		v100    = []
+    ##-----------------------------------------------------------------------
+    # Input:
+    #           name: Name of the plot
+    #
+    # Output:
+    #   Example: test
+    #
+    def __init__(self):
+        Plotter.__init__(self, "schedule")
+        return
 
-		a400    = []
-		c400    = []
-		u400    = []
-		v400    = []
+    ##-----------------------------------------------------------------------
+    # Input:
+    #           name: Name of the plot
+    #
+    # Output:
+    #   Example: test
+    #
+    def plot(self):
+        # Configure Plot
+        fig, ax = plt.subplots(2)
+        a100    = []
+        c100    = []
+        u100    = []
+        v100    = []
 
-		for i in range(self.A+self.N):
-			if self.v[i] <= 4:
-				a100.append(self.a[i])
-				c100.append(self.c[i])
-				u100.append(self.u[i])
-				v100.append(self.v[i])
-			else:
-				a400.append(self.a[i])
-				c400.append(self.c[i])
-				u400.append(self.u[i])
-				v400.append(self.v[i])
+        a400    = []
+        c400    = []
+        u400    = []
+        v400    = []
 
-		# Create a unique color for each bus
-		color     = ['#%06X' % np.random.randint(0, 0xFFFFFF) for i in range(self.A)]
-		facecolor = [color[self.Gamma[x]] for x in range(self.A+self.N)]
+        for i in range(self.A+self.N):
+            if self.v[i] <= 4:
+                a100.append(self.a[i])
+                c100.append(self.c[i])
+                u100.append(self.u[i])
+                v100.append(self.v[i])
+            else:
+                a400.append(self.a[i])
+                c400.append(self.c[i])
+                u400.append(self.u[i])
+                v400.append(self.v[i])
 
-		time100, position100 = self.__plotResults(len(v100), ax[0], a100, u100, v100, c100)
-		_                    = self.__makeErrorBoxes(ax[0], u100, v100, time100, position100, facecolor)
+        # Create a unique color for each bus
+        color     = ['#%06X' % np.random.randint(0, 0xFFFFFF) for i in range(self.A)]
+        facecolor = [color[self.Gamma[x]] for x in range(self.A+self.N)]
 
-		time400, position400 = self.__plotResults(len(v400), ax[1], a400, u400, v400, c400)
-		_                    = self.__makeErrorBoxes(ax[1], u400, v400, time400, position400, facecolor)
+        time100, position100 = self.__plotResults(len(v100), ax[0], a100, u100, v100, c100)
+        _                    = self.__makeErrorBoxes(ax[0], u100, v100, time100, position100, facecolor)
 
-		ax[0].set_title("Slow Chargers")
-		ax[1].set_title("Fast Chargers")
+        time400, position400 = self.__plotResults(len(v400), ax[1], a400, u400, v400, c400)
+        _                    = self.__makeErrorBoxes(ax[1], u400, v400, time400, position400, facecolor)
 
-		ax[0].set(xlabel="Time [hr]", ylabel="Queue")
-		ax[1].set(xlabel="Time [hr]", ylabel="Queue")
+        ax[0].set_title("Slow Chargers")
+        ax[1].set_title("Fast Chargers")
 
-		gs = GridShader(ax[0], facecolor="lightgrey", first=False, alpha=0.7)
-		gs = GridShader(ax[1], facecolor="lightgrey", first=False, alpha=0.7)
+        ax[0].set(xlabel="Time [hr]", ylabel="Queue")
+        ax[1].set(xlabel="Time [hr]", ylabel="Queue")
 
-		fig.set_size_inches(25,10)
-		plt.savefig('schedule.pdf', dpi=100)
+        gs = GridShader(ax[0], facecolor="lightgrey", first=False, alpha=0.7)
+        gs = GridShader(ax[1], facecolor="lightgrey", first=False, alpha=0.7)
 
-		plt.show()
+        fig.set_size_inches(25,10)
+
+        plt.savefig(self.outdir+'schedule.pdf', dpi=100)
+
+        plt.show()
 
 
-		fig, ax = plt.subplots(1)
-		time100, position100 = self.__plotResults(len(v100), ax, a100, u100, v100, c100)
-		_                    = self.__makeErrorBoxes(ax, u100, v100, time100, position100, facecolor)
+        fig, ax = plt.subplots(1)
+        time100, position100 = self.__plotResults(len(v100), ax, a100, u100, v100, c100)
+        _                    = self.__makeErrorBoxes(ax, u100, v100, time100, position100, facecolor)
 
-		fig.set_size_inches(25,10)
+        fig.set_size_inches(25,10)
 
-		plt.show()
-		return
+        plt.show()
+        return
 
-	##=======================================================================
-	# PRIVATE
+    ##=======================================================================
+    # PRIVATE
 
-	##-----------------------------------------------------------------------------
-	# Input:
-	#   a: Arrival time
-	#   u: Starting charge time
-	#   v: Staring queue position
-	#   c: Departure Time
-	#
-	# Output:
-	#
-	def __plotResults(self, N, ax, a, u, v, c):
-		# Format error matrix
-		pos_upper = []
-		pos_lower = []
-		tim_upper = []
-		tim_lower = []
+    ##-----------------------------------------------------------------------------
+    # Input:
+    #   a: Arrival time
+    #   u: Starting charge time
+    #   v: Staring queue position
+    #   c: Departure Time
+    #
+    # Output:
+    #
+    def __plotResults(self, N, ax, a, u, v, c):
+        # Format error matrix
+        pos_upper = []
+        pos_lower = []
+        tim_upper = []
+        tim_lower = []
 
-		for i in range(N):
-			pos_lower.append(0)
-			pos_upper.append(0.8)
+        for i in range(N):
+            pos_lower.append(0)
+            pos_upper.append(0.8)
 
-			tim_lower.append(u[i] - a[i])
-			tim_upper.append(c[i] - u[i])
+            tim_lower.append(u[i] - a[i])
+            tim_upper.append(c[i] - u[i])
 
-		tim = np.vstack((tim_lower, tim_upper))
-		pos = np.vstack((pos_lower, pos_upper))
+        tim = np.vstack((tim_lower, tim_upper))
+        pos = np.vstack((pos_lower, pos_upper))
 
-		return tim, pos
+        return tim, pos
 
-	##-----------------------------------------------------------------------------
-	#
-	def __makeErrorBoxes(self, ax, xdata, ydata, xerror, yerror, facecolor='r',
-											 edgecolor='None', alpha=0.5):
+    ##-----------------------------------------------------------------------------
+    #
+    def __makeErrorBoxes(self, ax, xdata, ydata, xerror, yerror, facecolor='r',
+                                             edgecolor='None', alpha=0.5):
 
-		# Loop over data points; create box from errors at each point
-		errorboxes = [Rectangle((x - xe[0], y - ye[0]), xe.sum(), ye.sum())
-									for x, y, xe, ye in zip(xdata, ydata, xerror.T, yerror.T)]
+        # Loop over data points; create box from errors at each point
+        errorboxes = [Rectangle((x - xe[0], y - ye[0]), xe.sum(), ye.sum())
+                                    for x, y, xe, ye in zip(xdata, ydata, xerror.T, yerror.T)]
 
-		#  facecolor = ['#%06X' % np.random.randint(0, 0xFFFFFF) for i in range(self.N+self.A)]
+        #  facecolor = ['#%06X' % np.random.randint(0, 0xFFFFFF) for i in range(self.N+self.A)]
 
-		# Create patch collection with specified colour/alpha
-		pc = PatchCollection(errorboxes, facecolor=facecolor, alpha=alpha,
-												 edgecolor=edgecolor)
+        # Create patch collection with specified colour/alpha
+        pc = PatchCollection(errorboxes, facecolor=facecolor, alpha=alpha,
+                                                 edgecolor=edgecolor)
 
-		# Add collection to axes
-		ax.add_collection(pc)
+        # Add collection to axes
+        ax.add_collection(pc)
 
-		# Plot errorbars
-		artists = ax.errorbar(xdata, ydata, xerr=xerror, yerr=yerror,
-													fmt='None', ecolor='k')
+        # Plot errorbars
+        artists = ax.errorbar(xdata, ydata, xerr=xerror, yerr=yerror,
+                                                    fmt='None', ecolor='k')
 
-		return artists
+        return artists

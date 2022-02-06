@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 class Plotter:
     ##=============================================================================
     # PUBLIC
-    
+
     ##-----------------------------------------------------------------------------
     # Static Variables
 
@@ -47,11 +47,12 @@ class Plotter:
     #   Example: test
     #
     def __init__(self, name):
-        self.name = name
+        self.name   = name
+        self.outdir = '../img/'
         return
-    
+
     ##-----------------------------------------------------------------------------
-    # Input:
+    # Input
     #           params: Model parameters
     #           d_var : Model decision variable results
     #

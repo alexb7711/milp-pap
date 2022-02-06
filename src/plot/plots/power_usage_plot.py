@@ -20,7 +20,7 @@ class PowerUsagePlot(Plotter):
     #   Example: test
     #
     def __init__(self):
-        self._name = "power_usage_plot"
+        Plotter.__init__(self, "power_usage_plot")
         return
 
     ##-----------------------------------------------------------------------
@@ -65,7 +65,7 @@ class PowerUsagePlot(Plotter):
         gs = GridShader(ax, facecolor="lightgrey", first=False, alpha=0.7)
 
         fig.set_size_inches(5,10)
-        plt.savefig('power_usage.pdf')
+        plt.savefig(self.outdir+'power_usage.pdf')
 
         plt.show()
         return

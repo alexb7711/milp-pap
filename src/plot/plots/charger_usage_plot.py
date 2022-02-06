@@ -20,7 +20,7 @@ class ChargerUsagePlot(Plotter):
     #   Example: test
     #
     def __init__(self):
-        self._name = "charger_usage"
+        Plotter.__init__(self, "charger_usage")
         return
 
     ##-----------------------------------------------------------------------
@@ -89,7 +89,7 @@ class ChargerUsagePlot(Plotter):
         gs = GridShader(ax[1], facecolor="lightgrey", first=False, alpha=0.7)
 
         fig.set_size_inches(5,10)
-        plt.savefig('usage.pdf')
+        plt.savefig(self.outdir+'usage.pdf')
 
         plt.show()
         return

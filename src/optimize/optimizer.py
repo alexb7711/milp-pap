@@ -41,7 +41,7 @@ class Optimizer:
         self.iterations = 1
         self.jobs       = 0
         self.verbose    = 1
-        with open(r'./general.yaml') as f:
+        with open(r'config/general.yaml') as f:
                 file           = yaml.load(f, Loader=yaml.FullLoader)
                 self.jobs      = file['jobs']
                 self.verbose   = file['verbose']
@@ -113,9 +113,9 @@ class Optimizer:
                 "g"     : self.d_var['g'].X,
             }
 
-            np.save('results.npy', results)
+            np.save('data/results.npy', results)
         else:
-            results = np.load("results.npy", allow_pickle='TRUE').item()
+            results = np.load("data/results.npy", allow_pickle='TRUE').item()
 
         return results
 
