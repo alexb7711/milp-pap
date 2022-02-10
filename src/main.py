@@ -23,8 +23,13 @@ sys.path.append("util/")
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Developed
-from schedule_manager import Schedule
+#  from schedule_manager import Schedule
+from scheduler import Schedule
 from optimizer        import Optimizer
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Data managers
+from data_manager import DataManager
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Objective
@@ -54,7 +59,7 @@ from min_charge_propagation import MinChargePropagation
 from scalar_to_vector_queue import ScalarToVectorQueue
 from valid_queue_vector     import ValidQueueVector
 
-## Dynamic
+## Power
 from discrete_power_usage    import DiscretePowerUsage
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -85,7 +90,10 @@ def plot(results):
 
 ##===============================================================================
 #
-def setupObjective(o, m, params, d_var):
+def setupObjective(o, dm):
+    # Local variables
+    m = dm['model']
+
     objectives = \
     [
         MinTimeObjective("min_time_objective"),
@@ -99,11 +107,11 @@ def setupObjective(o, m, params, d_var):
 
 ##===============================================================================
 #
-def setupConstraints(o, m, params, d_var):
+def setupConstraints(o, dm):
     # Local Variables
-    A = params['A']
-    N = params['N']
-    Q = params['Q']
+    A = dm['A']
+    N = dm['N']
+    Q = dm['Q']
 
     # Set the number of visists
     o.setIterations(N+A)
@@ -123,7 +131,7 @@ def setupConstraints(o, m, params, d_var):
         ValidInitialTime("valid_initial_time"),
 
         ### Dynamic
-        BilinearLinearization("bilinera_linearization"),
+        BilinearLinearization("bilinear_linearization"),
         ChargePropagation("charge_propagation"),
         FinalCharge("final_charge"),
         InitialCharge("initial_charge"),
@@ -156,52 +164,6 @@ def subscribeConstr(constraints, optimizer_obj):
 
 ##===============================================================================
 #
-def schedule2PAndD(schedule):
-    params = \
-    {
-        'A'     : schedule['A'],
-        'Gamma' : schedule['Gamma'],
-        'N'     : schedule['N'],
-        'Q'     : schedule['Q'],
-        'S'     : schedule['Q'],
-        'T'     : schedule['T'],
-        'K'     : schedule['K'],
-        'a'     : schedule['a'],
-        'alpha' : schedule['alpha'],
-        'beta'  : schedule['beta'],       # [%]
-        'dt'    : schedule['dt'],
-        'e'     : schedule['e'],
-        'gamma' : schedule['gamma'],
-        'kappa' : schedule['kappa'],
-        'l'     : schedule['l'],
-        'm'     : schedule['m'],
-        'nu'    : schedule['nu'],
-        'r'     : schedule['r'],
-        's'     : np.ones(schedule['N']*schedule['A'],dtype=int),
-        't'     : schedule['t'],
-        'tk'    : schedule['tk'],
-    }
-
-    d_var = \
-    {
-        'c'     : schedule['c'],
-        'delta' : schedule['delta'],
-        'dt'    : schedule['dt'],
-        'eta'   : schedule['eta'],
-        'g'     : schedule['g'],
-        'p'     : schedule['p'],
-        'psi'   : schedule['psi'],
-        'sigma' : schedule['sigma'],
-        'u'     : schedule['u'],
-        'v'     : schedule['v'],
-        'w'     : schedule['w'],
-        'xi'    : schedule['xi'],
-    }
-
-    return params, d_var
-
-##===============================================================================
-#
 def main():
     load_from_file = False
     with open(r'config/general.yaml') as f:
@@ -209,28 +171,22 @@ def main():
         if lff >= 1:
             load_from_file = True
 
-    # Create Gurobi model
-    m = gp.Model()
-
     # Create schedule manager class
-    s = Schedule(m)
-
-    ## Generate the schedule
-    schedule = s.generate()
-
-    # Separate decision variables from parameters
-    params, d_var = schedule2PAndD(schedule)
+    Schedule(gp.Model())
 
     # Optimize
-    o = Optimizer(m, params, d_var, load_from_file)
+    #  o = Optimizer(load_from_file)
 
-    setupObjective(o, m, params, d_var)
-    setupConstraints(o, m, params, d_var)
+    ## Create data manager object
+    dm = DataManager()
 
-    results = o.optimize()
+    #  setupObjective(o, dm)
+    #  setupConstraints(o, dm)
+
+    #  results = o.optimize()
 
     # Plot Results
-    plot(results)
+    #  plot(results)
 
     return
 

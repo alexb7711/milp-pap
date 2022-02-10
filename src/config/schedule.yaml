@@ -1,13 +1,16 @@
 time:
   time_horizon: 24 # [hr]
-  dt: 1            # [min]
+  K: 1000          # [steps]
 buses:
   num_bus: 40
   num_visit: 240
-  max_charge: 1    # [0-1] NOTE: Not implemented
+  max_charge: 1    # [0-1]
   min_charge: 0.5  # [0-1]
   dis_rate: 5      # [Kw]
-  max_rest: 0.25   # [hr]
+  max_rest: 0.5    # [hr]
+  min_rest: 0.25   # [hr]
+  max_route: 0.75  # [hr]
+  min_route: 0.15  # [hr]
 initial_charge:
   max: 0.90        # [0-1]
   min: 0.87        # [0-1]
@@ -19,4 +22,4 @@ chargers:
   fast:
     num: 2
     rate: 400      # [Kw]
-run_prev: 1
+run_prev: 0

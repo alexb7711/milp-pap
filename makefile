@@ -29,7 +29,9 @@ run:
 	python main.py
 
 debug:
-	$(BIN)/python -m pudb main.py
+	source $(BIN)/activate && \
+	cd $(SRC)              && \
+	python -m pudb main.py
 
 clean:
 	rm -rfv $(ENV_DIR)
