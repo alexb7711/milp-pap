@@ -7,9 +7,10 @@ import yaml
 from gurobipy import GRB
 
 # Developed
+from array_util   import *
+from bus_data     import *
 from data_manager import DataManager
-from array_util import *
-from pretty import *
+from pretty       import *
 
 ##===============================================================================
 #
@@ -133,12 +134,8 @@ class Schedule:
         self.dm['m'] = m
 
         ## Maximum/Minimum rest time between bus routes
-        self.dm['maxrst'] = init['buses']['max_rest']
-        self.dm['minrst'] = init['buses']['min_rest']
-
-        ## Maximum/Minimum rout time between bus routes
-        self.dm['maxrt'] = init['buses']['max_route']
-        self.dm['minrt'] = init['buses']['min_route']
+        self.dm['maxr'] = init['buses']['max_rest']
+        self.dm['minr'] = init['buses']['min_rest']
 
         ## Minimum charge allowed on next visit
         self.dm['nu'] = init['buses']['min_charge']
@@ -151,7 +148,6 @@ class Schedule:
 
         ## Discharge rate
         self.dm['zeta'] = np.repeat([init['buses']['dis_rate']], init['buses']['num_bus'])
-
 
         ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # Arrays to be generated
@@ -182,44 +178,55 @@ class Schedule:
     #
     def __generateScheduleParams(self):
         # Local variables
-        A = self.dm['A']
-        N = self.dm['N']
+        A         : float = self.dm['A']
+        N         : float = self.dm['N']
+        discharge : float = 0
+        id        : int   = 0
+        bus_data          = []
 
         # Determine amount of visits for each bus
         # http://sunny.today/generate-random-integers-with-fixed-sum/
-        num_visits = np.random.multinomial(N, np.ones(A)/A, size=1)[0]
+        num_visits: np.array = np.random.multinomial(N, np.ones(A)/A, size=1)[0]
 
         # For each bus
         for a,n in zip(range(A),num_visits):
+            ## Allocate memory to temporarily store bus route information
+
             ## Initialize the previous arribval/departure
             ## to hour 0 (beginning of day)
-            prev_departure = 0.
-            next_arrival   = 0.
+            departure_t: float = float(0)
+            arrival_t_n: float = float(0)
+            arrival_t_o: float = float(0)
 
             ## For each bus, determine all the parameters for each visit
             for i in range(n):
+                ### Set the old arrival time equal to the new arrival time
+                arrival_t_o = arrival_t_n
+
                 ### Determine if this visit is the final visit
                 final_visit = True if i == n else False
 
                 ### Select a start time (<= to the max rest time)
-                prev_departure = self.__selectDeptTime(next_arrival, final_visit)
+                departure_t = self.__selectDeptTime(arrival_t_o, final_visit)
 
                 ### Select a duration (<= to the max route time allowed)
-                next_arrival = self.__selectDuration(i, n)
+                arrival_t_n = self.__selectNextArrivalTime(i, n)
 
-                print("arr: ", next_arrival)
-                print("dep: ", prev_departure)
-                input()
+                ## Calculate discharge
+                discharge = self.__calcDischarge(id, arrival_t_o, departure_t)
 
-                ## Calculate departure time
-                #  self.__calcDepartureTime(self)
+                ## Append to bus_data
+                bd = self.__fillBusData(id, arrival_t_o, departure_t, discharge)
+                bus_data.append(bd)
 
-                ### Calculate discharge
-                #  self.__calcDischarge(self)
+            ## Update id
+            id += 1
 
         # Determine gamma array
+        self.dm['gamma'] = sorted(bus_data, key=lambda d: d['arrival_time'])
 
         # Determine Gamma array
+
 
         return
 
@@ -321,15 +328,15 @@ class Schedule:
     #
     def __selectDeptTime(self, prev_arrival: float, final_visit: bool) -> float:
         # Local Variables
-        maxrst = self.dm['maxrst']
-        minrst = self.dm['minrst']
+        maxr = self.dm['maxr']
+        minr = self.dm['minr']
 
         if not final_visit:
             # If the next departure time is less than the time horizon use that,
             # otherwise set the departure time as the time horizon
             dept_time = \
-                    prev_arrival + random.uniform(minrst, maxrst)                if   \
-                    prev_arrival + random.uniform(minrst, maxrst) < self.dm['T'] else \
+                    prev_arrival + random.uniform(minr, maxr)                if   \
+                    prev_arrival + random.uniform(minr, maxr) < self.dm['T'] else \
                     self.dm['T']
         else:
             dept_time = self.dm['T']
@@ -344,15 +351,40 @@ class Schedule:
     # Output:
     #   Next arrival time
     #
-    def __selectDuration(self, i: float, n: float) -> float:
+    def __selectNextArrivalTime(self, i: float, n: float) -> float:
         # Local variables
         i    += 1
         chunk = self.dm['T']/n
 
-        #  maxrt = self.dm['maxrt']
-        #  minrt = self.dm['minrt']
-
-        # Determine how much time is left over until current "time chunk" is over
+        # Determine when the time next time interval is over
         arrival_time = i*chunk
 
         return arrival_time
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   b_id       : bus id (index)
+    #   arrival_t  : arrival time for bus a visit i
+    #   departure_t: departure time for bus a visit i
+    #
+    # Output:
+    #   Total amount of discharge [KWH]
+    #
+    def __calcDischarge(self, b_id: int, arrival_t: float, departure_t: float) -> float:
+        return self.dm['zeta'][b_id]*(departure_t-arrival_t)
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   arrival_t   : Arrival time of bus a visit i
+    #   departure_t : Departure time of bus a visit i
+    #   discharge   : Total discharge from route
+    #
+    # Output:
+    #   b: filled bus_info dictionary
+    #
+    def __fillBusData(self, id: int, arrival_t:float , departure_t: float, discharge: float) -> dict:
+        # Local variables
+        keys = bus_info.keys()
+        data = [id, arrival_t, departure_t, departure_t - arrival_t, discharge]
+
+        return dict(zip(keys, data))

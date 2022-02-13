@@ -172,7 +172,8 @@ def main():
             load_from_file = True
 
     # Create schedule manager class
-    Schedule(gp.Model())
+    m = gp.Model()
+    Schedule(m)
 
     # Optimize
     #  o = Optimizer(load_from_file)

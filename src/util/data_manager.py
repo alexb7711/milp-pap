@@ -117,15 +117,13 @@ class DataManager:
         'kappa'  : None, #  Battery capacity for bus i                          [MJ]
         'l'      : None, #  (lambda) Discharge of bus visit over route i
         'm'      : None, #  Cost of bus i being assigned to charger q
-        'maxrst' : None, #  Maximum rest time between routes                    [hr]
-        'minrst' : None, #  Minimum rest time between routes                    [hr]
-        'maxrt'  : None, #  Maximum rout time                                   [hr]
-        'minrt'  : None, #  Minimum rout time                                   [hr]
+        'maxr'   : None, #  Maximum rest time between routes                    [hr]
+        'minr'   : None, #  Minimum rest time between routes                    [hr]
         'nu'     : None, #  Minimum charge allowed on departure of visit i      [%]
         'r'      : None, #  Charge rate for charger q                           [KWh]
-        't'      : None, #  (tau) Departe time for bus i
+        't'      : None, #  (tau) Departure time for bus visit i                [hr]
         'tk'     : None, #  Array of discrete times                             [hr]
-
+        'zeta'   : None, #  Discharge rate for bus a                            [KW]
     }
 
     # Decision Variables
