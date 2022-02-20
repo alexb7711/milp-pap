@@ -25,7 +25,8 @@ sys.path.append("util/")
 # Developed
 #  from schedule_manager import Schedule
 from scheduler import Schedule
-from optimizer        import Optimizer
+from optimizer import Optimizer
+from pretty    import *
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Data managers
@@ -92,7 +93,9 @@ def plot(results):
 #
 def setupObjective(o, dm):
     # Local variables
-    m = dm['model']
+    d_var  = dm.m_decision_var
+    m      = dm['model']
+    params = dm.m_params
 
     objectives = \
     [
@@ -112,20 +115,23 @@ def setupConstraints(o, dm):
     A = dm['A']
     N = dm['N']
     Q = dm['Q']
+    d_var  = dm.m_decision_var
+    m = dm['model']
+    params = dm.m_params
 
     # Set the number of visists
-    o.setIterations(N+A)
+    o.setIterations(N)
 
     ## List of constraints to optimize over
     constraints = \
     [
         ### Packing
         ChargeDuration("charge_duration"),
-        Delta("delta", N+A),
-        Sigma("sigma", N+A),
-        SigmaDelta("sigma_delta", N+A),
-        SpaceBigO("space_big_o", N+A),
-        TimeBigO("time_big_o", N+A),
+        Delta("delta", N),
+        Sigma("sigma", N),
+        SigmaDelta("sigma_delta", N),
+        SpaceBigO("space_big_o", N),
+        TimeBigO("time_big_o", N),
         ValidDepartureTime("valid_departure_time"),
         ValidEndTime("valid_end_time"),
         ValidInitialTime("valid_initial_time"),
@@ -171,20 +177,29 @@ def main():
         if lff >= 1:
             load_from_file = True
 
+    # Create data manager object
+    dm = DataManager()
+
+    # Create gurobi model
+    m = dm['model'] = gp.Model()
+
     # Create schedule manager class
-    m = gp.Model()
     Schedule(m)
 
     # Optimize
-    #  o = Optimizer(load_from_file)
+    ## Initialize optimizer
+    o = Optimizer(load_from_file)
 
-    ## Create data manager object
-    dm = DataManager()
+    ## Initialize objectives and constraints
+    setupObjective(o, dm)
+    setupConstraints(o, dm)
 
-    #  setupObjective(o, dm)
-    #  setupConstraints(o, dm)
+    ## Optimize model
+    results = o.optimize()
 
-    #  results = o.optimize()
+    #  pretty(dm.m_params)
+    pretty(results)
+    input()
 
     # Plot Results
     #  plot(results)

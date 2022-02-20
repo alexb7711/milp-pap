@@ -12,7 +12,8 @@ from joblib   import Parallel, delayed
 np.set_printoptions(threshold=sys.maxsize)
 
 # Developed Modules
-from pretty import *
+from data_manager import DataManager
+from pretty       import *
 
 ##===============================================================================
 #
@@ -31,16 +32,18 @@ class Optimizer:
     # Output:
     #       Example: test
     #
-    def __init__(self, model, params, d_var, load_from_file):
-        self.model      = model
-        self.params     = params
-        self.d_var      = d_var
+    def __init__(self, load_from_file):
+        self.dm         = DataManager()
+        self.model      = self.dm['model']
+        self.params     = self.dm.m_params
+        self.d_var      = self.dm.m_decision_var
         self.lff        = load_from_file
         self.constr     = []
         self.objective  = []
         self.iterations = 1
         self.jobs       = 0
         self.verbose    = 1
+
         with open(r'config/general.yaml') as f:
                 file           = yaml.load(f, Loader=yaml.FullLoader)
                 self.jobs      = file['jobs']

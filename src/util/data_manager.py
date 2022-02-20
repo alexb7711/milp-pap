@@ -3,9 +3,31 @@ from dict_util import *
 
 ##===============================================================================
 #
-class DataManager:
+class DataManager(object):
     ##===========================================================================
     # PUBLIC
+
+    ##---------------------------------------------------------------------------
+    #
+    def __new__(cls):
+        """
+        Override the instanciation of the objects to behave like a singleton
+
+        References:
+        https://www.geeksforgeeks.org/singleton-pattern-in-python-a-complete-guide/
+        https://radek.io/2011/07/21/static-variables-and-methods-in-python/
+
+        Input:
+          NONE
+
+        Output:
+          NONE
+
+        """
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(DataManager, cls).__new__(cls)
+
+        return cls.instance
 
     ##---------------------------------------------------------------------------
     # Input:
@@ -15,9 +37,9 @@ class DataManager:
     #   NONE
     #
     def __init__(self):
-        if self.m_schedule_data == None:
-            self.m_schedule_data = merge_dicts(self.m_params, self.m_decision_var)
-            self.m_schedule_data = merge_dicts(self.m_schedule_data, {'model' :None})
+        if not DataManager.m_schedule_data:
+            DataManager.m_schedule_data = merge_dicts(DataManager.m_params, DataManager.m_decision_var)
+            DataManager.m_schedule_data = merge_dicts(DataManager.m_schedule_data, {'model' : None})
         return
 
     ##---------------------------------------------------------------------------
@@ -33,20 +55,20 @@ class DataManager:
 
         # Check if the schedule has the specified key, if so update schdule
         # parameter
-        if self.m_schedule_data.__contains__(key):
+        if DataManager.m_schedule_data.__contains__(key):
             key_exists = True
 
-            self.m_schedule_data[key] = val
+            DataManager.m_schedule_data[key] = val
 
             ## Check if input parameter contains the key,
             ## if so update its value
-            if self.m_params.__contains__(key):
-                self.m_params[key] = val
+            if DataManager.m_params.__contains__(key):
+                DataManager.m_params[key] = val
 
             ## Otherwise decision variable contains the key,
             ## if so update its value
             else:
-                self.m_decision_var[key] = val
+                DataManager.m_decision_var[key] = val
 
         return key_exists
 
@@ -64,7 +86,7 @@ class DataManager:
         # Check if the schedule has the specified key, if so update schdule
         # parameter
         for ke,k,v in zip(key_exists, keys,vals):
-            ke = self.set(k,v)
+            ke = DataManager.set(k,v)
 
         return key_exists
 
@@ -75,9 +97,9 @@ class DataManager:
     # Output:
     #   value: The value associated with the specified key
     #
-    def __getitem__(self, key):
-        if self.m_schedule_data.__contains__(key):
-            return self.m_schedule_data[key]
+    def __getitem__(DataManager, key):
+        if DataManager.m_schedule_data.__contains__(key):
+            return DataManager.m_schedule_data[key]
         else:
             print("ERROR: Invalid key provided!")
             print(quit)
@@ -91,7 +113,7 @@ class DataManager:
     #   key_exists: Returns of the key exists (value was saved)
     #
     def __setitem__(self, key, value):
-        return self.set(key,value)
+        return DataManager.set(self, key,value)
 
     ##===========================================================================
     # PRIVATE
@@ -105,12 +127,13 @@ class DataManager:
         'A'      : None, #  Number of buses
         'Gamma'  : None, #  Array of visit ID's
         'N'      : None, #  Number of total visits
-        'Q'      : None, #  Number of charters
+        'Q'      : None, #  Number of chargers
+        'S'      : None, #  Length of a single charger
         'T'      : None, #  Time horizon                                        [hr]
         'K'      : None, #  Discrete number of steps in T
-        'a'      : None, #  Arrival time of bus i                               [hr]
-        'alpha'  : None, #  Initial charge percentage for bus i                 [%]
-        'beta'   : None, #  Final charge percentage for bus i at T              [%]
+        'a'      : None, #  Arrival time of bus visit i                         [hr]
+        'alpha'  : None, #  Initial charge percentage for bus a                 [%]
+        'beta'   : None, #  Final charge percentage for bus a at T              [%]
         'dt'     : None, #  Discrete time step                                  [hr]
         'e'      : None, #  (epsilon) Cost of using charger q per unit time
         'gamma'  : None, #  Array of values indicating the next index for bus i
@@ -121,6 +144,7 @@ class DataManager:
         'minr'   : None, #  Minimum rest time between routes                    [hr]
         'nu'     : None, #  Minimum charge allowed on departure of visit i      [%]
         'r'      : None, #  Charge rate for charger q                           [KWh]
+        's'      : None, #  Length of a bus
         't'      : None, #  (tau) Departure time for bus visit i                [hr]
         'tk'     : None, #  Array of discrete times                             [hr]
         'zeta'   : None, #  Discharge rate for bus a                            [KW]

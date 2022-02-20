@@ -38,8 +38,7 @@ class Schedule:
 
         # If a new schedule is to be generated
         if self.init['run_prev'] <= 0:
-            self.__loadAttributes()
-            self.__generateScheduleParams()
+            self.__genNewSchedule()
         else:
             self.__loadPreviousParams()
 
@@ -79,7 +78,7 @@ class Schedule:
     # Output:
     #   Schedule attributes
     #
-    def __loadAttributes(self):
+    def __bufferAttributes(self):
         ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # Local Variables
         init = self.init
@@ -112,6 +111,9 @@ class Schedule:
         self.dm['Q'] = init['chargers']['slow']['num'] + \
                        init['chargers']['fast']['num']
 
+        ## Singular charger size
+        self.dm['T'] = init['chargers']['size']
+
         ## Time horizon
         self.dm['T'] = init['time']['time_horizon']
 
@@ -122,13 +124,16 @@ class Schedule:
         self.dm['alpha'] = np.zeros(self.dm['A'], dtype=float)
 
         ## Final charge percentages
-        self.dm['beta'] = np.zeros(self.dm['A'], dtype=float)
+        self.dm['beta'] = np.repeat(self.init['final_charge'], self.dm['A'])
 
         ## Calculate discrete time step
         self.dm['dt'] = self.dm['T']/self.dm['K']
 
         ## Cost of use for charger q
-        self.dm['epsilon'] = epsilon
+        self.dm['e'] = epsilon
+
+        ## Battery capacity of each bus
+        self.dm['kappa'] = np.repeat(init['buses']['bat_capacity'], self.dm['A'])
 
         ## Cost of assignment for charger q
         self.dm['m'] = m
@@ -142,6 +147,9 @@ class Schedule:
 
         ## Charge rate for bus q
         self.dm['r'] = r
+
+        ## Length of a bus
+        self.dm['s'] = np.repeat(init['buses']['bus_length'], self.dm['N'])
 
         ## Discrete time steps
         self.dm['tk'] = np.array([i*self.dm['dt'] for i in range(0,self.dm['K'])]);
@@ -159,7 +167,7 @@ class Schedule:
         self.dm['tau'] = np.zeros(self.dm['N'], dtype=float)
 
         ## Discharge for route i
-        self.dm['lambda'] = np.zeros(self.dm['N'], dtype=float)
+        self.dm['l'] = np.zeros(self.dm['N'], dtype=float)
 
         ## ID of bus for each visit
         self.dm['gamma'] = np.zeros(self.dm['N'], dtype=int)
@@ -222,12 +230,44 @@ class Schedule:
             ## Update id
             id += 1
 
-        # Determine gamma array
-        self.dm['gamma'] = sorted(bus_data, key=lambda d: d['arrival_time'])
+        # Sort and apply final elements to the schedule
+        ## Determine gamma array
+        self.dm['Gamma'] = self.__genNextVisit(bus_data)
 
-        # Determine Gamma array
+        ## Determine Gamma array
+        self.dm['gamma'] = self.__determineNextVisit(self.dm['Gamma'])
 
+        ## Randomly assign initial charges
+        self.dm['alpha'] = \
+                self.__determineInitCharge(self.init['initial_charge'])
 
+        ## Assign arrival times to tau array
+        self.dm['a'] = self.__applyParam(bus_data,
+                                         self.dm['gamma'],
+                                         "arrival_time")
+
+        ## Assign departure times to tau array
+        self.dm['t'] = self.__applyParam(bus_data,
+                                         self.dm['gamma'],
+                                         "departure_time")
+
+        ## Assign discharges to lambda array
+        self.dm['l'] = self.__applyParam(bus_data,
+                                         self.dm['gamma'],
+                                         "route_discharge")
+        return
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   NONE
+    #
+    # Output:
+    #   New bus schedule
+    #
+    def __genNewSchedule(self):
+        self.__bufferAttributes()
+        self.__generateScheduleParams()
+        self.__genDecisionVars()
         return
 
     ##---------------------------------------------------------------------------
@@ -257,7 +297,6 @@ class Schedule:
 
         # Save values to shared memory
         self.dm.setList(keys, values)
-
         return
 
     ##---------------------------------------------------------------------------
@@ -278,10 +317,10 @@ class Schedule:
     #
     def __genDecisionVars(self):
         # Local Variables
-        A = self.A
-        N = self.N
-        K = self.K
-        Q = self.Q
+        A = self.dm['A']
+        N = self.dm['N']
+        K = self.dm['K']
+        Q = self.dm['Q']
 
         # Generate decision variables
         ## Initial charge time
@@ -370,7 +409,8 @@ class Schedule:
     # Output:
     #   Total amount of discharge [KWH]
     #
-    def __calcDischarge(self, b_id: int, arrival_t: float, departure_t: float) -> float:
+    def __calcDischarge(self, b_id: int, arrival_t: float,
+                        departure_t: float) -> float:
         return self.dm['zeta'][b_id]*(departure_t-arrival_t)
 
     ##---------------------------------------------------------------------------
@@ -382,9 +422,103 @@ class Schedule:
     # Output:
     #   b: filled bus_info dictionary
     #
-    def __fillBusData(self, id: int, arrival_t:float , departure_t: float, discharge: float) -> dict:
+    def __fillBusData(self, id: int, arrival_t: float,
+                      departure_t: float, discharge: float) -> dict:
         # Local variables
         keys = bus_info.keys()
         data = [id, arrival_t, departure_t, departure_t - arrival_t, discharge]
 
         return dict(zip(keys, data))
+
+    ##---------------------------------------------------------------------------
+    # Input:
+    #   bus_data: List of bus information
+    #
+    # Output:
+    #   Gamma: List of id's for each visit
+    #
+    def __genNextVisit(self, bus_data: np.ndarray) -> np.ndarray:
+        Gamma = sorted(bus_data, key=lambda d: d['arrival_time'])
+        Gamma = [i['id'] for i in Gamma]
+        return Gamma
+
+    ##---------------------------------------------------------------------------
+    #
+    def __determineNextVisit(self, Gamma: np.ndarray) -> np.ndarray:
+        """
+        Input:
+            Gamma: Array of bus arrivals id's
+
+        Output:
+            gamma: Array of index of next bus arrival for bus a
+        """
+
+        # Local Variables
+        A = self.dm['A']
+        N = self.dm['N']
+
+        ## Create gamma buffer
+        gamma = -1*np.ones(N, dtype=int)
+
+        ## Keep track of the previous index each bus arrived at
+        next_idx = np.array([final(Gamma, i) for i in range(A)], dtype=int)
+
+        ## Keep track of the first instance each bus arrives
+        last_idx = next_idx.copy()
+
+        # Loop through each bus visit
+        for i in range(N-1, -1, -1):
+            ## Make sure that the index being checked is greater than the first
+            ## visit. If it is, set the previous index value equal to the current.
+            ## In other words, index i's value indicates the next index the bus
+            ## will visit.
+            if i < last_idx[Gamma[i]]:
+                gamma[i]           = next_idx[Gamma[i]]
+                next_idx[Gamma[i]] = i
+
+        return gamma
+
+    ##---------------------------------------------------------------------------
+    #
+    def __determineInitCharge(self, initial_charges: np.ndarray) -> np.ndarray:
+        """
+        Randomly assign inital charges that range from min to max
+
+        Input:
+            initial_charges: Contains min and max charge percentages
+            bat_capacity   : Battery capacity for bus 'a'
+
+        Output:
+            arr: Array of bus_data elements in gamma order
+        """
+        # Local variables
+        alpha = lambda: np.random.uniform(initial_charges['min'], initial_charges['max'])
+
+        return [alpha() for i in range(self.dm['A'])]
+
+    ##---------------------------------------------------------------------------
+    #
+    def __applyParam(self, bus_data: np.ndarray,
+                           gamma: np.ndarray,
+                           info: str) -> np.ndarray:
+        """
+        Apply the departure times for visit 'i' in the tau array
+
+        Input:
+            bus_data: List of information for each bus visit (See bus_data.py)
+            gamma: Array of index of next bus arrival for bus a
+            str: String specifying the data to extract from bus_data
+
+        Output:
+            arr: Array of bus_data elements in gamma order
+        """
+        # Local variables
+        arr = np.empty(self.dm['N'], dtype=float)
+        idx = 0
+
+        # Assign departure time to each visit
+        for g in gamma:
+            arr[idx] = bus_data[g][info]
+            idx     += 1
+
+        return arr

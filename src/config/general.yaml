@@ -5,7 +5,7 @@ jobs: 4
 plot: 1
 
 # Generate new schedule
-load_from_file: 1
+load_from_file: 0
 
 # Verbose
 verbose: 0
