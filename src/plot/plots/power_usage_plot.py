@@ -48,7 +48,7 @@ class PowerUsagePlot(Plotter):
 
         idx = 0
         for i in np.linspace(0,self.T,self.K):
-            for j in range(self.A+self.N):
+            for j in range(N):
                 if u[j] <= i and c[j] >= i:
                     usage[idx] += r[int(v[j])]
             idx += 1

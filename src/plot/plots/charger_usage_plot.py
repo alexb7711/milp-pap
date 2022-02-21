@@ -46,7 +46,7 @@ class ChargerUsagePlot(Plotter):
         # Configure Plot
         fig, ax = plt.subplots(2)
 
-        for i in range(self.A+self.N):
+        for i in range(N):
             if self.v[i] <= 4:
                 v100.append(self.v[i])
             else:
@@ -63,7 +63,7 @@ class ChargerUsagePlot(Plotter):
 
         idx = 0
         for i in np.linspace(0,self.T,self.K):
-            for j in range(self.A+self.N):
+            for j in range(N):
                 if u[j] <= i and c[j] >= i:
                     if v[j] <= u100:
                         use100[idx] += 1

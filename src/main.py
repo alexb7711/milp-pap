@@ -197,12 +197,8 @@ def main():
     ## Optimize model
     results = o.optimize()
 
-    #  pretty(dm.m_params)
-    pretty(results)
-    input()
-
     # Plot Results
-    #  plot(results)
+    plot(results)
 
     return
 

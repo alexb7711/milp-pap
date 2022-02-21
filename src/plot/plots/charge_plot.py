@@ -75,7 +75,7 @@ class ChargePlot(Plotter):
             tempx       = []
             tempy       = []
 
-            for j in range(N+A):
+            for j in range(N):
                 if Gamma[j] == i:
                     tempx.append(j)
                     tempy.append(eta[j])

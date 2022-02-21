@@ -6,31 +6,34 @@ from constraint import Constraint
 ##===============================================================================
 #
 class FinalCharge(Constraint):
-	##=======================================================================
-	# PUBLIC
+    ##=======================================================================
+    # PUBLIC
 
-	##-----------------------------------------------------------------------
-	# Input:
-	#			m     : Gurobi model
-	#			params: Model parameters
-	#			d_var : Model decision variables
-	#			i     : constraint id
-	#
-	# Output:
-	#			NONE
-	#
-	def constraint(self, model, params, d_var, i, j):
-		# Extract parameters
-		G     = self.params['Gamma']
-		beta  = self.params['beta']
-		kappa = self.params['kappa']
+    ##-----------------------------------------------------------------------
+    #
+    def constraint(self, model, params, d_var, i, j):
+        """
+        Input:
+            m     : Gurobi model
+            params: Model parameters
+            d_var : Model decision variables
+            i     : constraint id
 
-		# Extract decision vars
-		eta = self.d_var['eta']
-		g   = self.d_var['g']
+        Output:
+            NONE
+        """
 
-		if beta[i] > 0:
-			model.addConstr(eta[i] >= beta[i]*kappa[G[i]], \
-											name="{0}_{1}".format(i,self.name))
+        # Extract parameters
+        G     = self.params['Gamma']
+        beta  = self.params['beta']
+        kappa = self.params['kappa']
 
-		return
+        # Extract decision vars
+        eta = self.d_var['eta']
+        g   = self.d_var['g']
+
+        if beta[i] > 0:
+            model.addConstr(eta[i] >= beta[i]*kappa[G[i]], \
+                                            name="{0}_{1}".format(i,self.name))
+
+        return

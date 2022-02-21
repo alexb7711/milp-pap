@@ -112,7 +112,7 @@ class Schedule:
                        init['chargers']['fast']['num']
 
         ## Singular charger size
-        self.dm['T'] = init['chargers']['size']
+        self.dm['S'] = init['chargers']['size']
 
         ## Time horizon
         self.dm['T'] = init['time']['time_horizon']
@@ -124,7 +124,7 @@ class Schedule:
         self.dm['alpha'] = np.zeros(self.dm['A'], dtype=float)
 
         ## Final charge percentages
-        self.dm['beta'] = np.repeat(self.init['final_charge'], self.dm['A'])
+        self.dm['beta'] = np.zeros(self.dm['N'], dtype=float)
 
         ## Calculate discrete time step
         self.dm['dt'] = self.dm['T']/self.dm['K']
@@ -239,7 +239,14 @@ class Schedule:
 
         ## Randomly assign initial charges
         self.dm['alpha'] = \
-                self.__determineInitCharge(self.init['initial_charge'])
+                self.__determineInitCharge(self.dm['Gamma'],
+                                           self.init['initial_charge'])
+
+        ## Assign final charges
+        self.dm['beta'] = \
+                self.__determineFinalCharge(self.dm['Gamma'],
+                                            self.dm['gamma'],
+                                            self.init['final_charge'])
 
         ## Assign arrival times to tau array
         self.dm['a'] = self.__applyParam(bus_data,
@@ -480,7 +487,8 @@ class Schedule:
 
     ##---------------------------------------------------------------------------
     #
-    def __determineInitCharge(self, initial_charges: np.ndarray) -> np.ndarray:
+    def __determineInitCharge(self, Gamma: np.ndarray,
+                                    initial_charges: np.ndarray) -> np.ndarray:
         """
         Randomly assign inital charges that range from min to max
 
@@ -489,12 +497,46 @@ class Schedule:
             bat_capacity   : Battery capacity for bus 'a'
 
         Output:
-            arr: Array of bus_data elements in gamma order
+            alpha: Initial charge percentage for bus 'a'
         """
         # Local variables
-        alpha = lambda: np.random.uniform(initial_charges['min'], initial_charges['max'])
+        init_charge = lambda: np.random.uniform(initial_charges['min'], initial_charges['max'])
+        alpha       = np.zeros(self.dm['N'], dtype=float)
 
-        return [alpha() for i in range(self.dm['A'])]
+        # Loop through bus
+        for a in range(self.dm['A']):
+            ## For each first visit, assign an inital charge percentage
+            alpha[first(Gamma, a)] = init_charge()
+
+        return alpha
+
+    ##---------------------------------------------------------------------------
+    #
+    def __determineFinalCharge(self, Gamma, gamma, final_charge):
+        """
+        Assign final charge percentage at the correct index in array of
+        N arrivals
+
+        Input:
+            Gamma: Array of bus id's for each visit
+            gamma: Array of indices for next bus arrival
+            final_charge:
+
+        Output:
+            beta: Array of final charge percentages for bus 'a'
+        """
+
+        # Local variables
+        beta = np.zeros(self.dm['N'], dtype=float)
+
+        # Loop through each visit
+        for i in range(self.dm['N']):
+            ## If it is the last visit for bus 'a', update the final charge
+            ## percentage
+            if gamma[i] == -1:
+                beta[i] = final_charge
+
+        return beta
 
     ##---------------------------------------------------------------------------
     #

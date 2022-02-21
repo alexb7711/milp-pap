@@ -46,7 +46,7 @@ class SchedulePlot(Plotter):
         u400    = []
         v400    = []
 
-        for i in range(self.A+self.N):
+        for i in range(self.N):
             if self.v[i] <= 4:
                 a100.append(self.a[i])
                 c100.append(self.c[i])
@@ -60,7 +60,7 @@ class SchedulePlot(Plotter):
 
         # Create a unique color for each bus
         color     = ['#%06X' % np.random.randint(0, 0xFFFFFF) for i in range(self.A)]
-        facecolor = [color[self.Gamma[x]] for x in range(self.A+self.N)]
+        facecolor = [color[self.Gamma[x]] for x in range(self.N)]
 
         time100, position100 = self.__plotResults(len(v100), ax[0], a100, u100, v100, c100)
         _                    = self.__makeErrorBoxes(ax[0], u100, v100, time100, position100, facecolor)
