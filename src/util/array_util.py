@@ -101,11 +101,16 @@ def initArray(size: int, t) -> np.ndarray:
     return initArray(size, t)
 
 ##===============================================================================
-# Input:
-#   size: tuple for array length
-#   t   : type of array
 #
-# Output:
-#   Array of values corresponding to the matrix
-def initArray(size: tuple, t) -> np.ndarray:
-    return -1*numpy.ones(size, t)
+def initArray(size: tuple, dtype=float) -> np.ndarray:
+    """
+    Initialize a numpy array of dimension tuple of type t
+
+    Input:
+        size: tuple for array length
+        t   : type of array
+
+    Output:
+        Array of values corresponding to the matrix
+    """
+    return -1*np.ones(size, dtype=dtype)

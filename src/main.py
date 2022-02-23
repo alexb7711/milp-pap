@@ -100,7 +100,7 @@ def setupObjective(o, dm):
     objectives = \
     [
         MinTimeObjective("min_time_objective"),
-        MinPowerObjective("min_power_objective"),
+        #  MinPowerObjective("min_power_objective"),
     ]
 
     objectives[0].initialize(m, params, d_var)
@@ -112,11 +112,11 @@ def setupObjective(o, dm):
 #
 def setupConstraints(o, dm):
     # Local Variables
-    A = dm['A']
-    N = dm['N']
-    Q = dm['Q']
+    A      = dm['A']
+    N      = dm['N']
+    Q      = dm['Q']
     d_var  = dm.m_decision_var
-    m = dm['model']
+    m      = dm['model']
     params = dm.m_params
 
     # Set the number of visists
@@ -147,7 +147,7 @@ def setupConstraints(o, dm):
         ValidQueueVector("valid_queue_vector"),
 
         ### Power
-        DiscretePowerUsage("discrete_power_usage", Q),
+        #  DiscretePowerUsage("discrete_power_usage", Q),
     ]
 
     initializeConstr(constraints, m, params, d_var)
@@ -171,12 +171,6 @@ def subscribeConstr(constraints, optimizer_obj):
 ##===============================================================================
 #
 def main():
-    load_from_file = False
-    with open(r'config/general.yaml') as f:
-        lff = yaml.load(f, Loader=yaml.FullLoader)['load_from_file']
-        if lff >= 1:
-            load_from_file = True
-
     # Create data manager object
     dm = DataManager()
 
@@ -188,7 +182,7 @@ def main():
 
     # Optimize
     ## Initialize optimizer
-    o = Optimizer(load_from_file)
+    o = Optimizer()
 
     ## Initialize objectives and constraints
     setupObjective(o, dm)

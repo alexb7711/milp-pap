@@ -27,7 +27,7 @@ class Schedule:
     #
     def __init__(self, model):
         # Parse YAML file
-        self.init = self.__parseYAML()
+        self.init, self.run_prev = self.__parseYAML()
 
         # Create data manager object
         self.dm = DataManager()
@@ -37,7 +37,7 @@ class Schedule:
         self.dm['model'] = model
 
         # If a new schedule is to be generated
-        if self.init['run_prev'] <= 0:
+        if self.run_prev <= 0:
             self.__genNewSchedule()
         else:
             self.__loadPreviousParams()
@@ -67,9 +67,17 @@ class Schedule:
     #   self.init: Parsed schedule YAML file
     #
     def __parseYAML(self):
-        self.f = open(r'./config/schedule.yaml')
-        init   = yaml.load(self.f, Loader=yaml.FullLoader)
-        return init
+        # Parse 'config/schedule.yaml'
+        self.f   = open(r'./config/schedule.yaml')
+        init     = yaml.load(self.f, Loader = yaml.FullLoader)
+
+        # Parse 'config/general.yaml'
+        # Parse 'config/general.yaml'
+        with open(r'config/general.yaml') as f:
+                file     = yaml.load(f, Loader=yaml.FullLoader)
+                run_prev = file['run_prev']
+
+        return init, run_prev
 
     ##---------------------------------------------------------------------------
     # Input:
@@ -112,7 +120,7 @@ class Schedule:
                        init['chargers']['fast']['num']
 
         ## Singular charger size
-        self.dm['S'] = init['chargers']['size']
+        self.dm['S'] = self.dm['Q']
 
         ## Time horizon
         self.dm['T'] = init['time']['time_horizon']
@@ -121,10 +129,10 @@ class Schedule:
         self.dm['K'] = init['time']['K']
 
         ## Initial charge percentages
-        self.dm['alpha'] = np.zeros(self.dm['A'], dtype=float)
+        self.dm['alpha'] = initArray(self.dm['A'], dtype=float)
 
         ## Final charge percentages
-        self.dm['beta'] = np.zeros(self.dm['N'], dtype=float)
+        self.dm['beta'] = initArray(self.dm['N'], dtype=float)
 
         ## Calculate discrete time step
         self.dm['dt'] = self.dm['T']/self.dm['K']
@@ -198,8 +206,6 @@ class Schedule:
 
         # For each bus
         for a,n in zip(range(A),num_visits):
-            ## Allocate memory to temporarily store bus route information
-
             ## Initialize the previous arribval/departure
             ## to hour 0 (beginning of day)
             departure_t: float = float(0)
@@ -231,6 +237,9 @@ class Schedule:
             id += 1
 
         # Sort and apply final elements to the schedule
+        ## Sort bus_data by arrival times
+        bus_data = sorted(bus_data, key=lambda d: d['arrival_time'])
+
         ## Determine gamma array
         self.dm['Gamma'] = self.__genNextVisit(bus_data)
 
@@ -244,24 +253,21 @@ class Schedule:
 
         ## Assign final charges
         self.dm['beta'] = \
-                self.__determineFinalCharge(self.dm['Gamma'],
-                                            self.dm['gamma'],
+                self.__determineFinalCharge(self.dm['gamma'],
                                             self.init['final_charge'])
 
         ## Assign arrival times to tau array
-        self.dm['a'] = self.__applyParam(bus_data,
-                                         self.dm['gamma'],
-                                         "arrival_time")
+        self.dm['a'] = self.__applyParam(bus_data, "arrival_time")
 
         ## Assign departure times to tau array
-        self.dm['t'] = self.__applyParam(bus_data,
-                                         self.dm['gamma'],
-                                         "departure_time")
+        self.dm['t'] = self.__applyParam(bus_data, "departure_time")
 
         ## Assign discharges to lambda array
-        self.dm['l'] = self.__applyParam(bus_data,
-                                         self.dm['gamma'],
-                                         "route_discharge")
+        self.dm['l'] = self.__applyParam(bus_data, "route_discharge")
+
+        ## Save parameters to disk
+        self.__saveParams()
+
         return
 
     ##---------------------------------------------------------------------------
@@ -278,14 +284,37 @@ class Schedule:
         return
 
     ##---------------------------------------------------------------------------
-    # Input:
-    #   NONE
     #
-    # Output:
-    #   Previously generated schedule
+    def __saveParams(self):
+        """
+        Save the generated schedule parameters to disk
+
+        Input:
+            NONE
+
+        Output:
+             Ouput parameters to 'data/input_vars.npy'
+        """
+        # Save data for furture runs
+        np.save('data/input_vars.npy', self.dm.m_params)
+        return
+
+    ##---------------------------------------------------------------------------
     #
-    def __loadPreviousParams():
+    def __loadPreviousParams(self):
+        """
+        Save the generated parameters
+
+        Input:
+            NONE
+
+        Output:
+            Previously generated schedule
+        """
+
+        # Load previous run input params from disk
         data = np.load('data/input_vars.npy', allow_pickle='TRUE').item()
+
         self.__saveKVParams(data)
         self.__genDecisionVars()
         return
@@ -336,7 +365,7 @@ class Schedule:
         ## Assigned queue
         self.dm['v'] = self.model.addMVar(shape=N, vtype=GRB.CONTINUOUS, name="v")
 
-        ## Detatch tiself.dm['model.
+        ## Detatch time
         self.dm['c'] = self.model.addMVar(shape=N, vtype=GRB.CONTINUOUS, name="c")
 
         ## Charge tiself.dm['model.
@@ -358,10 +387,10 @@ class Schedule:
         self.dm['delta'] = self.model.addMVar(shape=(N,N), vtype=GRB.BINARY, name="delta")
 
         ## Xi
-        self.dm['xi'] = self.model.addMVar(shape=(N, Q, K), vtype=GRB.BINARY, name="xi")
+        #  self.dm['xi'] = self.model.addMVar(shape=(N, Q, K), vtype=GRB.BINARY, name="xi")
 
         ## Psi
-        self.dm['psi'] = self.model.addMVar(shape=(N, Q, K), vtype=GRB.BINARY, name="psi")
+        #  self.dm['psi'] = self.model.addMVar(shape=(N, Q, K), vtype=GRB.BINARY, name="psi")
 
         return
 
@@ -445,8 +474,7 @@ class Schedule:
     #   Gamma: List of id's for each visit
     #
     def __genNextVisit(self, bus_data: np.ndarray) -> np.ndarray:
-        Gamma = sorted(bus_data, key=lambda d: d['arrival_time'])
-        Gamma = [i['id'] for i in Gamma]
+        Gamma         = [i['id'] for i in bus_data]
         return Gamma
 
     ##---------------------------------------------------------------------------
@@ -512,7 +540,8 @@ class Schedule:
 
     ##---------------------------------------------------------------------------
     #
-    def __determineFinalCharge(self, Gamma, gamma, final_charge):
+    def __determineFinalCharge(self, gamma: np.ndarray,
+                                     final_charge: float) -> np.ndarray:
         """
         Assign final charge percentage at the correct index in array of
         N arrivals
@@ -540,27 +569,16 @@ class Schedule:
 
     ##---------------------------------------------------------------------------
     #
-    def __applyParam(self, bus_data: np.ndarray,
-                           gamma: np.ndarray,
-                           info: str) -> np.ndarray:
+    def __applyParam(self, bus_data: np.ndarray, info: str) -> np.ndarray:
         """
         Apply the departure times for visit 'i' in the tau array
 
         Input:
             bus_data: List of information for each bus visit (See bus_data.py)
-            gamma: Array of index of next bus arrival for bus a
+            Gamma: Array of bus arrival id's
             str: String specifying the data to extract from bus_data
 
         Output:
-            arr: Array of bus_data elements in gamma order
+            arr: Array of bus_data elements in Gamma order
         """
-        # Local variables
-        arr = np.empty(self.dm['N'], dtype=float)
-        idx = 0
-
-        # Assign departure time to each visit
-        for g in gamma:
-            arr[idx] = bus_data[g][info]
-            idx     += 1
-
-        return arr
+        return np.array([b[info] for b in bus_data])

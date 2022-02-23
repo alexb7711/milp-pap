@@ -37,9 +37,16 @@ class DataManager(object):
     #   NONE
     #
     def __init__(self):
+        # If DataManager has not been created yet, create it
         if not DataManager.m_schedule_data:
-            DataManager.m_schedule_data = merge_dicts(DataManager.m_params, DataManager.m_decision_var)
-            DataManager.m_schedule_data = merge_dicts(DataManager.m_schedule_data, {'model' : None})
+            ## Combine parameters and decision variables
+            DataManager.m_schedule_data = \
+                    merge_dicts(DataManager.m_params.copy(),
+                                DataManager.m_decision_var.copy())
+
+            ## Append the gurobi model to the dictionary
+            DataManager.m_schedule_data = \
+                    merge_dicts(DataManager.m_schedule_data, {'model' : None})
         return
 
     ##---------------------------------------------------------------------------
@@ -86,7 +93,7 @@ class DataManager(object):
         # Check if the schedule has the specified key, if so update schdule
         # parameter
         for ke,k,v in zip(key_exists, keys,vals):
-            ke = DataManager.set(k,v)
+            ke = DataManager.set(self, k, v)
 
         return key_exists
 
@@ -158,12 +165,12 @@ class DataManager(object):
         'eta'   : None, #  Initial charge for bus visit i                   [MJ]
         'g'     : None, #  Linearization for bilinear term g := p[i]*w[i][q]
         'p'     : None, #  Time to charge for bus visit i                   [hr]
-        'psi'   : None, #  Linearization term for power objective function
+        #  'psi'   : None, #  Linearization term for power objective function
         'sigma' : None, #  Determines if i is "fully below" j
         'u'     : None, #  Initial charge time for visit i                  [hr]
         'v'     : None, #  Assigned queue for visit i
         'w'     : None, #  Matrix represetntation of bus charger assignments
-        'xi'    : None, #  Binary term to determine bus i is charging in tk
+        #  'xi'    : None, #  Binary term to determine bus i is charging in tk
     }
 
     # Schedule

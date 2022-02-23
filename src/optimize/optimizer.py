@@ -13,6 +13,7 @@ np.set_printoptions(threshold=sys.maxsize)
 
 # Developed Modules
 from data_manager import DataManager
+from dict_util    import *
 from pretty       import *
 
 ##===============================================================================
@@ -32,36 +33,45 @@ class Optimizer:
     # Output:
     #       Example: test
     #
-    def __init__(self, load_from_file):
-        self.dm         = DataManager()
-        self.model      = self.dm['model']
-        self.params     = self.dm.m_params
-        self.d_var      = self.dm.m_decision_var
-        self.lff        = load_from_file
-        self.constr     = []
-        self.objective  = []
-        self.iterations = 1
-        self.jobs       = 0
-        self.verbose    = 1
-
+    def __init__(self):
+        # Parse 'config/general.yaml'
         with open(r'config/general.yaml') as f:
                 file           = yaml.load(f, Loader=yaml.FullLoader)
                 self.jobs      = file['jobs']
                 self.verbose   = file['verbose']
+                self.lff       = file['load_from_file']
+                self.time_lim  = file['time_limit']
+
+        # Initialize member variables
+        self.dm         = DataManager()
+        self.model      = self.dm['model']
+        self.params     = self.dm.m_params
+        self.d_var      = self.dm.m_decision_var
+        self.constr     = []
+        self.objective  = []
+
         return
 
     ##---------------------------------------------------------------------------
-    # Input:
-    #
-    # Output:
     #
     def optimize(self):
+        """
+            This method runs the uta-pap optimization based on the the data
+            set in DataManager shared memory.
+
+        Input:
+            NONE
+
+        Output:
+            Gurobi MILP optimization results
+        """
         if not self.lff:
             # gurobi model
             model = self.model
 
-            #  pretty(self.sc)
-            #  input("Enter to continue...")
+            # Set time limit
+            model.setParam('TimeLimit', self.time_lim)
+
             # Objective
             print("====================================================================")
             print("Creating Objective...")
@@ -72,52 +82,34 @@ class Optimizer:
             print("====================================================================")
             print("Adding Constraints")
             print("====================================================================")
-            #  Parallel(n_jobs=self.jobs, backend='threading')(delayed(self.__inputConstraints)(i) for i in range(self.iterations))
-            for i in range(self.iterations):
-                self.__inputConstraints(i)
+            Parallel(n_jobs=self.jobs, backend='threading') \
+                    (delayed(self.__inputConstraints)(i) for i in range(self.iterations))
+            #  for i in range(self.iterations):
+                #  self.__inputConstraints(i)
 
             # Uncomment to print model to disk
             #  model.write("model.lp")
 
             # Optimize
-            print("Optimizing...")
+            print("====================================================================")
+            print("Optimizing")
+            print("====================================================================")
             model.optimize()
 
             # Save Results
-            results = \
-            {
-                ## Constants
-                "A"     : self.params['A'],
-                "N"     : self.params['N'],
-                "Q"     : self.params['Q'],
-                "T"     : self.params['T'],
-                "K"     : self.params['K'],
+            ## Extract all the decision variable results
+            d_var_results = \
+                    dict((k, self.dm.m_decision_var[k].X)
+                          for k in self.dm.m_decision_var.keys()
+                          if k != 'model')
 
-                ## Input Vars
-                "Gamma" : self.params['Gamma'],
-                "a"     : self.params['a'],
-                "alpha" : self.params['alpha'],
-                "beta"  : self.params['beta'],
-                "dt"    : self.params['dt'],
-                "gamma" : self.params['gamma'],
-                "l"     : self.params['l'],
-                "r"     : self.params['r'],
-                "t"     : self.params['t'],
+            ## Combine decision variable results with input parameters
+            results = merge_dicts(self.dm.m_params, d_var_results)
 
-                ## Decision Vars
-                "c"     : self.d_var['c'].X,
-                "delta" : self.d_var['delta'].X,
-                "eta"   : self.d_var['eta'].X,
-                "p"     : self.d_var['p'].X,
-                "sigma" : self.d_var['sigma'].X,
-                "u"     : self.d_var['u'].X,
-                "v"     : self.d_var['v'].X,
-                "w"     : self.d_var['w'].X,
-                "g"     : self.d_var['g'].X,
-            }
-
+            ## Save the results to disk
             np.save('data/results.npy', results)
         else:
+            ## Load the results from disk
             results = np.load("data/results.npy", allow_pickle='TRUE').item()
 
         return results
