@@ -1,3 +1,4 @@
+debugpy
 gurobipy
 joblib
 matplotlib
