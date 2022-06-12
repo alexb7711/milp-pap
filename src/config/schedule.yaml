@@ -2,8 +2,8 @@ time:
   time_horizon: 24     # [hr]
   K: 1000              # [steps]
 buses:
-  num_bus: 45
-  num_visit: 250
+  num_bus: 25
+  num_visit: 200
   bus_length: 1
   bat_capacity: 387.78 # [KWh]
   max_charge: 1        # [0-1]

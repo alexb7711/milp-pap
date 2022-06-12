@@ -227,7 +227,7 @@ class Schedule:
                 arrival_t_n = self.__selectNextArrivalTime(i, n)
 
                 ## Calculate discharge
-                discharge = self.__calcDischarge(id, arrival_t_o, departure_t)
+                discharge = self.__calcDischarge(id, arrival_t_n, departure_t)
 
                 ## Append to bus_data
                 bd = self.__fillBusData(id, arrival_t_o, departure_t, discharge)
@@ -256,7 +256,7 @@ class Schedule:
                 self.__determineFinalCharge(self.dm['gamma'],
                                             self.init['final_charge'])
 
-        ## Assign arrival times to tau array
+        ## Assign arrival times to arrival array
         self.dm['a'] = self.__applyParam(bus_data, "arrival_time")
 
         ## Assign departure times to tau array
@@ -447,7 +447,7 @@ class Schedule:
     #
     def __calcDischarge(self, b_id: int, arrival_t: float,
                         departure_t: float) -> float:
-        return self.dm['zeta'][b_id]*(departure_t-arrival_t)
+        return self.dm['zeta'][b_id]*(arrival_t - departure_t)
 
     ##---------------------------------------------------------------------------
     # Input:

@@ -11,7 +11,7 @@ time_limit: 100
 load_from_file: 0
 
 # Load previous input parameters
-run_prev: 1
+run_prev: 0
 
 # Verbose
 verbose: 0
