@@ -4,10 +4,11 @@ DATA    = $(SRC)/data
 ENV_DIR = $(SRC)/environment
 BIN     = $(ENV_DIR)/bin
 DEP     = dependencies.txt
+PYTHON  = python3.9
 
 setup:
 	@# Set up virtual environemnt
-	python3.9 -m venv ./$(ENV_DIR)
+	$(PYTHON) -m venv $(ENV_DIR)
 	$(BIN)/pip install --upgrade pip
 	make install
 
