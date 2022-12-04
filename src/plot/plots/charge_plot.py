@@ -37,7 +37,7 @@ class ChargePlot(Plotter):
 
         # Configure Plot
         fig, ax = plt.subplots(1)
-        x,y     = self.__groupChargeResults(N, A, self.Gamma, self.eta)
+        x,y     = self.__groupChargeResults(N, A, self.Gamma, self.eta, self.u)
 
         plt.xlabel("Time")
         plt.ylabel("Charge [kwh]")
@@ -61,12 +61,13 @@ class ChargePlot(Plotter):
     #   A     : Number of buses
     #   Gamma : Array of bus ID's
     #   eta   : Array of bus charges
+    #   u     : Initial charge time
     #
     # Output:
     #   x : Array of incrementing values from 1 to N
     #   y : Array of charges for each bus
     #
-    def __groupChargeResults(self, N, A, Gamma, eta):
+    def __groupChargeResults(self, N, A, Gamma, eta, u):
         charges = []
         idx     = []
 
@@ -77,18 +78,13 @@ class ChargePlot(Plotter):
 
             for j in range(N):
                 if Gamma[j] == i:
-                    tempx.append(j)
+                    tempx.append(u[j])
                     tempy.append(eta[j])
                     last_charge = eta[j]
                 elif last_charge == 0:
                     continue
-                else:
-                    tempx.append(j)
-                    tempy.append(last_charge)
 
             idx.append(tempx)
             charges.append(tempy)
-
-        idx = [[x*(1.0/10) for x in y] for y in idx]
 
         return idx, charges
