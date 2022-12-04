@@ -47,7 +47,7 @@ class SchedulePlot(Plotter):
         v400    = []
 
         for i in range(self.N):
-            if self.v[i] <= 5:                                                  # Number of slow chargers
+            if self.v[i] < 5:                                                   # Number of slow chargers
                 a100.append(self.a[i])
                 c100.append(self.c[i])
                 u100.append(self.u[i])
