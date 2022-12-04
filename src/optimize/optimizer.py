@@ -7,7 +7,6 @@ import numpy    as np
 import time
 
 from gurobipy import GRB
-from multiprocessing import Pool
 
 np.set_printoptions(threshold=sys.maxsize)
 
@@ -82,8 +81,6 @@ class Optimizer:
             print("====================================================================")
             print("Adding Constraints")
             print("====================================================================")
-            # with Pool(self.jobs) as pool:
-            #     pool.map(self.__inputConstraints, range(self.iterations))
             for i in range(self.iterations):
                 self.__inputConstraints(i)
 
