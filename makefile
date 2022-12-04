@@ -36,4 +36,3 @@ debug:
 
 clean:
 	rm -rfv $(ENV_DIR)
-	rm -f $(DATA)/*

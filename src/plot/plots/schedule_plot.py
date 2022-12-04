@@ -36,6 +36,7 @@ class SchedulePlot(Plotter):
     def plot(self):
         # Configure Plot
         fig, ax = plt.subplots(2)
+        fig.tight_layout(pad=1)
         a100    = []
         c100    = []
         u100    = []
@@ -68,18 +69,21 @@ class SchedulePlot(Plotter):
         time400, position400 = self.__plotResults(len(v400), ax[1], a400, u400, v400, c400)
         _                    = self.__makeErrorBoxes(ax[1], u400, v400, time400, position400, facecolor)
 
+        # Set the axis limits
+        ax[0].set_xlim(0, 24)
+        ax[1].set_xlim(0, 24)
+
         ax[0].set_title("Slow Chargers")
         ax[1].set_title("Fast Chargers")
 
         ax[0].set(xlabel="Time [hr]", ylabel="Queue")
         ax[1].set(xlabel="Time [hr]", ylabel="Queue")
 
-        gs = GridShader(ax[0], facecolor="lightgrey", first=False, alpha=0.7)
-        gs = GridShader(ax[1], facecolor="lightgrey", first=False, alpha=0.7)
+        # gs = GridShader(ax[0], facecolor="lightgrey", first=False, alpha=0.7)
+        # gs = GridShader(ax[1], facecolor="lightgrey", first=False, alpha=0.7)
 
-        fig.set_size_inches(25,10)
-
-        plt.savefig(self.outdir+'schedule.pdf', dpi=100)
+        fig.set_size_inches(15,8)
+        plt.savefig(self.outdir+'schedule.pdf', transparent=True, dpi=100)
 
         plt.show()
 
@@ -87,8 +91,7 @@ class SchedulePlot(Plotter):
         time100, position100 = self.__plotResults(len(v100), ax, a100, u100, v100, c100)
         _                    = self.__makeErrorBoxes(ax, u100, v100, time100, position100, facecolor)
 
-        fig.set_size_inches(25,10)
-
+        fig.set_size_inches(5,3)
         plt.show()
         return
 

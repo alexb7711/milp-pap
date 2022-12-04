@@ -26,5 +26,5 @@ class ValidInitialTime(Constraint):
 		# Extract decision vars
 		u = self.d_var['u']
 
-		model.addConstr(a[i] - u[i] <= 0 , name="{0}_{1}".format(self.name,i))
+		model.addConstr(a[i] <= u[i] , name="{0}_{1}".format(self.name,i))
 		return

@@ -180,7 +180,7 @@ def main():
     # Create schedule
     Schedule(dm['model'])
 
-    pretty(dm.m_params)
+    # pretty(dm.m_params)
 
     # Optimize
     ## Initialize optimizer
