@@ -27,6 +27,6 @@ class ValidQueueVector(Constraint):
 		w = self.d_var['w']
 
 		model.addConstr(sum(w[i][q] for q in range(Q)) == 1, \
-									  name="{0}_{1}".format(self.name,i))
+				name="{0}_{1}".format(self.name,i))
 
 		return

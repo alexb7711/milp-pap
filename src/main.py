@@ -79,7 +79,7 @@ def plot(results):
         SchedulePlot(),
         ChargePlot(),
         ChargerUsagePlot(),
-        PowerUsagePlot(),
+        # PowerUsagePlot(),
     ]
 
     Plotter.initialize(results)
@@ -139,7 +139,7 @@ def setupConstraints(o, dm):
         ### Dynamic
         BilinearLinearization("bilinear_linearization"),
         ChargePropagation("charge_propagation"),
-        FinalCharge("final_charge"),
+        FinalCharge("final_charge"), #
         InitialCharge("initial_charge"),
         MaxChargePropagation("max_charge_propagation"),
         MinChargePropagation("min_charge_propagation"),
@@ -175,10 +175,12 @@ def main():
     dm = DataManager()
 
     # Create gurobi model
-    m = dm['model'] = gp.Model()
+    dm['model'] = gp.Model()
 
-    # Create schedule manager class
-    Schedule(m)
+    # Create schedule
+    Schedule(dm['model'])
+
+    pretty(dm.m_params)
 
     # Optimize
     ## Initialize optimizer

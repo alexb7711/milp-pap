@@ -47,12 +47,12 @@ class SchedulePlot(Plotter):
         v400    = []
 
         for i in range(self.N):
-            if self.v[i] <= 4:
+            if self.v[i] <= 5:                                                  # Number of slow chargers
                 a100.append(self.a[i])
                 c100.append(self.c[i])
                 u100.append(self.u[i])
                 v100.append(self.v[i])
-            else:
+            else:                                                               # Fast chargers
                 a400.append(self.a[i])
                 c400.append(self.c[i])
                 u400.append(self.u[i])
@@ -82,7 +82,6 @@ class SchedulePlot(Plotter):
         plt.savefig(self.outdir+'schedule.pdf', dpi=100)
 
         plt.show()
-
 
         fig, ax = plt.subplots(1)
         time100, position100 = self.__plotResults(len(v100), ax, a100, u100, v100, c100)
@@ -116,8 +115,8 @@ class SchedulePlot(Plotter):
             pos_lower.append(0)
             pos_upper.append(0.8)
 
-            tim_lower.append(u[i] - a[i])
-            tim_upper.append(c[i] - u[i])
+            tim_lower.append(self.__round_up(u[i] - a[i]))
+            tim_upper.append(self.__round_up(c[i] - u[i]))
 
         tim = np.vstack((tim_lower, tim_upper))
         pos = np.vstack((pos_lower, pos_upper))
@@ -143,7 +142,27 @@ class SchedulePlot(Plotter):
         ax.add_collection(pc)
 
         # Plot errorbars
-        artists = ax.errorbar(xdata, ydata, xerr=xerror, yerr=yerror,
-                                                    fmt='None', ecolor='k')
+        artists = ax.errorbar(xdata, ydata, xerr=xerror, yerr=yerror, fmt='None', ecolor='k')
 
         return artists
+
+    ##-----------------------------------------------------------------------------
+    #
+    def __round_up(self, val):
+        """Sometimes the difference of numbers is so small it shows up as a super
+        small negative number, this method will round that up to 0.
+
+        * INPUT
+          - `val`: Number to be checked
+
+        * OUTPUT
+          - `val`: Update value
+        """
+
+        # Local Variables
+        tol = 1e-10
+
+        if val <= tol:
+            return 0.0
+
+        return val
