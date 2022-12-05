@@ -29,6 +29,6 @@ class TimeBigO(Constraint):
 		u     = self.d_var['u']
 
 		if i != j:
-			model.addConstr(u[j] - u[i] - p[i] - (sigma[i][j] - 1)*T >= 0, \
-											name="{0}_{1}".format(self.name,i))
+			model.addConstr(u[i] - u[j] - p[j] - (sigma[i][j] - 1)*T >= 0, \
+					name="{0}_{1}".format(self.name,i))
 		return

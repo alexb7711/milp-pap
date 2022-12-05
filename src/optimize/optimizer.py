@@ -7,7 +7,6 @@ import numpy    as np
 import time
 
 from gurobipy import GRB
-from joblib   import Parallel, delayed
 
 np.set_printoptions(threshold=sys.maxsize)
 
@@ -82,10 +81,8 @@ class Optimizer:
             print("====================================================================")
             print("Adding Constraints")
             print("====================================================================")
-            Parallel(n_jobs=self.jobs, backend='threading') \
-                    (delayed(self.__inputConstraints)(i) for i in range(self.iterations))
-            #  for i in range(self.iterations):
-                #  self.__inputConstraints(i)
+            for i in range(self.iterations):
+                self.__inputConstraints(i)
 
             # Uncomment to print model to disk
             #  model.write("model.lp")

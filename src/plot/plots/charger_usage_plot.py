@@ -45,6 +45,7 @@ class ChargerUsagePlot(Plotter):
 
         # Configure Plot
         fig, ax = plt.subplots(2)
+        fig.tight_layout(pad=0.75)
 
         for i in range(N):
             if self.v[i] <= 4:
@@ -71,12 +72,16 @@ class ChargerUsagePlot(Plotter):
                         use400[idx] += 1
             idx += 1
 
+        # Set the axis limits
+        ax[0].set_xlim(0, 24)
+        ax[1].set_xlim(0, 24)
+
         ax[0].set_title("Slow Chargers")
         ax[1].set_title("Fast Chargers")
         ax[0].set(xlabel="Time [hr]", ylabel="Times Used")
         ax[1].set(xlabel="Time [hr]", ylabel="Times Used")
 
-        # Plot restults
+        # Plot results
         n = self.dt
 
         ran = range(len(use100)-1)
@@ -85,11 +90,11 @@ class ChargerUsagePlot(Plotter):
         ran = range(len(use400)-1)
         ax[1].plot([x*n for x in ran], use400[0:len(use400)-1])
 
-        gs = GridShader(ax[0], facecolor="lightgrey", first=False, alpha=0.7)
-        gs = GridShader(ax[1], facecolor="lightgrey", first=False, alpha=0.7)
+        # gs = GridShader(ax[0], facecolor="lightgrey", first=False, alpha=0.7)
+        # gs = GridShader(ax[1], facecolor="lightgrey", first=False, alpha=0.7)
 
-        fig.set_size_inches(5,10)
-        plt.savefig(self.outdir+'usage.pdf')
+        fig.set_size_inches(15,8)
+        plt.savefig(self.outdir+'usage.pdf', transparent=True)
 
         plt.show()
         return

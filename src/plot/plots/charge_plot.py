@@ -37,17 +37,22 @@ class ChargePlot(Plotter):
 
         # Configure Plot
         fig, ax = plt.subplots(1)
-        x,y     = self.__groupChargeResults(N, A, self.Gamma, self.eta)
+        x,y     = self.__groupChargeResults(N, A, self.Gamma, self.eta, self.u, self.c, self.v, self.r, self.g)
 
+        # Set the axis limits
+        ax.set_xlim(0, 24)
+
+        ax.set_title("BEB Charge")
         plt.xlabel("Time")
         plt.ylabel("Charge [kwh]")
 
         for i in range(A):
             ax.plot(x[i], y[i])
 
-        gs = GridShader(ax, facecolor="lightgrey", first=False, alpha=0.7)
+        # gs = GridShader(ax, facecolor="lightgrey", first=False, alpha=0.7)
 
-        plt.savefig(self.outdir+'charges.pdf')
+        fig.set_size_inches(15,8)
+        plt.savefig(self.outdir+'charges.pdf', transparent=True, dpi=100)
 
         plt.show()
         return
@@ -61,34 +66,38 @@ class ChargePlot(Plotter):
     #   A     : Number of buses
     #   Gamma : Array of bus ID's
     #   eta   : Array of bus charges
+    #   u     : Initial charge time
+    #   c     : Detach time
+    #   v     : Active charger
+    #   r     : Charger rate
     #
     # Output:
     #   x : Array of incrementing values from 1 to N
     #   y : Array of charges for each bus
     #
-    def __groupChargeResults(self, N, A, Gamma, eta):
+    def __groupChargeResults(self, N, A, Gamma, eta, u, c, v, r,g):
         charges = []
         idx     = []
 
-        for i in range(A):
-            last_charge = 0
+        # For every bus
+        for j in range(A):
             tempx       = []
             tempy       = []
 
-            for j in range(N):
-                if Gamma[j] == i:
-                    tempx.append(j)
-                    tempy.append(eta[j])
-                    last_charge = eta[j]
-                elif last_charge == 0:
-                    continue
-                else:
-                    tempx.append(j)
-                    tempy.append(last_charge)
+            ## For every visit
+            for i in range(N):
+                ### If the visit is for the bus of interest
+                if Gamma[i] == j:
+                    #### Append the charge on arrival
+                    tempx.append(u[i])
+                    tempy.append(eta[i])
 
+                    #### Append the charge on departure
+                    tempx.append(c[i])
+                    tempy.append(eta[i] + g[i][int(v[i])]*r[int(v[i])])
+
+            ### Update the plot arrays
             idx.append(tempx)
             charges.append(tempy)
-
-        idx = [[x*(1.0/10) for x in y] for y in idx]
 
         return idx, charges

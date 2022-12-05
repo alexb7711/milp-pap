@@ -28,6 +28,6 @@ class SigmaDelta(Constraint):
 
 		if i != j:
 			model.addConstr(sigma[i][j] + sigma[j][i] +      \
-											delta[i][j] + delta[j][i] >= 1 , \
-											name="{0}_{1}_{2}".format(self.name,i,j))
+					delta[i][j] + delta[j][i] >= 1 , \
+					name="{0}_{1}_{2}".format(self.name,i,j))
 		return

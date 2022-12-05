@@ -4,7 +4,7 @@ DATA    = $(SRC)/data
 ENV_DIR = $(SRC)/environment
 BIN     = $(ENV_DIR)/bin
 DEP     = dependencies.txt
-PYTHON  = python3.9
+PYTHON  = python
 
 setup:
 	@# Set up virtual environemnt
@@ -36,4 +36,3 @@ debug:
 
 clean:
 	rm -rfv $(ENV_DIR)
-	rm -f $(DATA)/*

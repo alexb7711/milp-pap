@@ -36,6 +36,7 @@ class SchedulePlot(Plotter):
     def plot(self):
         # Configure Plot
         fig, ax = plt.subplots(2)
+        fig.tight_layout(pad=1)
         a100    = []
         c100    = []
         u100    = []
@@ -47,12 +48,12 @@ class SchedulePlot(Plotter):
         v400    = []
 
         for i in range(self.N):
-            if self.v[i] <= 4:
+            if self.v[i] < 5:                                                   # Number of slow chargers
                 a100.append(self.a[i])
                 c100.append(self.c[i])
                 u100.append(self.u[i])
                 v100.append(self.v[i])
-            else:
+            else:                                                               # Fast chargers
                 a400.append(self.a[i])
                 c400.append(self.c[i])
                 u400.append(self.u[i])
@@ -68,28 +69,29 @@ class SchedulePlot(Plotter):
         time400, position400 = self.__plotResults(len(v400), ax[1], a400, u400, v400, c400)
         _                    = self.__makeErrorBoxes(ax[1], u400, v400, time400, position400, facecolor)
 
+        # Set the axis limits
+        ax[0].set_xlim(0, 24)
+        ax[1].set_xlim(0, 24)
+
         ax[0].set_title("Slow Chargers")
         ax[1].set_title("Fast Chargers")
 
         ax[0].set(xlabel="Time [hr]", ylabel="Queue")
         ax[1].set(xlabel="Time [hr]", ylabel="Queue")
 
-        gs = GridShader(ax[0], facecolor="lightgrey", first=False, alpha=0.7)
-        gs = GridShader(ax[1], facecolor="lightgrey", first=False, alpha=0.7)
+        # gs = GridShader(ax[0], facecolor="lightgrey", first=False, alpha=0.7)
+        # gs = GridShader(ax[1], facecolor="lightgrey", first=False, alpha=0.7)
 
-        fig.set_size_inches(25,10)
-
-        plt.savefig(self.outdir+'schedule.pdf', dpi=100)
+        fig.set_size_inches(15,8)
+        plt.savefig(self.outdir+'schedule.pdf', transparent=True, dpi=100)
 
         plt.show()
-
 
         fig, ax = plt.subplots(1)
         time100, position100 = self.__plotResults(len(v100), ax, a100, u100, v100, c100)
         _                    = self.__makeErrorBoxes(ax, u100, v100, time100, position100, facecolor)
 
-        fig.set_size_inches(25,10)
-
+        fig.set_size_inches(5,3)
         plt.show()
         return
 
@@ -116,8 +118,8 @@ class SchedulePlot(Plotter):
             pos_lower.append(0)
             pos_upper.append(0.8)
 
-            tim_lower.append(u[i] - a[i])
-            tim_upper.append(c[i] - u[i])
+            tim_lower.append(self.__round_up(u[i] - a[i]))
+            tim_upper.append(self.__round_up(c[i] - u[i]))
 
         tim = np.vstack((tim_lower, tim_upper))
         pos = np.vstack((pos_lower, pos_upper))
@@ -143,7 +145,27 @@ class SchedulePlot(Plotter):
         ax.add_collection(pc)
 
         # Plot errorbars
-        artists = ax.errorbar(xdata, ydata, xerr=xerror, yerr=yerror,
-                                                    fmt='None', ecolor='k')
+        artists = ax.errorbar(xdata, ydata, xerr=xerror, yerr=yerror, fmt='None', ecolor='k')
 
         return artists
+
+    ##-----------------------------------------------------------------------------
+    #
+    def __round_up(self, val):
+        """Sometimes the difference of numbers is so small it shows up as a super
+        small negative number, this method will round that up to 0.
+
+        * INPUT
+          - `val`: Number to be checked
+
+        * OUTPUT
+          - `val`: Update value
+        """
+
+        # Local Variables
+        tol = 1e-10
+
+        if val <= tol:
+            return 0.0
+
+        return val

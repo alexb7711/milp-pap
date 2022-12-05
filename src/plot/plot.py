@@ -63,16 +63,16 @@ class Plotter:
 
         # Constants
         Plotter.A     = results['A']
-        Plotter.N     = results['N']
+        Plotter.N     = results['N'] if 'K' in results else results['N']+Plotter.A
         Plotter.Q     = results['Q']
         Plotter.T     = results['T']
-        Plotter.K     = results['K']
+        Plotter.K     = results['K'] if 'K' in results else 1000
 
         # Input Vars
         Plotter.a     = results['a']
         Plotter.r     = results['r']
         Plotter.t     = results['t']
-        Plotter.dt    = results['dt']
+        Plotter.dt    = results['dt'] if 'dt' in results else Plotter.T/Plotter.K
         Plotter.Gamma = results['Gamma']
         Plotter.gamma = results['gamma']
 
@@ -80,6 +80,7 @@ class Plotter:
         Plotter.c     = results['c']
         Plotter.delta = results['delta']
         Plotter.eta   = results['eta']
+        Plotter.g     = results['g']
         Plotter.p     = results['p']
         Plotter.sigma = results['sigma']
         Plotter.u     = results['u']

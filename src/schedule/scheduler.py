@@ -29,12 +29,11 @@ class Schedule:
         # Parse YAML file
         self.init, self.run_prev = self.__parseYAML()
 
-        # Create data manager object
+        # Get an instance of data manager
         self.dm = DataManager()
 
         # Store gurobi model
         self.model       = model
-        self.dm['model'] = model
 
         # If a new schedule is to be generated
         if self.run_prev <= 0:
@@ -116,8 +115,7 @@ class Schedule:
         self.dm['N'] = init['buses']['num_visit']
 
         ## Number of chargers
-        self.dm['Q'] = init['chargers']['slow']['num'] + \
-                       init['chargers']['fast']['num']
+        self.dm['Q'] = init['chargers']['slow']['num'] + init['chargers']['fast']['num']
 
         ## Singular charger size
         self.dm['S'] = self.dm['Q']
@@ -218,7 +216,7 @@ class Schedule:
                 arrival_t_o = arrival_t_n
 
                 ### Determine if this visit is the final visit
-                final_visit = True if i == n else False
+                final_visit = True if i == n-1 else False
 
                 ### Select a start time (<= to the max rest time)
                 departure_t = self.__selectDeptTime(arrival_t_o, final_visit)
@@ -386,12 +384,6 @@ class Schedule:
         ## Delta
         self.dm['delta'] = self.model.addMVar(shape=(N,N), vtype=GRB.BINARY, name="delta")
 
-        ## Xi
-        #  self.dm['xi'] = self.model.addMVar(shape=(N, Q, K), vtype=GRB.BINARY, name="xi")
-
-        ## Psi
-        #  self.dm['psi'] = self.model.addMVar(shape=(N, Q, K), vtype=GRB.BINARY, name="psi")
-
         return
 
     ##---------------------------------------------------------------------------
@@ -445,8 +437,7 @@ class Schedule:
     # Output:
     #   Total amount of discharge [KWH]
     #
-    def __calcDischarge(self, b_id: int, arrival_t: float,
-                        departure_t: float) -> float:
+    def __calcDischarge(self, b_id: int, arrival_t: float, departure_t: float) -> float:
         return self.dm['zeta'][b_id]*(arrival_t - departure_t)
 
     ##---------------------------------------------------------------------------
@@ -458,8 +449,7 @@ class Schedule:
     # Output:
     #   b: filled bus_info dictionary
     #
-    def __fillBusData(self, id: int, arrival_t: float,
-                      departure_t: float, discharge: float) -> dict:
+    def __fillBusData(self, id: int, arrival_t: float, departure_t: float, discharge: float) -> dict:
         # Local variables
         keys = bus_info.keys()
         data = [id, arrival_t, departure_t, departure_t - arrival_t, discharge]
@@ -575,8 +565,7 @@ class Schedule:
 
         Input:
             bus_data: List of information for each bus visit (See bus_data.py)
-            Gamma: Array of bus arrival id's
-            str: String specifying the data to extract from bus_data
+            info: String specifying the data to extract from bus_data
 
         Output:
             arr: Array of bus_data elements in Gamma order
