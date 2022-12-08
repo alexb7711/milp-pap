@@ -66,11 +66,10 @@ class Schedule:
     #   self.init: Parsed schedule YAML file
     #
     def __parseYAML(self):
-        # Parse 'config/schedule.yaml'
+        # Variables
         self.f   = open(r'./config/schedule.yaml')
         init     = yaml.load(self.f, Loader = yaml.FullLoader)
 
-        # Parse 'config/general.yaml'
         # Parse 'config/general.yaml'
         with open(r'config/general.yaml') as f:
                 file     = yaml.load(f, Loader=yaml.FullLoader)
@@ -102,8 +101,8 @@ class Schedule:
         r = np.concatenate((slow_chargers, fast_chargers))
 
         ### Assign cost of assignment and use for each charger
-        epsilon = r.copy()
-        m       = r.copy()
+        epsilon = [1]*len(r)
+        m       = [1000*x for x in range(int(init['buses']['num_bus']))]
 
         ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # Store Input Parameters
@@ -366,7 +365,7 @@ class Schedule:
         ## Detatch time
         self.dm['c'] = self.model.addMVar(shape=N, vtype=GRB.CONTINUOUS, name="c")
 
-        ## Charge tiself.dm['model.
+        ## Charge time
         self.dm['p'] = self.model.addMVar(shape=N, vtype=GRB.CONTINUOUS, name="p")
 
         ## Lineriztion term
