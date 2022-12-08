@@ -14,7 +14,7 @@ from array_util   import *
 ##==============================================================================
 # PUBLIC
 
-##---------------------------------------------------------------------------
+##------------------------------------------------------------------------------
 #
 def genNewSchedule(self):
     """
@@ -25,14 +25,15 @@ def genNewSchedule(self):
       - New bus schedule
 
     """
-    __bufferAttributes(self)
-    __generateScheduleParams(self)
+    __bufferAttributes(self)                                                    # Initialize all the attributes of the
+                                                                                # random bus schedule
+    __generateScheduleParams(self)                                              # Generate decision variables
     return
 
 ##==============================================================================
 # PRIVATE
 
-##---------------------------------------------------------------------------
+##------------------------------------------------------------------------------
 #
 def __generateScheduleParams(self):
     """
@@ -119,7 +120,7 @@ def __generateScheduleParams(self):
 
     return
 
-##---------------------------------------------------------------------------
+##------------------------------------------------------------------------------
 #
 def __bufferAttributes(self):
     """
@@ -129,7 +130,7 @@ def __bufferAttributes(self):
     Output:
       - Schedule attributes
     """
-    ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Local Variables
     init = self.init
 
@@ -148,7 +149,7 @@ def __bufferAttributes(self):
     epsilon = [1]*len(r)
     m       = [1000*x for x in range(int(init['buses']['num_bus']))]
 
-    ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Store Input Parameters
 
     ## Number of buses
@@ -206,7 +207,7 @@ def __bufferAttributes(self):
     ## Discharge rate
     self.dm['zeta'] = np.repeat([init['buses']['dis_rate']], init['buses']['num_bus'])
 
-    ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Arrays to be generated
 
     ## Arrival time
@@ -226,7 +227,7 @@ def __bufferAttributes(self):
 
     return
 
-##---------------------------------------------------------------------------
+##------------------------------------------------------------------------------
 #
 def __applyParam(self, bus_data: np.ndarray, info: str) -> np.ndarray:
     """
@@ -241,7 +242,7 @@ def __applyParam(self, bus_data: np.ndarray, info: str) -> np.ndarray:
     """
     return np.array([b[info] for b in bus_data])
 
-##---------------------------------------------------------------------------
+##------------------------------------------------------------------------------
 #
 def __selectDeptTime(self, prev_arrival: float, final_visit: bool) -> float:
     """
@@ -267,7 +268,7 @@ def __selectDeptTime(self, prev_arrival: float, final_visit: bool) -> float:
 
     return dept_time
 
-##---------------------------------------------------------------------------
+##------------------------------------------------------------------------------
 #
 def __selectNextArrivalTime(self, i: float, n: float) -> float:
     """
@@ -287,7 +288,7 @@ def __selectNextArrivalTime(self, i: float, n: float) -> float:
 
     return arrival_time
 
-##---------------------------------------------------------------------------
+##------------------------------------------------------------------------------
 #
 def __calcDischarge(self, b_id: int, arrival_t: float, departure_t: float) -> float:
     """
@@ -301,7 +302,7 @@ def __calcDischarge(self, b_id: int, arrival_t: float, departure_t: float) -> fl
         """
     return self.dm['zeta'][b_id]*(arrival_t - departure_t)
 
-##---------------------------------------------------------------------------
+##------------------------------------------------------------------------------
 #
 def __genNextVisit(self, bus_data: np.ndarray) -> np.ndarray:
     """
@@ -314,7 +315,7 @@ def __genNextVisit(self, bus_data: np.ndarray) -> np.ndarray:
     Gamma         = [i['id'] for i in bus_data]
     return Gamma
 
-##---------------------------------------------------------------------------
+##------------------------------------------------------------------------------
 #
 def __determineNextVisit(self, Gamma: np.ndarray) -> np.ndarray:
     """
@@ -350,7 +351,7 @@ def __determineNextVisit(self, Gamma: np.ndarray) -> np.ndarray:
 
     return gamma
 
-##---------------------------------------------------------------------------
+##------------------------------------------------------------------------------
 #
 def __determineInitCharge(self, Gamma: np.ndarray, initial_charges: np.ndarray) -> np.ndarray:
     """
@@ -374,7 +375,7 @@ def __determineInitCharge(self, Gamma: np.ndarray, initial_charges: np.ndarray) 
 
     return alpha
 
-##---------------------------------------------------------------------------
+##------------------------------------------------------------------------------
 #
 def __determineFinalCharge(self, gamma: np.ndarray,
                            final_charge: float) -> np.ndarray:
@@ -402,7 +403,7 @@ def __determineFinalCharge(self, gamma: np.ndarray,
 
     return beta
 
-##---------------------------------------------------------------------------
+##------------------------------------------------------------------------------
 #
 def __saveParams(self):
     """

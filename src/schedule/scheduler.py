@@ -29,7 +29,7 @@ class Schedule:
        - NONE
         """
         # Parse YAML file
-        self.init, self.run_prev = self.__parseYAML()
+        self.init, self.run_prev, self.schedule_type = self.__parseYAML()
 
         # Get an instance of data manager
         self.dm = DataManager()
@@ -39,7 +39,8 @@ class Schedule:
 
         # If a new schedule is to be generated
         if self.run_prev <= 0:
-            genNewSchedule(self)
+            if self.schedule_type == "random": genNewSchedule(self)             # Generate random schedule
+            else                             : print("Load from CSV")           # Load schedule from CSV
             self.__genDecisionVars()
         else:
             self.__loadPreviousParams()
@@ -97,10 +98,11 @@ class Schedule:
 
         # Parse 'config/general.yaml'
         with open(r'config/general.yaml') as f:
-                file     = yaml.load(f, Loader=yaml.FullLoader)
-                run_prev = file['run_prev']
+                file          = yaml.load(f, Loader=yaml.FullLoader)
+                run_prev      = file['run_prev']
+                schedule_type = file['schedule_type']
 
-        return init, run_prev
+        return init, run_prev, schedule_type
 
     ##---------------------------------------------------------------------------
     #
