@@ -102,8 +102,8 @@ class Schedule:
         r = np.concatenate((slow_chargers, fast_chargers))
 
         ### Assign cost of assignment and use for each charger
-        epsilon = r.copy()
-        m       = r.copy()
+        epsilon = [1]*len(r)
+        m       = [1000*x for x in range(int(init['buses']['num_bus']))]
 
         ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # Store Input Parameters
@@ -366,7 +366,7 @@ class Schedule:
         ## Detatch time
         self.dm['c'] = self.model.addMVar(shape=N, vtype=GRB.CONTINUOUS, name="c")
 
-        ## Charge tiself.dm['model.
+        ## Charge time
         self.dm['p'] = self.model.addMVar(shape=N, vtype=GRB.CONTINUOUS, name="p")
 
         ## Lineriztion term
