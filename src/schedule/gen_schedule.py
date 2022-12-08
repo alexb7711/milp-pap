@@ -9,7 +9,8 @@ import random
 import yaml
 
 # Developed
-from array_util   import *
+from array_util    import *
+from schedule_util import *
 
 ##==============================================================================
 # PUBLIC
@@ -19,15 +20,15 @@ from array_util   import *
 def genNewSchedule(self):
     """
     Input:
-      - NONE
+      - self: schedule object
 
     Output:
-      - New bus schedule
+      - Random set of bus routes
 
     """
     __bufferAttributes(self)                                                    # Initialize all the attributes of the
                                                                                 # random bus schedule
-    __generateScheduleParams(self)                                              # Generate decision variables
+    __generateScheduleParams(self)                                              # Generate route times and gammas
     return
 
 ##==============================================================================
@@ -38,11 +39,10 @@ def genNewSchedule(self):
 def __generateScheduleParams(self):
     """
      Input:
-       NONE
+       - self: scheduler object
 
      Output:
-       Randomly generated schedule
-
+       - Randomly generated schedule
         """
     # Local variables
     A         : float = self.dm['A']
@@ -142,70 +142,10 @@ def __bufferAttributes(self):
                                        int(init['chargers']['fast']['num'])),
                              dtype=int)
 
-    ### Concatenate charge rates
-    r = np.concatenate((slow_chargers, fast_chargers))
-
-    ### Assign cost of assignment and use for each charger
-    epsilon = [1]*len(r)
-    m       = [1000*x for x in range(int(init['buses']['num_bus']))]
-
     ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Store Input Parameters
 
-    ## Number of buses
-    self.dm['A'] = init['buses']['num_bus']
-
-    ## Number of bus visits
-    self.dm['N'] = init['buses']['num_visit']
-
-    ## Number of chargers
-    self.dm['Q'] = init['chargers']['slow']['num'] + init['chargers']['fast']['num']
-
-    ## Singular charger size
-    self.dm['S'] = self.dm['Q']
-
-    ## Time horizon
-    self.dm['T'] = init['time']['time_horizon']
-
-    ## Total number of discrete steps
-    self.dm['K'] = init['time']['K']
-
-    ## Initial charge percentages
-    self.dm['alpha'] = initArray(self.dm['A'], dtype=float)
-
-    ## Final charge percentages
-    self.dm['beta'] = initArray(self.dm['N'], dtype=float)
-
-    ## Calculate discrete time step
-    self.dm['dt'] = self.dm['T']/self.dm['K']
-
-    ## Cost of use for charger q
-    self.dm['e'] = epsilon
-
-    ## Battery capacity of each bus
-    self.dm['kappa'] = np.repeat(init['buses']['bat_capacity'], self.dm['A'])
-
-    ## Cost of assignment for charger q
-    self.dm['m'] = m
-
-    ## Maximum/Minimum rest time between bus routes
-    self.dm['maxr'] = init['buses']['max_rest']
-    self.dm['minr'] = init['buses']['min_rest']
-
-    ## Minimum charge allowed on next visit
-    self.dm['nu'] = init['buses']['min_charge']
-
-    ## Charge rate for bus q
-    self.dm['r'] = r
-
-    ## Length of a bus
-    self.dm['s'] = np.repeat(init['buses']['bus_length'], self.dm['N'])
-
-    ## Discrete time steps
-    self.dm['tk'] = np.array([i*self.dm['dt'] for i in range(0,self.dm['K'])]);
-
-    ## Discharge rate
-    self.dm['zeta'] = np.repeat([init['buses']['dis_rate']], init['buses']['num_bus'])
+    genInputParams(self)
 
     ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Arrays to be generated

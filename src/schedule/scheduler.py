@@ -1,4 +1,4 @@
-# Standard Lib
+# Standard Library
 import gurobipy as gp
 import numpy as np
 import yaml
@@ -8,6 +8,7 @@ from gurobipy import GRB
 # Developed
 from array_util   import *
 from bus_data     import *
+from csv_loader   import genCSVRoutes
 from data_manager import DataManager
 from gen_schedule import genNewSchedule
 from pretty       import *
@@ -40,7 +41,7 @@ class Schedule:
         # If a new schedule is to be generated
         if self.run_prev <= 0:
             if self.schedule_type == "random": genNewSchedule(self)             # Generate random schedule
-            else                             : print("Load from CSV")           # Load schedule from CSV
+            else                             : genCSVRoutes(self)               # Load schedule from CSV
             self.__genDecisionVars()                                            # Generate decision variables
         else:
             self.__loadPreviousParams()
@@ -57,9 +58,9 @@ class Schedule:
         Output:
           - NONE
         """
-    # Close the opened YAML file
-    self.f.close()
-    return
+        # Close the opened YAML file
+        self.f.close()
+        return
 
     ##---------------------------------------------------------------------------
     #
@@ -84,7 +85,7 @@ class Schedule:
 
     ##---------------------------------------------------------------------------
     #
-    def __parseYAML(self):
+    def __parseYAML(self, path: str="./config/schedule.yaml"):
         """
         Input:
           - NONE
@@ -93,7 +94,7 @@ class Schedule:
           - self.init: Parsed schedule YAML file
         """
         # Variables
-        self.f   = open(r'./config/schedule.yaml')
+        self.f   = open(path, "r")
         init     = yaml.load(self.f, Loader = yaml.FullLoader)
 
         # Parse 'config/general.yaml'
