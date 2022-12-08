@@ -22,11 +22,11 @@ class Schedule:
     #
     def __init__(self, model):
         """
-     Input:
-       - model : Gurobi model
+        Input:
+          - model : Gurobi model
 
-     Output:
-       - NONE
+        Output:
+          - NONE
         """
         # Parse YAML file
         self.init, self.run_prev, self.schedule_type = self.__parseYAML()
@@ -41,7 +41,7 @@ class Schedule:
         if self.run_prev <= 0:
             if self.schedule_type == "random": genNewSchedule(self)             # Generate random schedule
             else                             : print("Load from CSV")           # Load schedule from CSV
-            self.__genDecisionVars()
+            self.__genDecisionVars()                                            # Generate decision variables
         else:
             self.__loadPreviousParams()
 
@@ -51,27 +51,27 @@ class Schedule:
     #
     def __del__(self):
         """
-     Input:
-       - NONE
+        Input:
+          - NONE
 
-     Output:
-       - NONE
+        Output:
+          - NONE
         """
-        # Close the opened YAML file
-        self.f.close()
-        return
+    # Close the opened YAML file
+    self.f.close()
+    return
 
     ##---------------------------------------------------------------------------
     #
     def fillBusData(self, id: int, arrival_t: float, departure_t: float, discharge: float) -> dict:
         """
-     Input:
-       arrival_t   : Arrival time of bus a visit i
-       departure_t : Departure time of bus a visit i
-       discharge   : Total discharge from route
+        Input:
+          arrival_t   : Arrival time of bus a visit i
+          departure_t : Departure time of bus a visit i
+          discharge   : Total discharge from route
 
-     Output:
-       b: filled bus_info dictionary
+        Output:
+          b: filled bus_info dictionary
         """
         # Local variables
         keys = bus_info.keys()
@@ -86,11 +86,11 @@ class Schedule:
     #
     def __parseYAML(self):
         """
-         Input:
-           - NONE
+        Input:
+          - NONE
 
-         Output:
-           - self.init: Parsed schedule YAML file
+        Output:
+          - self.init: Parsed schedule YAML file
         """
         # Variables
         self.f   = open(r'./config/schedule.yaml')
@@ -128,11 +128,11 @@ class Schedule:
     #
     def __saveKVParams(self, kv):
         """
-         Input:
-           - kv: Key/value pair for input parameters
+        Input:
+          - kv: Key/value pair for input parameters
 
-         Output:
-           - Save input parameters in shared memory
+        Output:
+          - Save input parameters in shared memory
         """
         # Local variables
         keys   = list(kv.keys())
@@ -146,20 +146,20 @@ class Schedule:
     #
     def __genDecisionVars(self):
         """
-     Input:
-       model: Gurobi model object
+        Input:
+          model: Gurobi model object
 
-     Output:
-       The following gurobi MVars:
-       u     : Starting charge time
-       v     : Selected charging queue
-       c     : Detatch time fro visit i
-       p     : Amount of time spent on charger for visit i
-       g     : Linearization term for bilinear term
-       eta   : Initial charge for visit i
-       w     : Vector representation of v
-       sigma : if u_i < u_j ? true : false
-       delta : if v_i < v_j ? true : false
+        Output:
+          The following gurobi MVars:
+          u     : Starting charge time
+          v     : Selected charging queue
+          c     : Detatch time fro visit i
+          p     : Amount of time spent on charger for visit i
+          g     : Linearization term for bilinear term
+          eta   : Initial charge for visit i
+          w     : Vector representation of v
+          sigma : if u_i < u_j ? true : false
+          delta : if v_i < v_j ? true : false
         """
         # Local Variables
         A = self.dm['A']
