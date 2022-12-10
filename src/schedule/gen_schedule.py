@@ -43,7 +43,7 @@ def __generateScheduleParams(self):
 
      Output:
        - Randomly generated schedule
-        """
+     """
     # Local variables
     A         : float = self.dm['A']
     N         : float = self.dm['N']
@@ -57,7 +57,7 @@ def __generateScheduleParams(self):
 
     # For each bus
     for a,n in zip(range(A),num_visits):
-        ## Initialize the previous arribval/departure
+        ## Initialize the previous arrival/departure
         ## to hour 0 (beginning of day)
         departure_t: float = float(0)
         arrival_t_n: float = float(0)
