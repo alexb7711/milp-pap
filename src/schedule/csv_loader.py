@@ -30,7 +30,9 @@ def genCSVRoutes(self, path: str="./data/routes.csv"):
     routes = __loadCSV(path)                                                    # Load the route data from CSV
     __bufferAttributes(self, routes)                                            # Load the route attributes into
                                                                                 # scheduler object
-    __generateScheduleParams(self)                                              # Generate route times and gammas
+    routes = __convertRouteToVisit(routes)                                      # Convert start/end route to
+                                                                                # arrival/departure
+    __generateScheduleParams(self, routes)                                      # Generate route times and gammas
     return
 
 ##===============================================================================
@@ -62,13 +64,13 @@ def __loadCSV(path: str):
                 first_row = False
                 continue
 
-            routes.append({'id': row[0], 'route': [float(x) for x in row[1:]]}) # Append the id and routes
+            routes.append({'id': int(row[0]), 'route': [float(x) for x in row[1:]]}) # Append the id and routes
 
     return routes
 
 ##-------------------------------------------------------------------------------
 #
-def __attributesToScheduler(self, routes):
+def __bufferAttributes(self, routes):
     """
     Takes the start,stop set of routes and generates routes that the scheduler
     object can understand.
@@ -82,9 +84,13 @@ def __attributesToScheduler(self, routes):
     # Variables
     init = self.init
 
-    genInputParams(self)                                                        # Get params from YAML
+    # Calculate input parameters
     self.dm['A'] = len(routes)                                                  # Number of buses
     self.dm['N'] = __countVisits(init, routes)                                  # Number of visits
+
+    # Get the rest of the parameters from YAML
+    genInputParams(self)                                                        # Get params from YAML
+
 
     return
 
@@ -119,17 +125,84 @@ def __countVisits(init, routes):
 
 ##-------------------------------------------------------------------------------
 #
-def  __generateScheduleParams(self):
-        """
+def  __convertRouteToVisit(routes):
+    """
+    Convert the start/stop representation to a arrival/departure representation
+    of the route schedule.
+
+    Input:
+      - routes: CSV route data in start/stop route form
+
+    Output:
+      - routes: CSV route data in arrival/departure form
+    """
+    # Variables
+    routes_visit = []
+
+    # For each bus/route
+    for route in routes:
+        ## Variables
+        r         = route['route']                                              # Routes for bus b
+        b         = route['id']                                                 # Bus id
+
+        J         = len(r)                                                      # Number of routes for bus
+        arrival_c = r[1]                                                        # Current arrival time
+        arrival_n = 0                                                           # Next arrival time
+        departure = 0                                                           # Departure time
+        j         = 0                                                           # Current route for bus b
+        tmp_route = []                                                          # Temporary [Arrival, Depart] pair
+
+        ## For each start/stop route pair
+        for j in range(0,J,2):
+            ### Update times
+            departure = r[j]                                                    # Assign departure time
+            arrival_n = r[j+1]                                                  # Assign next arrival time
+
+            ### If the first visit as at the BOD
+            if j == 0 and r[j] > BOD:
+                tmp_route.append([BOD, departure])                              # The first arrivial is at BOD
+                continue
+            ### Otherwise the first visit after BOD
+            elif j == 0 and r[j] == BOD:
+                continue                                                        # The first arrival is after next route
+            # Else append the arrival/departure time normally
+            else:
+                tmp_route.append([arrival_c, departure])                        # Append next arrival/departure pair
+
+            ### If the final visit is not at the EOD
+            if j == J-2  and r[j+1] < EOD:
+                tmp_route.append([arrival_n, EOD])                              # The last visit is after final route to
+                                                                                # EOD
+
+            arrival_c = arrival_n                                               # Update the current visit for next
+                                                                                # iteration
+
+        routes_visit.append({'id': b, 'visit': tmp_route})                      # Update the visits for bus b
+
+    return routes_visit
+
+##-------------------------------------------------------------------------------
+#
+def  __generateScheduleParams(self, routes):
+    """
         Generate a schedule based on the CSV file.
 
      Input:
-       - self: scheduler object
+       - self  : scheduler object
+       - routes: CSV route data
 
      Output:
        - CSV generated schedule
-        """
+    """
 
     # TODO: create gamma arrays, alpha/beta arrays, departure times, discharges (basically everything from gen_schedule:
     # __generateScheduleParams(self):)
+
+    # Local variables
+    A         : float = self.dm['A']
+    N         : float = self.dm['N']
+    discharge : float = 0
+    id        : int   = 0
+    bus_data          = []
+
     return
