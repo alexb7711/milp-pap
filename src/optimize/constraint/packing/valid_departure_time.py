@@ -26,7 +26,6 @@ class ValidDepartureTime(Constraint):
         # Extract decision vars
         c = self.d_var['c']
 
-        if t[i] > 0:
-            model.addConstr(c[i] <= t[i], name="{0}_{1}".format(self.name,i))
+        model.addConstr(c[i] <= t[i], name="{0}_{1}".format(self.name,i))
 
         return
