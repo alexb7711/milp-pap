@@ -7,7 +7,7 @@ from schedule_util import *
 ##===============================================================================
 # STATIC
 BOD = 0                                                                         # Beginning of working day
-EOD = 86400                                                                     # End of working day
+EOD = 24.0                                                                      # End of working day
 
 ##===============================================================================
 # PUBLIC
@@ -27,7 +27,7 @@ def genCSVRoutes(self, path: str="./data/routes.csv"):
       - But routes loaded from CSV
     """
 
-    routes = __loadCSV(path)                                                    # Load the route data from CSV
+    routes = __loadCSV(self, path)                                              # Load the route data from CSV
 
     __bufferAttributes(self, routes)                                            # Load the route attributes into
                                                                                 # scheduler object
@@ -44,12 +44,13 @@ def genCSVRoutes(self, path: str="./data/routes.csv"):
 
 ##-------------------------------------------------------------------------------
 #
-def __loadCSV(path: str):
+def __loadCSV(self, path: str):
     """
     Load a CSV of bus route data and format data into an easily accessible
     format
 
     Input:
+      - self: Scheduler object
       - path: file path to the CSV file with bus data
 
     Output:
@@ -68,7 +69,9 @@ def __loadCSV(path: str):
                 first_row = False
                 continue
 
-            routes.append({'id': int(row[0]), 'route': [float(x) for x in row[1:]]}) # Append the id and routes
+            ### If the route is not being ignored
+            if int(row[0]) not in self.init['ignore']:
+                routes.append({'id': int(row[0]), 'route': [__sec2Hr(float(x)) for x in row[1:]]}) # Append the id and routes
 
     return routes
 
@@ -287,3 +290,16 @@ def __generateScheduleParams(self, visits, discharge):
     saveParams(self)
 
     return
+
+##-------------------------------------------------------------------------------
+#
+def __sec2Hr(sec: float):
+    """
+    Convert seconds to hours
+
+    Input:
+      - sec: Time in seconds
+    Output:
+      - hr: Time in hours
+    """
+    return sec/3600.0
