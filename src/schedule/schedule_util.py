@@ -53,10 +53,10 @@ def genInputParams(self):
     self.dm['beta']  = initArray(self.dm['N'], dtype=float)                     # Final charge percentages
     self.dm['e']     = epsilon                                                  # Cost of use for charger q
     self.dm['kappa'] = np.repeat(init['buses']['bat_capacity'], self.dm['A'])   # Battery capacity of each bus
-    self.dm['m']     = [1000*x for x in range(int(init['buses']['num_bus']))]   # Cost of assignment for charger q
+    self.dm['m']     = [1000*x for x in range(int(self.dm['Q']))]               # Cost of assignment for charger q
     self.dm['nu']    = init['buses']['min_charge']                              # Minimum charge allowed on next visit
     self.dm['r']     = r                                                        # Charge rate for bus q
-    self.dm['s']     = np.repeat(init['buses']['bus_length'], self.dm['N']) # Length of a bus
+    self.dm['s']     = np.repeat(init['buses']['bus_length'], self.dm['N'])     # Length of a bus
     self.dm['zeta']  = np.repeat([init['buses']['dis_rate']], self.dm['A'])     # Discharge rate
 
     return

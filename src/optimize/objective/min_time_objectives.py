@@ -35,4 +35,3 @@ class MinTimeObjective(Objective):
                             for i in range(N)
                             for j in range(Q)), GRB.MINIMIZE)
         return
-

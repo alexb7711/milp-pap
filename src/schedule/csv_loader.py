@@ -286,6 +286,8 @@ def __generateScheduleParams(self, visits, discharge):
     ## Assign discharges to lambus_dataa array
     self.dm['l'] = applyParam(self, bus_data, "route_discharge")
 
+    input(bus_data)
+
     ## Save parameters to disk
     saveParams(self)
 

@@ -76,7 +76,7 @@ class Schedule:
         """
         # Local variables
         keys = bus_info.keys()
-        data = [id, arrival_t, departure_t, departure_t - arrival_t, discharge]
+        data = [id, arrival_t, departure_t, discharge]
 
         return dict(zip(keys, data))
 
