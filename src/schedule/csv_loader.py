@@ -6,7 +6,7 @@ from schedule_util import *
 
 ##===============================================================================
 # STATIC
-BOD = 0                                                                         # Beginning of working day
+BOD = 0.0                                                                       # Beginning of working day
 EOD = 24.0                                                                      # End of working day
 
 ##===============================================================================
@@ -63,6 +63,7 @@ def __loadCSV(self, path: str):
     with open(path, newline='') as csvfile:                                     # Open the CSV file
         routes_raw = csv.reader(csvfile, delimiter=',')
         routes     = []
+        id         = 0
 
         for row in routes_raw:                                                  # For each row in the csv file
             if first_row:                                                       # Ignore the first row
@@ -71,7 +72,8 @@ def __loadCSV(self, path: str):
 
             ### If the route is not being ignored
             if int(row[0]) not in self.init['ignore']:
-                routes.append({'id': int(row[0]), 'route': [__sec2Hr(float(x)) for x in row[1:]]}) # Append the id and routes
+                routes.append({'id': id, 'route': [__sec2Hr(float(x)) for x in row[1:]]}) # Append the id and routes
+                id += 1                                                                   # Update ID
 
     return routes
 
@@ -210,12 +212,12 @@ def __calcDischarge(self, routes):
 
     """
     # Variables
-    b         = 0                                                               # Bus index
     discharge = []                                                              # Discharge for each visit
 
     # For each set of routes for bus b
     for route in routes:
-        J = len(route['route'])                                                 # Number of routes for bus b
+        J             = len(route['route'])                                     # Number of routes for bus b
+        b             = route['id']                                             # Bus index
         discharge_tmp = []                                                      # Discharges for bus b
 
         ## For each route for bus b
@@ -285,8 +287,6 @@ def __generateScheduleParams(self, visits, discharge):
 
     ## Assign discharges to lambus_dataa array
     self.dm['l'] = applyParam(self, bus_data, "route_discharge")
-
-    input(bus_data)
 
     ## Save parameters to disk
     saveParams(self)
