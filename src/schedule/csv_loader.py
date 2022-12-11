@@ -28,11 +28,15 @@ def genCSVRoutes(self, path: str="./data/routes.csv"):
     """
 
     routes = __loadCSV(path)                                                    # Load the route data from CSV
+
     __bufferAttributes(self, routes)                                            # Load the route attributes into
                                                                                 # scheduler object
-    routes = __convertRouteToVisit(routes)                                      # Convert start/end route to
+
+    visits    = __convertRouteToVisit(routes)                                   # Convert start/end route to
                                                                                 # arrival/departure
-    __generateScheduleParams(self, routes)                                      # Generate route times and gammas
+    discharge = __calcDischarge(self, routes)                                   # Calculate the discharge
+    __generateScheduleParams(self, visits, discharge)                            # Generate schedule parameters
+
     return
 
 ##===============================================================================
@@ -85,8 +89,13 @@ def __bufferAttributes(self, routes):
     init = self.init
 
     # Calculate input parameters
-    self.dm['A'] = len(routes)                                                  # Number of buses
-    self.dm['N'] = __countVisits(init, routes)                                  # Number of visits
+    self.dm['A']     = len(routes)                                              # Number of buses
+    self.dm['N']     = __countVisits(init, routes)                              # Number of visits
+    self.dm['a']     = np.zeros(self.dm['N'], dtype=float)                      # Arrival times
+    self.dm['tau']   = np.zeros(self.dm['N'], dtype=float)                      # Departure times
+    self.dm['l']     = np.zeros(self.dm['N'], dtype=float)                      # Discharge for route i
+    self.dm['gamma'] = np.zeros(self.dm['N'], dtype=int)                        # ID of bus for each visit
+    self.dm['Gamma'] = np.zeros(self.dm['N'], dtype=int)                        # Index of next bus visit
 
     # Get the rest of the parameters from YAML
     genInputParams(self)                                                        # Get params from YAML
@@ -139,6 +148,7 @@ def  __convertRouteToVisit(routes):
     # Variables
     routes_visit = []
 
+    # Generate set of visit/departures
     # For each bus/route
     for route in routes:
         ## Variables
@@ -164,6 +174,7 @@ def  __convertRouteToVisit(routes):
                 continue
             ### Otherwise the first visit after BOD
             elif j == 0 and r[j] == BOD:
+                tmp_route.append([BOD, BOD])                                    # Put in a dummy visit to propogate discharge
                 continue                                                        # The first arrival is after next route
             # Else append the arrival/departure time normally
             else:
@@ -183,26 +194,96 @@ def  __convertRouteToVisit(routes):
 
 ##-------------------------------------------------------------------------------
 #
-def  __generateScheduleParams(self, routes):
+def __calcDischarge(self, routes):
     """
-        Generate a schedule based on the CSV file.
+    Calculate the discharge for each route
 
-     Input:
-       - self  : scheduler object
-       - routes: CSV route data
+    Input:
+      - self  : Scheduler object
+      - route : Bus routes in start/stop form
 
-     Output:
-       - CSV generated schedule
+    Output:
+      - discharge : Battery discharge over each visit
+
     """
+    # Variables
+    b         = 0                                                               # Bus index
+    discharge = []                                                              # Discharge for each visit
 
-    # TODO: create gamma arrays, alpha/beta arrays, departure times, discharges (basically everything from gen_schedule:
-    # __generateScheduleParams(self):)
+    # For each set of routes for bus b
+    for route in routes:
+        J = len(route['route'])                                                 # Number of routes for bus b
+        discharge_tmp = []                                                      # Discharges for bus b
 
-    # Local variables
-    A         : float = self.dm['A']
-    N         : float = self.dm['N']
-    discharge : float = 0
-    id        : int   = 0
-    bus_data          = []
+        ## For each route for bus b
+        for j in range(0,J,2):
+            r = route['route']
+            discharge_tmp.append(self.dm['zeta'][b] * (r[j+1] - r[j]))          # Calculate discharge
+
+            ### If the final visit is not at the end of the day
+            if j == J-2 and r[j+1] < EOD:
+                discharge_tmp.append(0)                                         # The final route does not have a discharge
+
+        discharge.append(discharge_tmp)                                         # Update discharges
+        b += 1                                                                  # Update the bus index
+
+    return discharge
+
+##-------------------------------------------------------------------------------
+#
+def __generateScheduleParams(self, visits, discharge):
+    """
+    Generate a schedule based on the CSV file.
+
+    Input
+      - self      : Scheduler object
+      - visits    : Routes in arrival/departure form
+      - discharge : Discharge for each bus route
+
+    Output
+      - Schedule generated from CSV
+    """
+    # Variables
+    bus_data        = []                                                        # Bus data to be sorted
+
+    # Generate bus data structure for each visit
+    for visit,dis in zip(visits, discharge):
+        id = visit['id']                                                        # ID
+
+        for j in range(len(visit['visit'])):
+            arrival  = visit['visit'][j][0]                                     # Visit
+            depart   = visit['visit'][j][1]                                     # Departure
+            bd       = self.fillBusData(id, arrival, depart, dis[j])            # Update bus data
+            bus_data.append(bd)
+
+    # Sort and apply final elements to the schedule
+    ## Sort bus_data by arrival times
+    bus_data = sorted(bus_data, key=lambda d: d['arrival_time'])                # Sort bus data using arrival time
+
+    ## Determine gamma array
+    self.dm['Gamma'] = genNextVisit(self, bus_data)
+
+    ## Determine Gamma array
+    self.dm['gamma'] = determineNextVisit(self, self.dm['Gamma'])
+
+    ## Randomly assign initial charges
+    self.dm['alpha'] = determineInitCharge(self, self.dm['Gamma'],
+                                           self.init['initial_charge'])
+
+    ## Assign final charges
+    self.dm['beta'] =  determineFinalCharge(self, self.dm['gamma'],
+                                            self.init['final_charge'])
+
+    ## Assign arrival times to arrival array
+    self.dm['a'] = applyParam(self, bus_data, "arrival_time")
+
+    ## Assign departure times to tau array
+    self.dm['t'] = applyParam(self, bus_data, "departure_time")
+
+    ## Assign discharges to lambus_dataa array
+    self.dm['l'] = applyParam(self, bus_data, "route_discharge")
+
+    ## Save parameters to disk
+    saveParams(self)
 
     return
