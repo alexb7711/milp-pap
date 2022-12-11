@@ -76,9 +76,9 @@ from power_usage_plot   import PowerUsagePlot
 def plot(results):
     plots = \
     [
-        SchedulePlot(),
+        # SchedulePlot(),
         ChargePlot(),
-        ChargerUsagePlot(),
+        # ChargerUsagePlot(),
         # PowerUsagePlot(),
     ]
 

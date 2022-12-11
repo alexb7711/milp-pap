@@ -22,7 +22,7 @@ class SpaceBigO(Constraint):
     def constraint(self, model, params, d_var, i, j):
         model.update()
         # Extract parameters
-        S = self.params['S']
+        Q = self.params['Q']
         s = self.params['s']
 
         # Extract decision vars
@@ -30,6 +30,6 @@ class SpaceBigO(Constraint):
         v     = self.d_var['v']
 
         if i != j:
-            model.addConstr(v[i] - v[j] - s[j] - (delta[i][j] - 1)*S >= 0, \
+            model.addConstr(v[i] - v[j] - (delta[i][j] - 1)*Q >= 0, \
                                       name="{0}_{1}_{2}".format(self.name,i,j))
         return
