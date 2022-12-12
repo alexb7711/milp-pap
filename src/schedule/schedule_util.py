@@ -42,15 +42,15 @@ def genInputParams(self):
     if type == 'random':
         self.dm['A']     = init['buses']['num_bus']                             # Number of buses
         self.dm['N']     = init['buses']['num_visit']                           # Number of bus visits
-        self.dm['K']     = init['time']['K']                                    # Total number of discrete steps
-        self.dm['dt']    = self.dm['T']/self.dm['K']                            # Calculate discrete time step
         self.dm['maxr']  = init['buses']['max_rest']                            # Maximum rest time between bus routes
         self.dm['minr']  = init['buses']['min_rest']                            # Minimum rest time between bus routes
         self.dm['tk']    =  np.array([i*self.dm['dt'] for i in range(0,self.dm['K'])]) # Discrete time step size
 
-    self.dm['Q']     =  init['chargers']['slow']['num'] + init['chargers']['fast']['num'] # Number of chargers
+    self.dm['K']     = init['time']['K']                                        # Total number of discrete steps
+    self.dm['Q']     = init['chargers']['slow']['num'] + init['chargers']['fast']['num'] # Number of chargers
     self.dm['alpha'] = initArray(self.dm['A'], dtype=float)                     # Initial charge percentages
     self.dm['beta']  = initArray(self.dm['N'], dtype=float)                     # Final charge percentages
+    self.dm['dt']    = self.dm['T']/self.dm['K']                                # Calculate discrete time step
     self.dm['e']     = epsilon                                                  # Cost of use for charger q
     self.dm['kappa'] = np.repeat(init['buses']['bat_capacity'], self.dm['A'])   # Battery capacity of each bus
     self.dm['m']     = [1000*x for x in range(int(self.dm['Q']))]               # Cost of assignment for charger q
@@ -58,6 +58,10 @@ def genInputParams(self):
     self.dm['r']     = r                                                        # Charge rate for bus q
     self.dm['s']     = np.repeat(init['buses']['bus_length'], self.dm['N'])     # Length of a bus
     self.dm['zeta']  = np.repeat([init['buses']['dis_rate']], self.dm['A'])     # Discharge rate
+
+    # Plotting info
+    self.dm.set('fast', init['chargers']['fast']['num'])                        # Set number of fast chargers
+    self.dm.set('slow', init['chargers']['slow']['num'])                        # Set number of slow chargers
 
     return
 
