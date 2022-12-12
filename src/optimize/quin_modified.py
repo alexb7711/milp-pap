@@ -173,19 +173,17 @@ class QuinModified:
           - N: Number of visits
         """
         # Variables
-        N = 0                                                                       # Number of visits
+        N = 0                                                                   # Number of visits
 
         for r in routes:
-            N += int((len(r['route'])) / 2)                                         # For every start/stop pair there is one
-            # visit. The first column is the id, so
-            # remove it
-            # If the bus does not go on route immediately after the working day has
-            # begun
+            N += int((len(r['route'])) / 2)                                     # For every start/stop pair there is one
+                                                                                # visit.
+
             if r['route'][0] > QuinModified.BOD:
-                N += 1                                                              # Increment the visit counter
+                N += 1                                                          # Increment the visit counter
                 # If the bus arrives before the end of the working day
                 if r['route'][-1] < QuinModified.EOD:
-                    N += 1                                                              # Increment the visit counter
+                    N += 1                                                      # Increment the visit counter
         return N
 
     ##---------------------------------------------------------------------------
@@ -206,12 +204,35 @@ class QuinModified:
 
         # For each route for bus b
         for route in routes:
+            J = len(route['route'])                                             # Number of routes for bus b
+            p_stop = QuinModified.BOD                                           # Keep track of the previos arrival time
+
+            ## If the first route is at the beginning of the day
+            if route['route'][0] == QuinModified.BOD:
+                p_stop = route['route'][1]                                      # The first visit is after first route
+
             ## For each start/stop pair
-            for r in range(0,len(route['route']),2):
-                route_sorted.append({'id': route['id']    ,
-                              'start': route['route'][r]  ,
-                              'stop': route['route'][r+1] ,
-                              'dis' : zeta*(route['route'][r+1] - route['route'][r])})
+            for r in range(0,J,2):
+                ### If the final visit is before the EOD
+                if r == J-2 and route['route'][r+1] < QuinModified.EOD:
+                    route_sorted.append({'id'    : route['id']               ,
+                                         'start' : QuinModified.EOD          ,
+                                         'stop'  : QuinModified.EOD          ,
+                                         'rest'  : QuinModified.EOD - p_stop ,
+                                         'dis'   : 0.0})
+                ### Otherwise
+                else:
+                    route_sorted.append({'id'    : route['id']                ,
+                                         'start' : route['route'][r]          ,
+                                         'stop'  : route['route'][r+1]        ,
+                                         'rest'  : route['route'][r+1]-p_stop ,
+                                         'dis'   : zeta*(route['route'][r+1] - route['route'][r])})
+
+
+                p_stop = route['route'][r+1]                                    # Update previous route
+
+
+
 
         route_sorted = sorted(route_sorted, key=lambda d: d['start'])           # Sort bus data using arrival time
 
@@ -252,7 +273,7 @@ class QuinModified:
         ## Charge time
         self.dm['p'] = np.zeros(N)
 
-        ## Lineriztion term
+        ## Linearization term
         self.dm['g'] = np.zeros((N,Q))
 
         ## Initial charge
