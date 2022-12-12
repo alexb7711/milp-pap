@@ -48,7 +48,7 @@ class ChargerUsagePlot(Plotter):
         fig.tight_layout(pad=0.75)
 
         for i in range(N):
-            if self.v[i] <= 4:
+            if self.v[i] < self.slow:
                 v100.append(self.v[i])
             else:
                 v400.append(self.v[i])

@@ -53,13 +53,13 @@ class Plotter:
 
     ##-----------------------------------------------------------------------------
     # Input
-    #           params: Model parameters
-    #           d_var : Model decision variable results
+    #           results : Output of GUROBI solution
+    #           dm      : Data manager
     #
     # Output:
     #           NONE
     #
-    def initialize(results):
+    def initialize(results, dm):
 
         # Constants
         Plotter.A     = results['A']
@@ -67,6 +67,8 @@ class Plotter:
         Plotter.Q     = results['Q']
         Plotter.T     = results['T']
         Plotter.K     = results['K'] if 'K' in results else 1000
+        Plotter.slow  = dm['slow']
+        Plotter.fast  = dm['fast']
 
         # Input Vars
         Plotter.a     = results['a']

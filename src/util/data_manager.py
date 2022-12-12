@@ -155,6 +155,8 @@ class DataManager(object):
         't'      : None, #  (tau) Departure time for bus visit i                [hr]
         'tk'     : None, #  Array of discrete times                             [hr]
         'zeta'   : None, #  Discharge rate for bus a                            [KW]
+        'slow'   : None, # Number of slow chargers
+        'fast'   : None, # Number of fast chargers
     }
 
     # Decision Variables
@@ -165,12 +167,10 @@ class DataManager(object):
         'eta'   : None, #  Initial charge for bus visit i                   [MJ]
         'g'     : None, #  Linearization for bilinear term g := p[i]*w[i][q]
         'p'     : None, #  Time to charge for bus visit i                   [hr]
-        #  'psi'   : None, #  Linearization term for power objective function
         'sigma' : None, #  Determines if i is "fully below" j
         'u'     : None, #  Initial charge time for visit i                  [hr]
         'v'     : None, #  Assigned queue for visit i
         'w'     : None, #  Matrix represetntation of bus charger assignments
-        #  'xi'    : None, #  Binary term to determine bus i is charging in tk
     }
 
     # Schedule

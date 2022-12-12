@@ -73,16 +73,26 @@ from power_usage_plot   import PowerUsagePlot
 
 ##===============================================================================
 #
-def plot(results):
+def plot(results, dm):
+    """
+    Runs a list of plot functions
+
+    Input
+      - results : Output of GUROBI solution
+      - dm      : Data Manager
+
+    Output
+      - NONE
+    """
     plots = \
     [
-        # SchedulePlot(),
+        SchedulePlot(),
         ChargePlot(),
-        # ChargerUsagePlot(),
+        ChargerUsagePlot(),
         # PowerUsagePlot(),
     ]
 
-    Plotter.initialize(results)
+    Plotter.initialize(results, dm)
 
     for p in plots:
         p.plot()
@@ -180,8 +190,6 @@ def main():
     # Create schedule
     Schedule(dm['model'])
 
-    # pretty(dm.m_params)
-
     # Optimize
     ## Initialize optimizer
     o = Optimizer()
@@ -194,7 +202,7 @@ def main():
     results = o.optimize()
 
     # Plot Results
-    plot(results)
+    plot(results, dm)
 
     return
 
