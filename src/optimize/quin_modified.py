@@ -9,6 +9,11 @@ from data_manager import DataManager
 ##===============================================================================
 #
 class QuinModified:
+    ##==========================================================================
+    # STATIC
+    BOD = 0.0                                                                   # Beginning of working day
+    EOD = 24.0                                                                  # End of working day
+
     ##===========================================================================
     # PUBLIC
     ##===========================================================================
@@ -28,8 +33,8 @@ class QuinModified:
         self.dm     = DataManager()                                             # Get instance of data manager
         self.init   = self.__parseYAML()                                        # Get ignored routes
         routes      = self.__loadCSV(path)                                      # Load the route data from CSV
+        self.__genDecisionVars()                                                # Generate decision variables
         self.routes = self.__sortRoutes(routes)                                 # Sort routes by start time
-        gon
         return
 
     ##---------------------------------------------------------------------------
@@ -51,18 +56,19 @@ class QuinModified:
         """
         # Local Variables
         a   = self.init['initial_charge']['max']                                # Initial charge percentage
-        c   = self.init['c']                                                    # Detatch time
-        eta = self.init['eta']                                                  # #Charge at start of visit
-        f   = self.init['fast']                                                 # Number of fast chargers
-        g   = self.init['g']                                                    # p_i * w_iq
+        c   = self.dm['c']                                                      # Detatch time
+        eta = self.dm['eta']                                                    # Charge at start of visit
+        f   = self.init['chargers']['fast']['num']                              # Number of fast chargers
+        g   = self.dm['g']                                                      # p_i * w_iq
         i   = 0                                                                 # Index
-        k   = self.init['kappa']                                                # Battery capacity
-        p   = self.init['p']                                                    # c_i - u_i
-        s   = self.init['slow']                                                 # Number of slow chargers
-        u   = self.init['u']                                                    # Initial charge times
-        v   = self.init['v']                                                    # Active charger
-        w   = self.init['w']                                                    # Active charger
+        k   = self.dm['kappa']                                                  # Battery capacity
+        p   = self.dm['p']                                                      # c_i - u_i
+        s   = self.init['chargers']['slow']['num']                              # Number of slow chargers
+        u   = self.dm['u']                                                      # Initial charge times
+        v   = self.dm['v']                                                      # Active charger
+        w   = self.dm['w']                                                      # Active charger
         first_visit = [True]*self.dm['A']                                       # List of first visit to initialize
+        charge = [True]*self.dm['A']                                            # Track the charges of the buses
 
         # For each route
         for r in self.route:
@@ -72,11 +78,24 @@ class QuinModified:
             ## Set initial charge for first visit
             if first_visit[id]:
                 first_visit[id] = False                                         # Remove flag
-                eta[i]          = k*a                                           # Initial charge
+                eta[i]          = k*a - dis                                     # Initial charge
+            # Else if the charge is below 60%, prioritize it to fast
+            elif charge[id] < 0.6*k:
+                self.__prioritizeFast(charge[id], v, u, c)
+            # Else if prioritize to slow, fast if no slow
+            elif charge[id] >= 0.6*k and charge[id] < 0.75*k:
+                self.__prioritizeSlow(charge[id], v, u, c)
+            # Else if only use slow
+            elif charge[id] <= 0.75*k and charge[id] < 0.9*k:
+                self.__onlySlow(charge[id], v, u, c)
+            # Else if, don't charge
+            elif charge[id] >= 0.9*k:
+                continue                                                        # Don't do anything
 
-            i += 1                                                              # Update index
+            ## Update
+            charge[id] = eta[i]                                                 # Update charge for bus b
+            i         += 1                                                      # Update index
 
-            continue
         return
 
     ##===========================================================================
@@ -136,7 +155,38 @@ class QuinModified:
 
         self.dm['A'] = id+1                                                     # Save number of buses
 
+        self.dm['N']     = self.__countVisits(self.init, routes)                # Number of visits
+
         return routes
+
+    ##--------------------------------------------------------------------------
+    #
+    def __countVisits(self, init, routes):
+        """
+        Counts the number of bus visits from the routes matrix.
+
+        Input:
+          - init  : Initialization parameters from YAML
+          - routes: Matrix of ID and start/stop times of routes for each bus
+
+        Output:
+          - N: Number of visits
+        """
+        # Variables
+        N = 0                                                                       # Number of visits
+
+        for r in routes:
+            N += int((len(r['route'])) / 2)                                         # For every start/stop pair there is one
+            # visit. The first column is the id, so
+            # remove it
+            # If the bus does not go on route immediately after the working day has
+            # begun
+            if r['route'][0] > QuinModified.BOD:
+                N += 1                                                              # Increment the visit counter
+                # If the bus arrives before the end of the working day
+                if r['route'][-1] < QuinModified.EOD:
+                    N += 1                                                              # Increment the visit counter
+        return N
 
     ##---------------------------------------------------------------------------
     #
@@ -186,8 +236,8 @@ class QuinModified:
           w     : Vector representation of v
         """
         # Local Variables
-        N = self.init['N']
-        Q = self.init['Q']
+        N = self.dm['N']
+        Q = self.dm['Q'] = self.init['chargers']['fast']['num'] + self.init['chargers']['slow']['num']
 
         # Generate decision variables
         ## Initial charge time
@@ -211,4 +261,42 @@ class QuinModified:
         ## Vector representation of queue
         self.dm['w'] = np.zeros((N,Q))
 
+        return
+
+    ##---------------------------------------------------------------------------
+    #
+    def __prioritizeFast(self, eta, v, u, c):
+        """
+        Charger assignment that prioritizes fast chargers
+
+        Input
+          - eta : current charge
+          - v   :
+
+        Output
+        """
+        return
+
+    ##---------------------------------------------------------------------------
+    #
+    def __prioritizeSlow(self, eta, v, u, c):
+        """
+        Charger assignment that prioritizes slow chargers
+
+        Input
+
+        Output
+        """
+        return
+
+    ##---------------------------------------------------------------------------
+    #
+    def __onlySlow(self, eta, v, u, c):
+        """
+        Charger assignment that only assigns to slow chargers
+
+        Input
+
+        Output
+        """
         return
