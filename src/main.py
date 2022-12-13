@@ -24,9 +24,10 @@ sys.path.append("util/")
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Developed
 #  from schedule_manager import Schedule
-from scheduler import Schedule
-from optimizer import Optimizer
-from pretty    import *
+from scheduler     import Schedule
+from optimizer     import Optimizer
+from quin_modified import QuinModified
+from pretty        import *
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Data managers
@@ -149,7 +150,7 @@ def setupConstraints(o, dm):
         ### Dynamic
         BilinearLinearization("bilinear_linearization"),
         ChargePropagation("charge_propagation"),
-        FinalCharge("final_charge"), #
+        FinalCharge("final_charge"),
         InitialCharge("initial_charge"),
         MaxChargePropagation("max_charge_propagation"),
         MinChargePropagation("min_charge_propagation"),
@@ -192,14 +193,16 @@ def main():
 
     # Optimize
     ## Initialize optimizer
-    o = Optimizer()
+    o  = Optimizer()
+    qm = QuinModified()
 
     ## Initialize objectives and constraints
-    setupObjective(o, dm)
-    setupConstraints(o, dm)
+    # setupObjective(o, dm)
+    # setupConstraints(o, dm)
 
     ## Optimize model
-    results = o.optimize()
+    # results = o.optimize()
+    results = qm.optimize()
 
     # Plot Results
     plot(results, dm)

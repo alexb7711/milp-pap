@@ -54,24 +54,32 @@ class QuinModified:
         Output
           - Charging schedule
         """
-        # Local Variables
+        # Variables
+        results = []
+
+        # MILP Variables
+        N   = self.dm['N']
+        Q   = self.dm['Q']
         a   = self.init['initial_charge']['max']                                # Initial charge percentage
         c   = self.dm['c']                                                      # Detatch time
         eta = self.dm['eta']                                                    # Charge at start of visit
         f   = self.init['chargers']['fast']['num']                              # Number of fast chargers
         g   = self.dm['g']                                                      # p_i * w_iq
         i   = 0                                                                 # Index
-        k   = self.dm['kappa']                                                  # Battery capacity
+        k   = self.init['buses']['bat_capacity']                                # Battery capacity
         p   = self.dm['p']                                                      # c_i - u_i
         s   = self.init['chargers']['slow']['num']                              # Number of slow chargers
         u   = self.dm['u']                                                      # Initial charge times
         v   = self.dm['v']                                                      # Active charger
         w   = self.dm['w']                                                      # Active charger
-        first_visit = [True]*self.dm['A']                                       # List of first visit to initialize
-        charge = [True]*self.dm['A']                                            # Track the charges of the buses
+
+        # Helper Variables
+        first_visit  = [True]*self.dm['A']                                      # List of first visit to initialize
+        charge       = [0]*self.dm['A']                                         # Track the charges of the buses
+        self.charger_use  = [None]*self.dm['A']                                 # Keep track of charger usage
 
         # For each route
-        for r in self.route:
+        for r in self.routes:
             id  = r['id']                                                       # ID
             dis = r['dis']                                                      # Discharge
 
@@ -81,13 +89,13 @@ class QuinModified:
                 eta[i]          = k*a - dis                                     # Initial charge
             # Else if the charge is below 60%, prioritize it to fast
             elif charge[id] < 0.6*k:
-                self.__prioritizeFast(charge[id], v, u, c)
+                self.__prioritizeFast(charge[id], self.charger_use, r['pstop'], r['start'])
             # Else if prioritize to slow, fast if no slow
             elif charge[id] >= 0.6*k and charge[id] < 0.75*k:
-                self.__prioritizeSlow(charge[id], v, u, c)
+                self.__prioritizeSlow(charge[id], self.charger_use)
             # Else if only use slow
             elif charge[id] <= 0.75*k and charge[id] < 0.9*k:
-                self.__onlySlow(charge[id], v, u, c)
+                self.__onlySlow(charge[id], self.charger_use)
             # Else if, don't charge
             elif charge[id] >= 0.9*k:
                 continue                                                        # Don't do anything
@@ -96,7 +104,10 @@ class QuinModified:
             charge[id] = eta[i]                                                 # Update charge for bus b
             i         += 1                                                      # Update index
 
-        return
+        # Format results
+        results = self.__formatResults()
+
+        return results
 
     ##===========================================================================
     # PRIVATE
@@ -206,18 +217,21 @@ class QuinModified:
         for route in routes:
             J = len(route['route'])                                             # Number of routes for bus b
             p_stop = QuinModified.BOD                                           # Keep track of the previos arrival time
+            start  = 0
 
             ## If the first route is at the beginning of the day
             if route['route'][0] == QuinModified.BOD:
                 p_stop = route['route'][1]                                      # The first visit is after first route
+                start  = 2
 
             ## For each start/stop pair
-            for r in range(0,J,2):
+            for r in range(start,J,2):
                 ### If the final visit is before the EOD
                 if r == J-2 and route['route'][r+1] < QuinModified.EOD:
                     route_sorted.append({'id'    : route['id']               ,
                                          'start' : QuinModified.EOD          ,
                                          'stop'  : QuinModified.EOD          ,
+                                         'pstop' : p_stop                    ,
                                          'rest'  : QuinModified.EOD - p_stop ,
                                          'dis'   : 0.0})
                 ### Otherwise
@@ -225,18 +239,16 @@ class QuinModified:
                     route_sorted.append({'id'    : route['id']                ,
                                          'start' : route['route'][r]          ,
                                          'stop'  : route['route'][r+1]        ,
-                                         'rest'  : route['route'][r+1]-p_stop ,
+                                         'pstop' : p_stop                     ,
+                                         'rest'  : route['route'][r]-p_stop   ,
                                          'dis'   : zeta*(route['route'][r+1] - route['route'][r])})
 
 
                 p_stop = route['route'][r+1]                                    # Update previous route
 
-
-
+        input(route_sorted)
 
         route_sorted = sorted(route_sorted, key=lambda d: d['start'])           # Sort bus data using arrival time
-
-        print(route_sorted)
 
         return route_sorted
 
@@ -286,21 +298,41 @@ class QuinModified:
 
     ##---------------------------------------------------------------------------
     #
-    def __prioritizeFast(self, eta, v, u, c):
+    def __prioritizeFast(self, eta, cu, start, stop):
         """
         Charger assignment that prioritizes fast chargers
 
         Input
-          - eta : current charge
-          - v   :
+          - eta   : Current charge
+          - cu    : Charger usage
+          - start : Start rest time
+          - stop  : Stop rest time
 
         Output
+          - eta : Current charge
+          - v   : Set of available chargers
+          - u   : Start charge time
+          - c   : Stop charge time
         """
-        return
+        # Variables
+        f = self.init['chargers']['fast']['num']
+        s = self.init['chargers']['slow']['num']
+        r = self.routes
+        Q = self.dm['Q']
+        v = -1
+
+        # For each of the chargers going from slow to fast
+        for i in range(Q):
+            if self.__chargerAvailable(cu, i, start, stop):
+                v         = i                                                   # Assigned to charger i
+                eta, u, c = self.__assignBusToCharge(i, eta, start, stop)       # Determine charge and time
+                break
+
+        return eta, v, u, c
 
     ##---------------------------------------------------------------------------
     #
-    def __prioritizeSlow(self, eta, v, u, c):
+    def __prioritizeSlow(self, eta, cu):
         """
         Charger assignment that prioritizes slow chargers
 
@@ -308,11 +340,13 @@ class QuinModified:
 
         Output
         """
+        f = self.init['chargers']['fast']['num']
+        s = self.init['chargers']['slow']['num']
         return
 
     ##---------------------------------------------------------------------------
     #
-    def __onlySlow(self, eta, v, u, c):
+    def __onlySlow(self, eta, cu):
         """
         Charger assignment that only assigns to slow chargers
 
@@ -320,4 +354,80 @@ class QuinModified:
 
         Output
         """
+        f = self.init['chargers']['fast']['num']
+        s = self.init['chargers']['slow']['num']
         return
+
+    ##---------------------------------------------------------------------------
+    #
+    def __formatResults(self):
+        """
+        Format the results so that they can be plotted
+        """
+        return
+
+    ##---------------------------------------------------------------------------
+    #
+    def __chargerAvailable(self, cu, q, start, stop):
+        """
+        Determine if charger is q available in the range [start, stop]
+
+        Input
+
+        Output
+        """
+
+        return
+
+    ##---------------------------------------------------------------------------
+    #
+    def __assignBusToCharge(self, q, eta, start, stop):
+        """
+        Assign bus to charger and determine charge time
+
+        Input
+
+        Output
+          - eta :
+          - u   :
+          - c   :
+          - v   :
+        """
+        f = self.init['chargers']['fast']['num']
+        s = self.init['chargers']['slow']['num']
+        k = self.init['buses']['bat_capacity']                                  # Battery capacity
+        r = -1
+        v = -1
+
+        # Pick a charger
+        if q < s: r = self.init['chargers']['slow']['rate']
+        else    : r = self.init['chargers']['fast']['rate']
+
+        # Reserve spot
+        # For each charger, try to find a spot to reserve
+        for q in self.charger_use:
+            ## For every assigned charge time
+            for i in q:
+                b = i[0]                                                        # Begin slot
+                e = i[1]                                                        # End slot
+
+                if   start < b and end < e: start = b; v = q
+                elif start > b and end > e: end   = e; v = q
+                elif start < b and end > e: start = b; end = e; v = q
+
+            if v >= 0: break                                                    # Charger found
+
+        # Save reservation
+        for i in range(len(self.charger_use)-1):
+            p = self.charger_use[v][i]
+            p = self.charger_use[v][i+1]
+            self.charger_use.append()
+
+        # Calculate new charge
+        if eta + r*(stop - start) >= 0.9*k:
+            stop = (k-eta)/r + start
+            eta  = 0.9*k
+        else:
+            eta = eta + r*(stop - start)
+
+        return eta, start, stop
