@@ -7,6 +7,7 @@ from operator import itemgetter
 
 # Developed Modules
 from data_manager import DataManager
+from dict_util    import *
 
 ##===============================================================================
 #
@@ -67,6 +68,11 @@ class QuinModified:
         i   = 0                                                                 # Index
         k   = self.init['buses']['bat_capacity']                                # Battery capacity
         s   = self.init['chargers']['slow']['num']                              # Number of slow chargers
+
+        c   = self.dm['c']                                                      # Detatch time
+        eta = self.dm['eta']                                                    # Charge at start of visit
+        u   = self.dm['u']                                                      # Initial charge times
+        v   = self.dm['v']                                                      # Active charger
 
         # Helper Variables
         first_visit  = [True]*self.dm['A']                                      # List of first visit to initialize
@@ -243,7 +249,7 @@ class QuinModified:
 
                 p_stop = route['route'][r+1]                                    # Update previous route
 
-        input(route_sorted)
+        #input(route_sorted)
 
         route_sorted = sorted(route_sorted, key=lambda d: d['start'])           # Sort bus data using arrival time
 
@@ -283,13 +289,13 @@ class QuinModified:
         self.dm['p'] = np.zeros(N)
 
         ## Linearization term
-        self.dm['g'] = np.zeros((N,Q))
+        self.dm['g'] = np.zeros((Q,N))
 
         ## Initial charge
         self.dm['eta'] = np.zeros(N)
 
         ## Vector representation of queue
-        self.dm['w'] = np.zeros((N,Q))
+        self.dm['w'] = np.zeros((Q,N))
 
         return
 
@@ -317,6 +323,7 @@ class QuinModified:
         Q     = self.dm['Q']
         queue = []
         v     = -1
+        u = c = 0
 
         # Set up search priority
         if priority == 'slow': queue = range(Q)                                  # Prioritize slow
@@ -348,11 +355,21 @@ class QuinModified:
 
         self.dm['p'] =  [self.dm['c'][i] - self.dm['u'][i] for i in range(N)]   # c_i - u_i
 
-        for i in N: 
-          self.dm['w'][v[i]] = 1                                                # Active charger
-          self.dm['g'][v[i]] = p[i]                                             # Linearization term
+        for i in range(N):
+          if v[i] > 0:
+            self.dm['w'][i][v[i]] = 1                                           # Active charger
+            self.dm['g'][i][v[i]] = p[i]                                        # Linearization term
+
+        # Save Results
+        ## Extract all the decision variable results
+        d_var_results = \
+                dict((k, self.dm.m_decision_var[k])
+                      for k in self.dm.m_decision_var.keys()
+                      if k != 'model')
 
         results = merge_dicts(self.dm.m_params, d_var_results)                  # Update results
+
+        input(results)
         
         return results
 
