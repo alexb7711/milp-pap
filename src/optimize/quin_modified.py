@@ -77,7 +77,9 @@ class QuinModified:
         # Helper Variables
         first_visit  = [True]*self.dm['A']                                      # List of first visit to initialize
         charge       = [0]*self.dm['A']                                         # Track the charges of the buses
-        self.charger_use  = [None]*self.dm['A']                                 # Keep track of charger usage
+        self.charger_use  = [[[0.0, QuinModified.EOD]]]*Q                         # Keep track of charger usage
+
+        #input(self.charger_use)
 
         # For each route
         for r in self.routes:
@@ -88,8 +90,12 @@ class QuinModified:
             if first_visit[id]:
                 first_visit[id] = False                                         # Remove flag
                 eta[i]          = k*a - dis                                     # Initial charge
+                charge[id]      = eta[i]
             else:
               priority = ''
+
+              # Discharge after route
+              charge[id] -= dis
 
               # If the charge is below 60%, prioritize it to fast
               if charge[id] < 0.6*k                           : priority = 'fast'
@@ -280,7 +286,7 @@ class QuinModified:
         self.dm['u'] = np.zeros(N)
 
         ## Assigned queue
-        self.dm['v'] = np.zeros(N)
+        self.dm['v'] = np.zeros(N, dtype=int)
 
         ## Detatch time
         self.dm['c'] = np.zeros(N)
@@ -289,13 +295,13 @@ class QuinModified:
         self.dm['p'] = np.zeros(N)
 
         ## Linearization term
-        self.dm['g'] = np.zeros((Q,N))
+        self.dm['g'] = np.zeros((N,Q), dtype=float)
 
         ## Initial charge
         self.dm['eta'] = np.zeros(N)
 
         ## Vector representation of queue
-        self.dm['w'] = np.zeros((Q,N))
+        self.dm['w'] = np.zeros((N,Q), dtype=int)
 
         return
 
@@ -327,7 +333,7 @@ class QuinModified:
 
         # Set up search priority
         if priority == 'slow': queue = range(Q)                                  # Prioritize slow
-        if priority == 'fast': queue = range(Q,-1,-1)                            # Prioritize fast
+        if priority == 'fast': queue = range(Q-1, -1,-1)                            # Prioritize fast
         if priority == 'SLOW': queue = range(0, s)                               # Only slow
 
         # For each of the chargers going from slow to fast
@@ -351,14 +357,15 @@ class QuinModified:
         self.dm['c']   = c                                                      # Detatch time
         self.dm['eta'] = eta                                                    # Charge at start of visit
         self.dm['u']   = u                                                      # Initial charge times
-        self.dm['v']   = v                                                      # Active charger
+        self.dm['v']   = [int(x) for x in v]                                    # Active charger
 
         self.dm['p'] =  [self.dm['c'][i] - self.dm['u'][i] for i in range(N)]   # c_i - u_i
 
         for i in range(N):
           if v[i] > 0:
+            print("Value of v: {0}".format(v[i]))
             self.dm['w'][i][v[i]] = 1                                           # Active charger
-            self.dm['g'][i][v[i]] = p[i]                                        # Linearization term
+            self.dm['g'][i][v[i]] = self.dm['p'][i]                             # Linearization term
 
         # Save Results
         ## Extract all the decision variable results
@@ -369,7 +376,7 @@ class QuinModified:
 
         results = merge_dicts(self.dm.m_params, d_var_results)                  # Update results
 
-        input(results)
+        #input(results)
         
         return results
 
@@ -399,37 +406,38 @@ class QuinModified:
 
         # Reserve spot
         # For each charger, try to find a spot to reserve
-        for q in self.charger_use:
+        for queue in self.charger_use:
             ## For every assigned charge time
-            for i in q:
+            for i in queue:
                 b = i[0]                                                        # Begin slot
                 e = i[1]                                                        # End slot
 
                 ### Try to find an open slot
-                if   start < b and end < e: start = b; v = q; break
-                elif start > b and end > e: end   = e; v = q; break
-                elif start < b and end > e: start = b; end = e; v = q; break
+                if   start < b and stop < e: start = b; v = q; break
+                elif start > b and stop > e: stop  = e; v = q; break
+                elif start < b and stop > e: start = b; stop = e; v = q; break
 
             if v >= 0: break                                                    # Charger found
 
         # Save reservation
         ## If there has been times allotted
-        for i in range(len(self.charger_use)):
-            s = self.charger_use[i][0]                                          # Start of free time
-            e = self.charger_use[i][1]                                          # End of free time
+        for q in self.charger_use:
+          for i in q:              
+              s = i[0]                                                          # Start of free time
+              e = i[1]                                                          # End of free time
 
-            # If the allocated time is in the selected free time
-            if s <= start and end <= e:
-              self.charger_use.pop(i)                                           # Remove current free time
-              self.charger_use.append([s, start])                               # Update charger times
-              self.charger_use.append([end, e])
-              self.charger_use = sorted(self.charger_use, key=itemgetter(0))    # Sort the new free times by start time
-              break
+              # If the allocated time is in the selected free time
+              if s <= start and stop <= e:
+                q.remove(i)                                        # Remove current free time
+                q.append([s, start])                               # Update charger times
+                q.append([stop, e])
+                q = sorted(self.charger_use, key=itemgetter(0))    # Sort the new free times by start time
+                break
 
         ## If this is the first time slot being allotted
         if not self.charger_use:
           self.charger_use.append([0,start])                                    # Free from BOD to start
-          self.charger_use.append([end, QuinModified.EOD])                      # Free from end to EOD
+          self.charger_use.append([stop, QuinModified.EOD])                      # Free from end to EOD
 
         # Calculate new charge
         if eta + r*(stop - start) >= 0.9*k:
@@ -437,5 +445,7 @@ class QuinModified:
             eta  = 0.9*k
         else:
             eta = eta + r*(stop - start)
+          
+        input("{0},{1},{2},{3}".format(eta, start, stop, v))
 
         return eta, start, stop, v
