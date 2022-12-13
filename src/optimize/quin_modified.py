@@ -63,17 +63,10 @@ class QuinModified:
         N   = self.dm['N']
         Q   = self.dm['Q']
         a   = self.init['initial_charge']['max']                                # Initial charge percentage
-        c   = self.dm['c']                                                      # Detatch time
-        eta = self.dm['eta']                                                    # Charge at start of visit
         f   = self.init['chargers']['fast']['num']                              # Number of fast chargers
-        g   = self.dm['g']                                                      # p_i * w_iq
         i   = 0                                                                 # Index
         k   = self.init['buses']['bat_capacity']                                # Battery capacity
-        p   = self.dm['p']                                                      # c_i - u_i
         s   = self.init['chargers']['slow']['num']                              # Number of slow chargers
-        u   = self.dm['u']                                                      # Initial charge times
-        v   = self.dm['v']                                                      # Active charger
-        w   = self.dm['w']                                                      # Active charger
 
         # Helper Variables
         first_visit  = [True]*self.dm['A']                                      # List of first visit to initialize
@@ -102,14 +95,14 @@ class QuinModified:
               elif charge[id] >= 0.9*k                        : continue        # Don't do anything
 
               ## Assign bus to charger
-              self.__assignCharger(charge[id], self.charger_use, r['pstop'], r['start'], priority)
+              eta[i], v[i], u[i], c[i] = self.__assignCharger(charge[id], self.charger_use, r['pstop'], r['start'], priority)
 
             ## Update
-            charge[id] = eta[i]                                                 # Update charge for bus b
+            charge[id] = eta[i]                                                 # Update charge
             i         += 1                                                      # Update index
 
         # Format results
-        results = self.__formatResults()
+        results = self.__formatResults(eta, v, u, c)
 
         return results
 
@@ -331,7 +324,7 @@ class QuinModified:
         if priority == 'SLOW': queue = range(0, s)                               # Only slow
 
         # For each of the chargers going from slow to fast
-        for i in queue:         
+        for i in queue:
           eta, u, c, v = self.__assignBusToCharge(i, eta, start, stop)           # Determine charge and time
           if v >=0: break                                                        # If a charger has been selected
 
@@ -339,11 +332,29 @@ class QuinModified:
 
     ##---------------------------------------------------------------------------
     #
-    def __formatResults(self):
+    def __formatResults(self, eta, v, u, c):
         """
         Format the results so that they can be plotted
         """
-        return
+        # Variables
+        N   = self.dm['N']
+        Q   = self.dm['Q']
+
+        # Update data manager
+        self.dm['c']   = c                                                      # Detatch time
+        self.dm['eta'] = eta                                                    # Charge at start of visit
+        self.dm['u']   = u                                                      # Initial charge times
+        self.dm['v']   = v                                                      # Active charger
+
+        self.dm['p'] =  [self.dm['c'][i] - self.dm['u'][i] for i in range(N)]   # c_i - u_i
+
+        for i in N: 
+          self.dm['w'][v[i]] = 1                                                # Active charger
+          self.dm['g'][v[i]] = p[i]                                             # Linearization term
+
+        results = merge_dicts(self.dm.m_params, d_var_results)                  # Update results
+        
+        return results
 
     ##---------------------------------------------------------------------------
     #
