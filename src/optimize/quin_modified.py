@@ -3,6 +3,8 @@ import csv
 import numpy as np
 import yaml
 
+from operator import itemgetter
+
 # Developed Modules
 from data_manager import DataManager
 
@@ -89,13 +91,13 @@ class QuinModified:
                 eta[i]          = k*a - dis                                     # Initial charge
             # Else if the charge is below 60%, prioritize it to fast
             elif charge[id] < 0.6*k:
-                self.__prioritizeFast(charge[id], self.charger_use, r['pstop'], r['start'])
+                self.__assignCharger(charge[id], self.charger_use, r['pstop'], r['start'], 'fast')
             # Else if prioritize to slow, fast if no slow
             elif charge[id] >= 0.6*k and charge[id] < 0.75*k:
-                self.__prioritizeSlow(charge[id], self.charger_use)
+                self.__assignCharger(charge[id], self.charger_use, r['pstop'], r['start'], 'slow')
             # Else if only use slow
             elif charge[id] <= 0.75*k and charge[id] < 0.9*k:
-                self.__onlySlow(charge[id], self.charger_use)
+                self.__assignCharger(charge[id], self.charger_use, r['pstop'], r['start'], 'SLOW')
             # Else if, don't charge
             elif charge[id] >= 0.9*k:
                 continue                                                        # Don't do anything
@@ -154,7 +156,8 @@ class QuinModified:
             routes     = []
             id         = 0
 
-            for row in routes_raw:                                              # For each row in the csv file
+            ## For each row in the csv file
+            for row in routes_raw:
                 if first_row:                                                   # Ignore the first row
                     first_row = False
                     continue
@@ -162,11 +165,10 @@ class QuinModified:
                 ### If the route is not being ignored
                 if int(row[0]) not in self.init['ignore']:
                     routes.append({'id': id, 'route': [sec2Hr(float(x)) for x in row[1:]]}) # Append the id and routes
-                    id += 1                                                                   # Update ID
+                    id += 1                                                     # Update ID
 
         self.dm['A'] = id+1                                                     # Save number of buses
-
-        self.dm['N']     = self.__countVisits(self.init, routes)                # Number of visits
+        self.dm['N'] = self.__countVisits(self.init, routes)                    # Number of visits
 
         return routes
 
@@ -298,7 +300,7 @@ class QuinModified:
 
     ##---------------------------------------------------------------------------
     #
-    def __prioritizeFast(self, eta, cu, start, stop):
+    def __assignCharger(self, eta, cu, start, stop, priority):
         """
         Charger assignment that prioritizes fast chargers
 
@@ -315,48 +317,23 @@ class QuinModified:
           - c   : Stop charge time
         """
         # Variables
-        f = self.init['chargers']['fast']['num']
-        s = self.init['chargers']['slow']['num']
-        r = self.routes
-        Q = self.dm['Q']
-        v = -1
+        f     = self.init['chargers']['fast']['num']
+        s     = self.init['chargers']['slow']['num']
+        Q     = self.dm['Q']
+        queue = []
+        v     = -1
+
+        # Set up search priority
+        if priority == 'slow': queue = range(Q)                                  # Prioritize slow
+        if priority == 'fast': queue = range(Q,-1,-1)                            # Prioritize fast
+        if priority == 'SLOW': queue = range(0, s)                               # Only slow
 
         # For each of the chargers going from slow to fast
-        for i in range(Q):
-            if self.__chargerAvailable(cu, i, start, stop):
-                v         = i                                                   # Assigned to charger i
-                eta, u, c = self.__assignBusToCharge(i, eta, start, stop)       # Determine charge and time
-                break
+        for i in queue:         
+          eta, u, c, v = self.__assignBusToCharge(i, eta, start, stop)           # Determine charge and time
+          if v >=0: break                                                        # If a charger has been selected
 
         return eta, v, u, c
-
-    ##---------------------------------------------------------------------------
-    #
-    def __prioritizeSlow(self, eta, cu):
-        """
-        Charger assignment that prioritizes slow chargers
-
-        Input
-
-        Output
-        """
-        f = self.init['chargers']['fast']['num']
-        s = self.init['chargers']['slow']['num']
-        return
-
-    ##---------------------------------------------------------------------------
-    #
-    def __onlySlow(self, eta, cu):
-        """
-        Charger assignment that only assigns to slow chargers
-
-        Input
-
-        Output
-        """
-        f = self.init['chargers']['fast']['num']
-        s = self.init['chargers']['slow']['num']
-        return
 
     ##---------------------------------------------------------------------------
     #
@@ -364,19 +341,6 @@ class QuinModified:
         """
         Format the results so that they can be plotted
         """
-        return
-
-    ##---------------------------------------------------------------------------
-    #
-    def __chargerAvailable(self, cu, q, start, stop):
-        """
-        Determine if charger is q available in the range [start, stop]
-
-        Input
-
-        Output
-        """
-
         return
 
     ##---------------------------------------------------------------------------
@@ -399,7 +363,7 @@ class QuinModified:
         r = -1
         v = -1
 
-        # Pick a charger
+        # Pick a charge rate
         if q < s: r = self.init['chargers']['slow']['rate']
         else    : r = self.init['chargers']['fast']['rate']
 
@@ -411,17 +375,31 @@ class QuinModified:
                 b = i[0]                                                        # Begin slot
                 e = i[1]                                                        # End slot
 
-                if   start < b and end < e: start = b; v = q
-                elif start > b and end > e: end   = e; v = q
-                elif start < b and end > e: start = b; end = e; v = q
+                ### Try to find an open slot
+                if   start < b and end < e: start = b; v = q; break
+                elif start > b and end > e: end   = e; v = q; break
+                elif start < b and end > e: start = b; end = e; v = q; break
 
             if v >= 0: break                                                    # Charger found
 
         # Save reservation
-        for i in range(len(self.charger_use)-1):
-            p = self.charger_use[v][i]
-            p = self.charger_use[v][i+1]
-            self.charger_use.append()
+        ## If there has been times allotted
+        for i in range(len(self.charger_use)):
+            s = self.charger_use[i][0]                                          # Start of free time
+            e = self.charger_use[i][1]                                          # End of free time
+
+            # If the allocated time is in the selected free time
+            if s <= start and end <= e:
+              self.charger_use.pop(i)                                           # Remove current free time
+              self.charger_use.append([s, start])                               # Update charger times
+              self.charger_use.append([end, e])
+              self.charger_use = sorted(self.charger_use, key=itemgetter(0))    # Sort the new free times by start time
+              break
+
+        ## If this is the first time slot being allotted
+        if not self.charger_use:
+          self.charger_use.append([0,start])                                    # Free from BOD to start
+          self.charger_use.append([end, QuinModified.EOD])                      # Free from end to EOD
 
         # Calculate new charge
         if eta + r*(stop - start) >= 0.9*k:
@@ -430,4 +408,4 @@ class QuinModified:
         else:
             eta = eta + r*(stop - start)
 
-        return eta, start, stop
+        return eta, start, stop, v
