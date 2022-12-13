@@ -89,18 +89,20 @@ class QuinModified:
             if first_visit[id]:
                 first_visit[id] = False                                         # Remove flag
                 eta[i]          = k*a - dis                                     # Initial charge
-            # Else if the charge is below 60%, prioritize it to fast
-            elif charge[id] < 0.6*k:
-                self.__assignCharger(charge[id], self.charger_use, r['pstop'], r['start'], 'fast')
-            # Else if prioritize to slow, fast if no slow
-            elif charge[id] >= 0.6*k and charge[id] < 0.75*k:
-                self.__assignCharger(charge[id], self.charger_use, r['pstop'], r['start'], 'slow')
-            # Else if only use slow
-            elif charge[id] <= 0.75*k and charge[id] < 0.9*k:
-                self.__assignCharger(charge[id], self.charger_use, r['pstop'], r['start'], 'SLOW')
-            # Else if, don't charge
-            elif charge[id] >= 0.9*k:
-                continue                                                        # Don't do anything
+            else:
+              priority = ''
+
+              # If the charge is below 60%, prioritize it to fast
+              if charge[id] < 0.6*k                           : priority = 'fast'
+              # Else if prioritize to slow, fast if no slow
+              elif charge[id] >= 0.6*k and charge[id] < 0.75*k: priority = 'slow'
+              # Else if only use slow
+              elif charge[id] <= 0.75*k and charge[id] < 0.9*k: priority = 'SLOW'
+              # Else if, don't charge
+              elif charge[id] >= 0.9*k                        : continue        # Don't do anything
+
+              ## Assign bus to charger
+              self.__assignCharger(charge[id], self.charger_use, r['pstop'], r['start'], priority)
 
             ## Update
             charge[id] = eta[i]                                                 # Update charge for bus b
