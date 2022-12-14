@@ -12,32 +12,27 @@ from dict_util    import *
 ##===============================================================================
 #
 class QuinModified:
-    ##==========================================================================
-    # STATIC
-    BOD = 0.0                                                                   # Beginning of working day
-    EOD = 24.0                                                                  # End of working day
-
     ##===========================================================================
     # PUBLIC
     ##===========================================================================
 
     ##---------------------------------------------------------------------------
     #
-    def __init__(self, path: str="./data/routes.csv"):
+    def __init__(self):
         """
         Initialize the Quin-Modified algorithm
 
         Input:
-          - path: path to CSV file
+          - None
 
         Output
            - None
         """
         self.dm     = DataManager()                                             # Get instance of data manager
         self.init   = self.__parseYAML()                                        # Get ignored routes
-        routes      = self.__loadCSV(path)                                      # Load the route data from CSV
         self.__genDecisionVars()                                                # Generate decision variables
-        self.routes = self.__sortRoutes(routes)                                 # Sort routes by start time
+        self.BOD    = 0.0                                                       # Beginning of day
+        self.EOD    = self.init['time']['time_horizon']                         # End of day
         return
 
     ##---------------------------------------------------------------------------
@@ -60,60 +55,61 @@ class QuinModified:
         # Variables
         results = []
 
-        # MILP Variables
-        N   = self.dm['N']
-        Q   = self.dm['Q']
-        a   = self.init['initial_charge']['max']                                # Initial charge percentage
+        # Unpack MILP Variables
+        ## Input variables
+        A   = self.dm['A']                                                      # Number of buses
+        G   = self.dm['Gamma']                                                  # ID of current visit
+        N   = self.dm['N']                                                      # Number of visits
+        Q   = self.dm['Q']                                                      # Number of chargers
+        a   = self.dm['a']                                                      # Initial charge percentage
+        alp = self.dm['alpha']                                                  # Initial charge percentage
         f   = self.init['chargers']['fast']['num']                              # Number of fast chargers
+        gam = self.dm['gamma']                                                  # Index of next visit for bus b
         i   = 0                                                                 # Index
-        k   = self.init['buses']['bat_capacity']                                # Battery capacity
+        l   = self.dm['l']                                                      # Discharge over route i
+        k   = self.dm['kappa']                                                  # Battery capacity
         s   = self.init['chargers']['slow']['num']                              # Number of slow chargers
+        t   = self.dm['t']                                                      # Departure time from station
+        z   = self.dm['zeta']                                                   # Discharge rate for bus b
 
-        c   = self.dm['c']                                                      # Detatch time
-        eta = self.dm['eta']                                                    # Charge at start of visit
-        u   = self.dm['u']                                                      # Initial charge times
-        v   = self.dm['v']                                                      # Active charger
+        ## Decision variables
+        c   = self.c                                                            # Detatch time
+        eta = self.eta                                                          # Charge at start of visit
+        u   = self.u                                                            # Initial charge times
+        v   = self.v                                                            # Active charger
 
         # Helper Variables
-        first_visit  = [True]*self.dm['A']                                      # List of first visit to initialize
-        charge       = [0]*self.dm['A']                                         # Track the charges of the buses
-        self.charger_use  = [[[0.0, QuinModified.EOD]]]*Q                         # Keep track of charger usage
+        first_visit = [True]*self.dm['A']                                       # List of first visit to initialize
+        self.cu     = [[[self.BOD, self.EOD]]]*Q                                # Keep track of charger usage
 
-        #input(self.charger_use)
-
-        # For each route
-        for r in self.routes:
-            id  = r['id']                                                       # ID
-            dis = r['dis']                                                      # Discharge
+        # For each visit
+        for r in range(N):
+            id  = G[i]                                                          # ID
+            dis = l[i]                                                          # Discharge
 
             ## Set initial charge for first visit
-            if first_visit[id]:
-                first_visit[id] = False                                         # Remove flag
-                eta[i]          = k*a - dis                                     # Initial charge
-                charge[id]      = eta[i]
+            if alp[i] > 0:
+                eta[i] = k*alp[i]                                               # Initial charge
+            ## Else its a normal visit
             else:
               priority = ''
 
-              # Discharge after route
-              charge[id] -= dis
-
-              # If the charge is below 60%, prioritize it to fast
-              if charge[id] < 0.6*k                           : priority = 'fast'
-              # Else if prioritize to slow, fast if no slow
-              elif charge[id] >= 0.6*k and charge[id] < 0.75*k: priority = 'slow'
-              # Else if only use slow
-              elif charge[id] <= 0.75*k and charge[id] < 0.9*k: priority = 'SLOW'
-              # Else if, don't charge
-              elif charge[id] >= 0.9*k                        : continue        # Don't do anything
+              ### If the charge is below 60%, prioritize it to fast
+              if eta[i]   < 0.6*k                     : priority = 'fast'
+              ### Else if prioritize to slow, fast if no slow
+              elif eta[i] >= 0.6*k and eta[i] < 0.75*k: priority = 'slow'
+              ### Else if only use slow
+              elif eta[i] <= 0.75*k and eta[i] < 0.9*k: priority = 'SLOW'
+              ### Else if, don't charge
+              elif eta[i] >= 0.9*k                    : continue                # Don't do anything
 
               ## Assign bus to charger
               if priority == '':
-                  eta[i], v[i], u[i], c[i] = self.__assignCharger(charge[id], self.charger_use, r['pstop'], r['pstop'], 'slow')
+                  eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(eta[i], self.cu, a[i], t[i], 'slow')
               else:
-                  eta[i], v[i], u[i], c[i] = self.__assignCharger(charge[id], self.charger_use, r['pstop'], r['start'], priority)
+                  eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(eta[i], self.cu, a[i], t[i], priority)
 
             ## Update
-            charge[id] = eta[i]                                                 # Update charge
             i         += 1                                                      # Update index
 
         # Format results
@@ -126,7 +122,7 @@ class QuinModified:
     ##===========================================================================
 
     ##---------------------------------------------------------------------------
-    #
+    # NOTE: Make this a shared util
     def __parseYAML(self, path: str="./config/schedule.yaml"):
         """
         Input:
@@ -136,133 +132,9 @@ class QuinModified:
           - self.init: Parsed schedule YAML file
         """
         # Variables
-        self.f   = open(path, "r")
-        init     = yaml.load(self.f, Loader = yaml.FullLoader)
+        self.f = open(path, "r")
+        init   = yaml.load(self.f, Loader = yaml.FullLoader)
         return init
-
-    ##---------------------------------------------------------------------------
-    #
-    def __loadCSV(self, path: str):
-        """
-        Load a CSV of bus route data and format data into an easily accessible
-        format
-
-        Input:
-          - self: Scheduler object
-          - path: file path to the CSV file with bus data
-
-        Output:
-          - routes: bus route data object
-        """
-        # Lambda
-        sec2Hr = lambda x : x/3600.0
-
-        # Variables
-        first_row = True                                                        # Indicate the first row is being
-                                                                                # processed
-
-        with open(path, newline='') as csvfile:                                 # Open the CSV file
-            routes_raw = csv.reader(csvfile, delimiter=',')
-            routes     = []
-            id         = 0
-
-            ## For each row in the csv file
-            for row in routes_raw:
-                if first_row:                                                   # Ignore the first row
-                    first_row = False
-                    continue
-
-                ### If the route is not being ignored
-                if int(row[0]) not in self.init['ignore']:
-                    routes.append({'id': id, 'route': [sec2Hr(float(x)) for x in row[1:]]}) # Append the id and routes
-                    id += 1                                                     # Update ID
-
-        self.dm['A'] = id+1                                                     # Save number of buses
-        self.dm['N'] = self.__countVisits(self.init, routes)                    # Number of visits
-
-        return routes
-
-    ##--------------------------------------------------------------------------
-    #
-    def __countVisits(self, init, routes):
-        """
-        Counts the number of bus visits from the routes matrix.
-
-        Input:
-          - init  : Initialization parameters from YAML
-          - routes: Matrix of ID and start/stop times of routes for each bus
-
-        Output:
-          - N: Number of visits
-        """
-        # Variables
-        N = 0                                                                   # Number of visits
-
-        for r in routes:
-            N += int((len(r['route'])) / 2)                                     # For every start/stop pair there is one
-                                                                                # visit.
-
-            if r['route'][0] > QuinModified.BOD:
-                N += 1                                                          # Increment the visit counter
-                # If the bus arrives before the end of the working day
-                if r['route'][-1] < QuinModified.EOD:
-                    N += 1                                                      # Increment the visit counter
-        return N
-
-    ##---------------------------------------------------------------------------
-    #
-    def __sortRoutes(self, routes):
-        """
-        Sort routes by start times
-
-        Input
-          - routes : CSV route data
-
-        Output
-          - routes : Sorted routes by start time
-        """
-        # Variables
-        route_sorted = []
-        zeta = self.dm['zeta'] = self.init['buses']['dis_rate']
-
-        # For each route for bus b
-        for route in routes:
-            J = len(route['route'])                                             # Number of routes for bus b
-            p_stop = QuinModified.BOD                                           # Keep track of the previos arrival time
-            start  = 0
-
-            ## If the first route is at the beginning of the day
-            if route['route'][0] == QuinModified.BOD:
-                p_stop = route['route'][1]                                      # The first visit is after first route
-                start  = 2
-
-            ## For each start/stop pair
-            for r in range(start,J,2):
-                ### If the final visit is before the EOD
-                if r == J-2 and route['route'][r+1] < QuinModified.EOD:
-                    route_sorted.append({'id'    : route['id']               ,
-                                         'start' : QuinModified.EOD          ,
-                                         'stop'  : QuinModified.EOD          ,
-                                         'pstop' : p_stop                    ,
-                                         'rest'  : QuinModified.EOD - p_stop ,
-                                         'dis'   : 0.0})
-                ### Otherwise
-                else:
-                    route_sorted.append({'id'    : route['id']                ,
-                                         'start' : route['route'][r]          ,
-                                         'stop'  : route['route'][r+1]        ,
-                                         'pstop' : p_stop                     ,
-                                         'rest'  : route['route'][r]-p_stop   ,
-                                         'dis'   : zeta*(route['route'][r+1] - route['route'][r])})
-
-
-                p_stop = route['route'][r+1]                                    # Update previous route
-
-        #input(route_sorted)
-
-        route_sorted = sorted(route_sorted, key=lambda d: d['start'])           # Sort bus data using arrival time
-
-        return route_sorted
 
     ##---------------------------------------------------------------------------
     #
@@ -272,40 +144,26 @@ class QuinModified:
           - None
 
         Output:
-          u     : Starting charge time
-          v     : Selected charging queue
-          c     : Detatch time fro visit i
-          p     : Amount of time spent on charger for visit i
-          g     : Linearization term for bilinear term
-          eta   : Initial charge for visit i
-          w     : Vector representation of v
+          - u   : Starting charge time
+          - v   : Selected charging queue
+          - c   : Detatch time fro visit i
+          - p   : Amount of time spent on charger for visit i
+          - g   : Linearization term for bilinear term
+          - eta : Initial charge for visit i
+          - w   : Vector representation of v
         """
         # Local Variables
-        N = self.dm['N']
-        Q = self.dm['Q'] = self.init['chargers']['fast']['num'] + self.init['chargers']['slow']['num']
+        N = self.dm['N']         # Number of visits
+        Q = self.dm['Q']         # Number of chargers
 
         # Generate decision variables
-        ## Initial charge time
-        self.dm['u'] = np.zeros(N)
-
-        ## Assigned queue
-        self.dm['v'] = np.zeros(N, dtype=int)
-
-        ## Detatch time
-        self.dm['c'] = np.zeros(N)
-
-        ## Charge time
-        self.dm['p'] = np.zeros(N)
-
-        ## Linearization term
-        self.dm['g'] = np.zeros((N,Q), dtype=float)
-
-        ## Initial charge
-        self.dm['eta'] = np.zeros(N)
-
-        ## Vector representation of queue
-        self.dm['w'] = np.zeros((N,Q), dtype=int)
-
+        self.u   = np.zeros(N)                  # Initial charge time
+        self.v   = np.zeros(N, dtype=int)       # Assigned queue
+        self.c   = np.zeros(N)                  # Detach time
+        self.p   = np.zeros(N)                  # Charge time
+        self.g   = np.zeros((N,Q), dtype=float) # Linearization term
+        self.eta = np.zeros(N)                  # Initial charge
+        self.w   = np.zeros((N,Q), dtype=int)   # Vector representation of queue
         return
 
     ##---------------------------------------------------------------------------
@@ -367,8 +225,11 @@ class QuinModified:
         for i in range(N):
           if v[i] > 0:
             print("Value of v: {0}".format(v[i]))
-            self.dm['w'][i][v[i]] = 1                                           # Active charger
-            self.dm['g'][i][v[i]] = self.dm['p'][i]                             # Linearization term
+            self.w[i][v[i]] = 1                                                 # Active charger
+            self.g[i][v[i]] = self.dm['p'][i]                                   # Linearization term
+
+        self.dm['w'] = self.w
+        self.dm['g'] = self.g
 
         # Save Results
         ## Extract all the decision variable results
@@ -377,22 +238,25 @@ class QuinModified:
                       for k in self.dm.m_decision_var.keys()
                       if k != 'model')
 
-        results = merge_dicts(self.dm.m_params, d_var_results)                  # Update results
-
-        # input(results)
+        # THIS NO LONGER WORKS, NEED TO UPDATE
+        results = merge_dicts(self.dm.m_params, d_var_results)                  # Update results 
 
         return results
 
     ##---------------------------------------------------------------------------
     #
-    def __assignBusToCharge(self, q, eta, start, stop):
+    def __assignBusToCharge(self, q, eta, a, t):
         """
         Assign bus to charger and determine charge time
 
         Input
+          - q   : Charger of interest
+          - eta : Current charge
+          - a   : Arrival time to station
+          - t   : Departure time
 
         Output
-          - eta :
+          - eta : Initial charge for next visit 
           - u   :
           - c   :
           - v   :
@@ -409,52 +273,62 @@ class QuinModified:
 
         # Reserve spot
         # For each charger, try to find a spot to reserve
-        for queue in self.charger_use:
+        for queue in self.cu:
             ## For every assigned charge time
             for i in queue:
                 b = i[0]                                                        # Begin slot
                 e = i[1]                                                        # End slot
 
                 ### Try to find an open slot
-                if   start >= b and stop <= e: v = q; break
-                elif start < b and stop < e: start = b; v = q; break
-                elif start > b and stop > e: stop  = e; v = q; break
-                elif start < b and stop > e: start = b; stop = e; v = q; break
+                if   a >= b and t <= e: v = q; break
+                elif a < b  and t < e: a = b; v = q; break
+                elif a > b  and t > e: t  = e; v = q; break
+                elif a < b  and t > e: a = b; t = e; v = q; break
 
             if v >= 0: break                                                    # Charger found
 
         # Save reservation
         ## If there has been times allotted
-        for q in self.charger_use:
+        for q in self.cu:
           for i in q:
               s = i[0]                                                          # Start of free time
               e = i[1]                                                          # End of free time
 
               # If the allocated time is in the selected free time
-              if s <= start and stop <= e:
+              if s <= a and t <= e:
                 q.remove(i)                                                     # Remove current free time
                 # print("remove {0} - {1}".format(i,q))
-                q.append([s, start])                                            # Update charger times
+                q.append([s, a])                                            # Update charger times
                 # print("append {0} - {1}".format([s, start], q))
-                q.append([stop, e])
+                q.append([t, e])
                 # print("append {0} - {1}".format([stop, e], q))
                 q.sort(key = lambda q: q[0])
                 # print("free times are: {0}".format(q))
                 break
 
         ## If this is the first time slot being allotted
-        if not self.charger_use:
-          self.charger_use.append([0,start])                                    # Free from BOD to start
-          self.charger_use.append([stop, QuinModified.EOD])                     # Free from end to EOD
+        if not self.cu:
+          self.cu.append([0,a])                                    # Free from BOD to start
+          self.cu.append([t, self.EOD])                            # Free from end to EOD
 
         # Calculate new charge
-        if eta + r*(stop - start) <= 0.9*k:
-            stop = (0.9*k-eta)/r + start
-            print("Amount charged: {0}".format(stop))
+        if eta + r*(t - a) <= 0.9*k:
+            t = (0.9*k-eta)/r + a
+            print("Amount charged: {0}".format(t))
             eta  = 0.9*k
         else:
-            eta = eta + r*(stop - start)
+            eta = eta + r*(t - a)
 
-        input("(eta, u, c, v): {0},{1},{2},{3}".format(eta, start, stop, v))
+        input("(eta, u, c, v): {0},{1},{2},{3}".format(eta, a, t, v))
 
-        return eta, start, stop, v
+        return eta, a, t, v
+
+    ##---------------------------------------------------------------------------
+    #
+    def __findFreeTime():
+      return
+
+    ##---------------------------------------------------------------------------
+    #
+    def __makeReservation():
+      return
