@@ -107,7 +107,10 @@ class QuinModified:
               elif charge[id] >= 0.9*k                        : continue        # Don't do anything
 
               ## Assign bus to charger
-              eta[i], v[i], u[i], c[i] = self.__assignCharger(charge[id], self.charger_use, r['pstop'], r['start'], priority)
+              if priority == '':
+                  eta[i], v[i], u[i], c[i] = self.__assignCharger(charge[id], self.charger_use, r['pstop'], r['pstop'], 'slow')
+              else:
+                  eta[i], v[i], u[i], c[i] = self.__assignCharger(charge[id], self.charger_use, r['pstop'], r['start'], priority)
 
             ## Update
             charge[id] = eta[i]                                                 # Update charge
@@ -332,14 +335,14 @@ class QuinModified:
         u = c = 0
 
         # Set up search priority
-        if priority == 'slow': queue = range(Q)                                  # Prioritize slow
-        if priority == 'fast': queue = range(Q-1, -1,-1)                            # Prioritize fast
-        if priority == 'SLOW': queue = range(0, s)                               # Only slow
+        if priority == 'slow': queue = range(Q)                                 # Prioritize slow
+        if priority == 'fast': queue = range(Q-1, -1,-1)                        # Prioritize fast
+        if priority == 'SLOW': queue = range(0, s)                              # Only slow
 
         # For each of the chargers going from slow to fast
         for i in queue:
           eta, u, c, v = self.__assignBusToCharge(i, eta, start, stop)           # Determine charge and time
-          if v >=0: break                                                        # If a charger has been selected
+          if v >= 0: break                                                       # If a charger has been selected
 
         return eta, v, u, c
 
@@ -413,7 +416,8 @@ class QuinModified:
                 e = i[1]                                                        # End slot
 
                 ### Try to find an open slot
-                if   start < b and stop < e: start = b; v = q; break
+                if   start >= b and stop <= e: v = q; break
+                elif start < b and stop < e: start = b; v = q; break
                 elif start > b and stop > e: stop  = e; v = q; break
                 elif start < b and stop > e: start = b; stop = e; v = q; break
 
@@ -429,13 +433,13 @@ class QuinModified:
               # If the allocated time is in the selected free time
               if s <= start and stop <= e:
                 q.remove(i)                                                     # Remove current free time
-                print("remove {0} - {1}".format(i,q))
+                # print("remove {0} - {1}".format(i,q))
                 q.append([s, start])                                            # Update charger times
-                print("append {0} - {1}".format([s, start], q))
+                # print("append {0} - {1}".format([s, start], q))
                 q.append([stop, e])
-                print("append {0} - {1}".format([stop, e], q))
+                # print("append {0} - {1}".format([stop, e], q))
                 q.sort(key = lambda q: q[0])
-                print("free times are: {0}".format(q))
+                # print("free times are: {0}".format(q))
                 break
 
         ## If this is the first time slot being allotted
@@ -444,12 +448,13 @@ class QuinModified:
           self.charger_use.append([stop, QuinModified.EOD])                     # Free from end to EOD
 
         # Calculate new charge
-        if eta + r*(stop - start) >= 0.9*k:
-            stop = (k-eta)/r + start
+        if eta + r*(stop - start) <= 0.9*k:
+            stop = (0.9*k-eta)/r + start
+            print("Amount charged: {0}".format(stop))
             eta  = 0.9*k
         else:
             eta = eta + r*(stop - start)
 
-        input("(eto, u, c, v): {0},{1},{2},{3}".format(eta, start, stop, v))
+        input("(eta, u, c, v): {0},{1},{2},{3}".format(eta, start, stop, v))
 
         return eta, start, stop, v
