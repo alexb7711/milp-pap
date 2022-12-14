@@ -376,8 +376,8 @@ class QuinModified:
 
         results = merge_dicts(self.dm.m_params, d_var_results)                  # Update results
 
-        #input(results)
-        
+        # input(results)
+
         return results
 
     ##---------------------------------------------------------------------------
@@ -422,22 +422,26 @@ class QuinModified:
         # Save reservation
         ## If there has been times allotted
         for q in self.charger_use:
-          for i in q:              
+          for i in q:
               s = i[0]                                                          # Start of free time
               e = i[1]                                                          # End of free time
 
               # If the allocated time is in the selected free time
               if s <= start and stop <= e:
-                q.remove(i)                                        # Remove current free time
-                q.append([s, start])                               # Update charger times
+                q.remove(i)                                                     # Remove current free time
+                print("remove {0} - {1}".format(i,q))
+                q.append([s, start])                                            # Update charger times
+                print("append {0} - {1}".format([s, start], q))
                 q.append([stop, e])
-                q = sorted(self.charger_use, key=itemgetter(0))    # Sort the new free times by start time
+                print("append {0} - {1}".format([stop, e], q))
+                q.sort(key = lambda q: q[0])
+                print("free times are: {0}".format(q))
                 break
 
         ## If this is the first time slot being allotted
         if not self.charger_use:
           self.charger_use.append([0,start])                                    # Free from BOD to start
-          self.charger_use.append([stop, QuinModified.EOD])                      # Free from end to EOD
+          self.charger_use.append([stop, QuinModified.EOD])                     # Free from end to EOD
 
         # Calculate new charge
         if eta + r*(stop - start) >= 0.9*k:
@@ -445,7 +449,7 @@ class QuinModified:
             eta  = 0.9*k
         else:
             eta = eta + r*(stop - start)
-          
-        input("{0},{1},{2},{3}".format(eta, start, stop, v))
+
+        input("(eto, u, c, v): {0},{1},{2},{3}".format(eta, start, stop, v))
 
         return eta, start, stop, v
