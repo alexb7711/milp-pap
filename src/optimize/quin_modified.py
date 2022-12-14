@@ -224,7 +224,6 @@ class QuinModified:
 
         for i in range(N):
           if v[i] > 0:
-            print("Value of v: {0}".format(v[i]))
             self.w[i][v[i]] = 1                                                 # Active charger
             self.g[i][v[i]] = self.dm['p'][i]                                   # Linearization term
 
@@ -272,20 +271,7 @@ class QuinModified:
         else    : r = self.init['chargers']['fast']['rate']
 
         # Reserve spot
-        # For each charger, try to find a spot to reserve
-        for queue in self.cu:
-            ## For every assigned charge time
-            for i in queue:
-                b = i[0]                                                        # Begin slot
-                e = i[1]                                                        # End slot
-
-                ### Try to find an open slot
-                if   a >= b and t <= e: v = q; break
-                elif a < b  and t < e: a = b; v = q; break
-                elif a > b  and t > e: t  = e; v = q; break
-                elif a < b  and t > e: a = b; t = e; v = q; break
-
-            if v >= 0: break                                                    # Charger found
+        self.__findFreeTime(self, a, t, q)
 
         # Save reservation
         ## If there has been times allotted
@@ -325,8 +311,41 @@ class QuinModified:
 
     ##---------------------------------------------------------------------------
     #
-    def __findFreeTime():
-      return
+    def __findFreeTime(self, a, t, queue):
+      """
+      Find a time for a bus to be charged
+
+      Input:
+        - a     : Arrival time
+        - t     : Departure time
+        - queue : Set of chargers
+
+      Output:
+        - u : Start charge time
+        - c : End charge time 
+        - v : Selected bus
+      """
+      # Variables
+      u = a
+      c = t
+      v = -1
+
+      # For each charger, try to find a spot to reserve
+      for queue in self.cu:
+          ## For every assigned charge time
+          for i in queue:
+              b = i[0]                                                        # Begin slot
+              e = i[1]                                                        # End slot
+
+              ### Try to find an open slot
+              if   a >= b and t <= e: v = q; break
+              elif a < b  and t < e : u = b; v = q;        break
+              elif a > b  and t > e : c = e; v = q;        break
+              elif a < b  and t > e : u = b; c = e; v = q; break
+
+          if v >= 0: break                                                    # Charger found
+
+      return a, t, v
 
     ##---------------------------------------------------------------------------
     #
