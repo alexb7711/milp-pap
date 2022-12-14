@@ -35,7 +35,7 @@ def genCSVRoutes(self, path: str="./data/routes.csv"):
     visits    = __convertRouteToVisit(routes)                                   # Convert start/end route to
                                                                                 # arrival/departure
     discharge = __calcDischarge(self, routes)                                   # Calculate the discharge
-    __generateScheduleParams(self, visits, discharge)                            # Generate schedule parameters
+    __generateScheduleParams(self, visits, discharge)                           # Generate schedule parameters
 
     return
 
