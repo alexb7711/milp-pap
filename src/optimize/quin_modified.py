@@ -65,7 +65,6 @@ class QuinModified:
         alp = self.dm['alpha']                                                  # Initial charge percentage
         f   = self.init['chargers']['fast']['num']                              # Number of fast chargers
         gam = self.dm['gamma']                                                  # Index of next visit for bus b
-        i   = 0                                                                 # Index
         l   = self.dm['l']                                                      # Discharge over route i
         k   = self.dm['kappa']                                                  # Battery capacity
         s   = self.init['chargers']['slow']['num']                              # Number of slow chargers
@@ -80,37 +79,34 @@ class QuinModified:
 
         # Helper Variables
         first_visit = [True]*self.dm['A']                                       # List of first visit to initialize
-        self.cu     = [[[self.BOD, self.EOD]]]*Q                                # Keep track of charger usage
+        self.cu     = [[[self.BOD, self.EOD]] for i in range(Q)]                # Keep track of charger usage
 
         # For each visit
-        for r in range(N):
+        for i in range(N):
             id  = G[i]                                                          # ID
             dis = l[i]                                                          # Discharge
 
             ## Set initial charge for first visit
             if alp[i] > 0:
-                eta[i] = k*alp[i]                                               # Initial charge
+              eta[i] = k[G[i]]*alp[i]                                           # Initial charge
             ## Else its a normal visit
             else:
               priority = ''
 
               ### If the charge is below 60%, prioritize it to fast
-              if eta[i]   < 0.6*k                     : priority = 'fast'
+              if eta[i]   < 0.6*k[G[i]]                           : priority = 'fast'
               ### Else if prioritize to slow, fast if no slow
-              elif eta[i] >= 0.6*k and eta[i] < 0.75*k: priority = 'slow'
+              elif eta[i] >= 0.6*k[G[i]] and eta[i] < 0.75*k[G[i]]: priority = 'slow'
               ### Else if only use slow
-              elif eta[i] <= 0.75*k and eta[i] < 0.9*k: priority = 'SLOW'
+              elif eta[i] <= 0.75*k[G[i]] and eta[i] < 0.9*k[G[i]]: priority = 'SLOW'
               ### Else if, don't charge
-              elif eta[i] >= 0.9*k                    : continue                # Don't do anything
+              elif eta[i] >= 0.9*k[G[i]]                          : continue    # Don't do anything
 
               ## Assign bus to charger
               if priority == '':
                   eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(eta[i], self.cu, a[i], t[i], 'slow')
               else:
                   eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(eta[i], self.cu, a[i], t[i], priority)
-
-            ## Update
-            i         += 1                                                      # Update index
 
         # Format results
         results = self.__formatResults(eta, v, u, c)
@@ -271,54 +267,50 @@ class QuinModified:
         else    : r = self.init['chargers']['fast']['rate']
 
         # Reserve spot
-        self.__findFreeTime(self, a, t, q)
+        u, c, v = self.__findFreeTime(a, t, q)
 
         # Save reservation
         ## If there has been times allotted
-        for q in self.cu:
-          for i in q:
+        if v >= 0:
+          for i in self.cu[v]:
               s = i[0]                                                          # Start of free time
               e = i[1]                                                          # End of free time
-
+              
               # If the allocated time is in the selected free time
-              if s <= a and t <= e:
+              if s <= u and c <= e:
+                q = self.cu[v]
                 q.remove(i)                                                     # Remove current free time
-                # print("remove {0} - {1}".format(i,q))
-                q.append([s, a])                                            # Update charger times
-                # print("append {0} - {1}".format([s, start], q))
-                q.append([t, e])
-                # print("append {0} - {1}".format([stop, e], q))
-                q.sort(key = lambda q: q[0])
-                # print("free times are: {0}".format(q))
+                #print("remove {0} - {1}".format(i,q))
+                q.append([s, u])                                                # Update charger times
+                #print("append {0} - {1}".format([s, u], q))
+                q.append([c, e])
+                #print("append {0} - {1}".format([c, e], q))
+                #q.sort(key = lambda q: q[0])
+                #print("free times are: {0}".format(q))
                 break
 
-        ## If this is the first time slot being allotted
-        if not self.cu:
-          self.cu.append([0,a])                                    # Free from BOD to start
-          self.cu.append([t, self.EOD])                            # Free from end to EOD
-
         # Calculate new charge
-        if eta + r*(t - a) <= 0.9*k:
+        if eta + r*(c - u) <= 0.9*k:
             t = (0.9*k-eta)/r + a
-            print("Amount charged: {0}".format(t))
+            #print("Amount charged: {0}".format(t))
             eta  = 0.9*k
         else:
-            eta = eta + r*(t - a)
+            eta = eta + r*(c - u)
 
-        input("(eta, u, c, v): {0},{1},{2},{3}".format(eta, a, t, v))
+        input("(eta, u, c, v): {0},{1},{2},{3}".format(eta, u, c, v))
 
-        return eta, a, t, v
+        return eta, u, c, v
 
     ##---------------------------------------------------------------------------
     #
-    def __findFreeTime(self, a, t, queue):
+    def __findFreeTime(self, a, t, q):
       """
       Find a time for a bus to be charged
 
       Input:
-        - a     : Arrival time
-        - t     : Departure time
-        - queue : Set of chargers
+        - a : Arrival time
+        - t : Departure time
+        - q : Charger of interest
 
       Output:
         - u : Start charge time
@@ -330,22 +322,26 @@ class QuinModified:
       c = t
       v = -1
 
-      # For each charger, try to find a spot to reserve
-      for queue in self.cu:
-          ## For every assigned charge time
-          for i in queue:
-              b = i[0]                                                        # Begin slot
-              e = i[1]                                                        # End slot
+      # For every assigned charge time
+      for i in self.cu[q]:
+          print("(a,t): ({0},{1})".format(a,t))
+          print("q: {0} - i: {1}".format(q,i))
+          b = i[0]                                                        # Begin slot
+          e = i[1]                                                        # End slot
 
-              ### Try to find an open slot
-              if   a >= b and t <= e: v = q; break
-              elif a < b  and t < e : u = b; v = q;        break
-              elif a > b  and t > e : c = e; v = q;        break
-              elif a < b  and t > e : u = b; c = e; v = q; break
+          ## Try to find an open slot
+          if (all(a < x for x in i) and all(t < x for x in i)) or \
+             (all(a > x for x in i) and all(t > x for x in i)): continue
 
-          if v >= 0: break                                                    # Charger found
+          if   b < a and t < e          : v = q;               print("1");break
+          elif a < b and t > a and t < e: u = b; v = q;        print("2");break
+          elif all(x > b for x in i) and \
+               all(t > x for x in i)    : c = e; v = q;        print("3");break
+          elif a < b and t > e          : u = b; c = e; v = q; print("4");break
 
-      return a, t, v
+          if v >= 0: break                                                # Charger found
+
+      return u, c, v
 
     ##---------------------------------------------------------------------------
     #
