@@ -330,14 +330,14 @@ class QuinModified:
           e = i[1]                                                        # End slot
 
           ## Try to find an open slot
-          if (all(a < x for x in i) and all(t < x for x in i)) or \
+          if (all(a < x for x in i) and all(t < x for x in i))  or \
              (all(a > x for x in i) and all(t > x for x in i)): continue
 
-          if   b < a and t < e          : v = q;               print("1");break
-          elif a < b and t > a and t < e: u = b; v = q;        print("2");break
+          if   b < a and t < e          : v = q;               break
+          elif a < b and t > a          : u = b; v = q;        break
           elif all(x > b for x in i) and \
-               all(t > x for x in i)    : c = e; v = q;        print("3");break
-          elif a < b and t > e          : u = b; c = e; v = q; print("4");break
+               all(t > x for x in i)    : c = e; v = q;        break
+          elif a < b and t > e          : u = b; c = e; v = q; break
 
           if v >= 0: break                                                # Charger found
 
