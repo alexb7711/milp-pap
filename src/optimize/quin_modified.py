@@ -89,6 +89,7 @@ class QuinModified:
             ## Set initial charge for first visit
             if alp[i] > 0:
               eta[i] = k[G[i]]*alp[i]                                           # Initial charge
+              eta[gam[i]] = eta[i] - dis                                        # Next visit charge
             ## Else its a normal visit
             else:
               priority = ''
@@ -100,16 +101,20 @@ class QuinModified:
               ### Else if only use slow
               elif eta[i] <= 0.75*k[G[i]] and eta[i] < 0.9*k[G[i]]: priority = 'SLOW'
               ### Else if, don't charge
-              elif eta[i] >= 0.9*k[G[i]]                          : continue    # Don't do anything
+              elif eta[i] >= 0.9*k[G[i]]                          : priority = ''    # Don't do anything
 
               ## Assign bus to charger
               if priority == '':
-                  eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(eta[i], self.cu, a[i], t[i], 'slow')
+                  eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(eta[i], self.cu, a[i], a[i], 'slow')
               else:
                   eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(eta[i], self.cu, a[i], t[i], priority)
 
         # Format results
         results = self.__formatResults(eta, v, u, c)
+        print("eta: {0}".format(eta))
+        print("u: {0}".format(u))
+        print("c: {0}".format(c))
+        input("v: {0}".format(v))
 
         return results
 
@@ -259,7 +264,7 @@ class QuinModified:
         f = self.init['chargers']['fast']['num']
         s = self.init['chargers']['slow']['num']
         k = self.init['buses']['bat_capacity']                                  # Battery capacity
-        r = -1
+        r = 0
         v = -1
 
         # Pick a charge rate
@@ -289,15 +294,15 @@ class QuinModified:
                 #print("free times are: {0}".format(q))
                 break
 
-        # Calculate new charge
-        if eta + r*(c - u) <= 0.9*k:
-            t = (0.9*k-eta)/r + a
-            #print("Amount charged: {0}".format(t))
-            eta  = 0.9*k
-        else:
-            eta = eta + r*(c - u)
+          ## Calculate new charge
+          if eta + r*(c - u) >= 0.9*k:
+              c = (0.9*k-eta)/r + a
+              #print("Amount charged: {0}".format(t))
+              eta  = 0.9*k
+          else:
+              eta = eta + r*(c - u)
 
-        input("(eta, u, c, v): {0},{1},{2},{3}".format(eta, u, c, v))
+          #input("(eta, u, c, v): {0},{1},{2},{3}".format(eta, u, c, v))
 
         return eta, u, c, v
 
@@ -324,8 +329,6 @@ class QuinModified:
 
       # For every assigned charge time
       for i in self.cu[q]:
-          print("(a,t): ({0},{1})".format(a,t))
-          print("q: {0} - i: {1}".format(q,i))
           b = i[0]                                                        # Begin slot
           e = i[1]                                                        # End slot
 
