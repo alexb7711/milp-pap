@@ -87,9 +87,9 @@ def plot(results, dm):
     """
     plots = \
     [
-        # SchedulePlot(),
+        SchedulePlot(),
         ChargePlot(),
-        # ChargerUsagePlot(),
+        ChargerUsagePlot(),
         # PowerUsagePlot(),
     ]
 
