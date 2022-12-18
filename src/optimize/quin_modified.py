@@ -101,20 +101,16 @@ class QuinModified:
               ### Else if only use slow
               elif eta[i] <= 0.75*k[G[i]] and eta[i] < 0.9*k[G[i]]: priority = 'SLOW'
               ### Else if, don't charge
-              elif eta[i] >= 0.9*k[G[i]]                          : priority = ''    # Don't do anything
+              elif eta[i] >= 0.9*k[G[i]]                          : priority = '' # Don't do anything
 
               ## Assign bus to charger
               if priority == '':
-                  eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(eta[i], self.cu, a[i], a[i], 'slow')
+                  eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(i, eta[i], self.cu, a[i], a[i], 'slow')
               else:
-                  eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(eta[i], self.cu, a[i], t[i], priority)
+                  eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(i, eta[i], self.cu, a[i], t[i], priority)
 
         # Format results
         results = self.__formatResults(eta, v, u, c)
-        print("eta: {0}".format(eta))
-        print("u: {0}".format(u))
-        print("c: {0}".format(c))
-        input("v: {0}".format(v))
 
         return results
 
@@ -169,11 +165,12 @@ class QuinModified:
 
     ##---------------------------------------------------------------------------
     #
-    def __assignCharger(self, eta, cu, start, stop, priority):
+    def __assignCharger(self, i, eta, cu, start, stop, priority):
         """
         Charger assignment that prioritizes fast chargers
 
         Input
+          - i     : Visit index
           - eta   : Current charge
           - cu    : Charger usage
           - start : Start rest time
@@ -199,9 +196,9 @@ class QuinModified:
         if priority == 'SLOW': queue = range(0, s)                              # Only slow
 
         # For each of the chargers going from slow to fast
-        for i in queue:
-          eta, u, c, v = self.__assignBusToCharge(i, eta, start, stop)           # Determine charge and time
-          if v >= 0: break                                                       # If a charger has been selected
+        for q in queue:
+          eta, u, c, v = self.__assignBusToCharge(i, q, eta, start, stop)       # Determine charge and time
+          if v >= 0: break                                                      # If a charger has been selected
 
         return eta, v, u, c
 
@@ -210,6 +207,15 @@ class QuinModified:
     def __formatResults(self, eta, v, u, c):
         """
         Format the results so that they can be plotted
+
+        Input:
+          - eta : Current charge of visit i
+          - v   : Charger of interest
+          - u   : Start charge time
+          - c   : End charge time
+
+        Output:
+          - Update data manager with decision variables
         """
         # Variables
         N   = self.dm['N']
@@ -238,25 +244,25 @@ class QuinModified:
                       for k in self.dm.m_decision_var.keys()
                       if k != 'model')
 
-        # THIS NO LONGER WORKS, NEED TO UPDATE
-        results = merge_dicts(self.dm.m_params, d_var_results)                  # Update results 
+        results = merge_dicts(self.dm.m_params, d_var_results)                  # Update results
 
         return results
 
     ##---------------------------------------------------------------------------
     #
-    def __assignBusToCharge(self, q, eta, a, t):
+    def __assignBusToCharge(self, i, q, eta, a, t):
         """
         Assign bus to charger and determine charge time
 
         Input
+          - i   : Visit index
           - q   : Charger of interest
           - eta : Current charge
           - a   : Arrival time to station
           - t   : Departure time
 
         Output
-          - eta : Initial charge for next visit 
+          - eta : Initial charge for next visit
           - u   :
           - c   :
           - v   :
@@ -277,32 +283,25 @@ class QuinModified:
         # Save reservation
         ## If there has been times allotted
         if v >= 0:
-          for i in self.cu[v]:
-              s = i[0]                                                          # Start of free time
-              e = i[1]                                                          # End of free time
-              
+          for j in self.cu[v]:
+              s = j[0]                                                          # Start of free time
+              e = j[1]                                                          # End of free time
+
               # If the allocated time is in the selected free time
               if s <= u and c <= e:
                 q = self.cu[v]
-                q.remove(i)                                                     # Remove current free time
-                #print("remove {0} - {1}".format(i,q))
+                q.remove(j)                                                     # Remove current free time
                 q.append([s, u])                                                # Update charger times
-                #print("append {0} - {1}".format([s, u], q))
                 q.append([c, e])
-                #print("append {0} - {1}".format([c, e], q))
-                #q.sort(key = lambda q: q[0])
-                #print("free times are: {0}".format(q))
                 break
 
           ## Calculate new charge
           if eta + r*(c - u) >= 0.9*k:
-              c = (0.9*k-eta)/r + a
+              c = (0.9*k-eta)/r + u
               #print("Amount charged: {0}".format(t))
-              eta  = 0.9*k
+              eta  = 0.9*k - self.dm['l'][i]
           else:
-              eta = eta + r*(c - u)
-
-          #input("(eta, u, c, v): {0},{1},{2},{3}".format(eta, u, c, v))
+              eta = eta + r*(c - u) - self.dm['l'][i]
 
         return eta, u, c, v
 
@@ -319,7 +318,7 @@ class QuinModified:
 
       Output:
         - u : Start charge time
-        - c : End charge time 
+        - c : End charge time
         - v : Selected bus
       """
       # Variables
@@ -329,8 +328,8 @@ class QuinModified:
 
       # For every assigned charge time
       for i in self.cu[q]:
-          b = i[0]                                                        # Begin slot
-          e = i[1]                                                        # End slot
+          b = i[0]                                                              # Begin slot
+          e = i[1]                                                              # End slot
 
           ## Try to find an open slot
           if (all(a < x for x in i) and all(t < x for x in i))  or \
