@@ -35,7 +35,7 @@ def genCSVRoutes(self, path: str="./data/routes.csv"):
     visits    = __convertRouteToVisit(routes)                                   # Convert start/end route to
                                                                                 # arrival/departure
     discharge = __calcDischarge(self, routes)                                   # Calculate the discharge
-    __generateScheduleParams(self, visits, discharge)                            # Generate schedule parameters
+    __generateScheduleParams(self, visits, discharge)                           # Generate schedule parameters
 
     return
 
@@ -56,6 +56,9 @@ def __loadCSV(self, path: str):
     Output:
       - routes: bus route data object
     """
+    # Lambda
+    sec2Hr = lambda x : x/3600.0
+
     # Variables
     first_row = True                                                            # Indicate the first row is being
                                                                                 # processed
@@ -72,7 +75,7 @@ def __loadCSV(self, path: str):
 
             ### If the route is not being ignored
             if int(row[0]) not in self.init['ignore']:
-                routes.append({'id': id, 'route': [__sec2Hr(float(x)) for x in row[1:]]}) # Append the id and routes
+                routes.append({'id': id, 'route': [sec2Hr(float(x)) for x in row[1:]]}) # Append the id and routes
                 id += 1                                                                   # Update ID
 
     return routes
@@ -126,8 +129,7 @@ def __countVisits(init, routes):
 
     for r in routes:
         N += int((len(r['route'])) / 2)                                         # For every start/stop pair there is one
-                                                                                # visit. The first column is the id, so
-                                                                                # remove it
+                                                                                # visit.
         # If the bus does not go on route immediately after the working day has
         # begun
         if r['route'][0] > BOD:
@@ -292,16 +294,3 @@ def __generateScheduleParams(self, visits, discharge):
     saveParams(self)
 
     return
-
-##-------------------------------------------------------------------------------
-#
-def __sec2Hr(sec: float):
-    """
-    Convert seconds to hours
-
-    Input:
-      - sec: Time in seconds
-    Output:
-      - hr: Time in hours
-    """
-    return sec/3600.0

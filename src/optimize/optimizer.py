@@ -24,13 +24,10 @@ class Optimizer:
 
     ##---------------------------------------------------------------------------
     # Input:
-    #       A        : A matrix
-    #       b        : b vector
-    #       x        : x vector
-    #       schedule : All schedule variables
+    #       NONE
     #
     # Output:
-    #       Example: test
+    #       NONE
     #
     def __init__(self):
         # Parse 'config/general.yaml'

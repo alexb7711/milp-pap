@@ -25,9 +25,11 @@ update:
 	$(BIN)/pip install -r $(DEP)
 
 run:
-	source $(BIN)/activate && \
-	cd $(SRC)              && \
-	python main.py
+	bash -c                    \
+	"cd $(shell pwd)       &&  \
+	source $(BIN)/activate &&  \
+	cd $(SRC)              &&  \
+	python main.py"
 
 debug:
 	source $(BIN)/activate && \

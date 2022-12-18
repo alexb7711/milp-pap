@@ -163,9 +163,7 @@ class Schedule:
           delta : if v_i < v_j ? true : false
         """
         # Local Variables
-        A = self.dm['A']
         N = self.dm['N']
-        K = self.dm['K']
         Q = self.dm['Q']
 
         # Generate decision variables
