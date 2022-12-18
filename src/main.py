@@ -14,7 +14,6 @@ sys.path.append("optimize/")
 sys.path.append("optimize/constraint/")
 sys.path.append("optimize/constraint/dynamics/")
 sys.path.append("optimize/constraint/packing/")
-sys.path.append("optimize/constraint/power/")
 sys.path.append("optimize/objective/")
 sys.path.append("plot/")
 sys.path.append("plot/plots/")
@@ -36,7 +35,6 @@ from data_manager import DataManager
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Objective
 from min_time_objectives import MinTimeObjective
-from min_power_objective import MinPowerObjective
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Constraints
@@ -61,9 +59,6 @@ from min_charge_propagation import MinChargePropagation
 from scalar_to_vector_queue import ScalarToVectorQueue
 from valid_queue_vector     import ValidQueueVector
 
-## Power
-from discrete_power_usage    import DiscretePowerUsage
-
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plots
 from plot               import Plotter
@@ -87,10 +82,10 @@ def plot(results, dm):
     """
     plots = \
     [
-        SchedulePlot(),
-        ChargePlot(),
-        ChargerUsagePlot(),
-        # PowerUsagePlot(),
+        # SchedulePlot(),
+        # ChargePlot(),
+        # ChargerUsagePlot(),
+        PowerUsagePlot(),
     ]
 
     Plotter.initialize(results, dm)
