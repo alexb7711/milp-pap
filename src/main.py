@@ -106,7 +106,6 @@ def setupObjective(o, dm):
     objectives = \
     [
         MinTimeObjective("min_time_objective"),
-        #  MinPowerObjective("min_power_objective"),
     ]
 
     objectives[0].initialize(m, params, d_var)
@@ -151,9 +150,6 @@ def setupConstraints(o, dm):
         MinChargePropagation("min_charge_propagation"),
         ScalarToVectorQueue("scalar_to_vector_queue"),
         ValidQueueVector("valid_queue_vector"),
-
-        ### Power
-        #  DiscretePowerUsage("discrete_power_usage", Q),
     ]
 
     initializeConstr(constraints, m, params, d_var)
