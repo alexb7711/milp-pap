@@ -30,7 +30,7 @@ class ChargePropagation(Constraint):
 		eta = self.d_var['eta']
 		g   = self.d_var['g']
 
-		if gam[i] > 0:
+		if gam[i] >= 0:
 			model.addConstr(eta[i] + sum(g[i][q]*r[q] for q in range(Q)) - l[i] == eta[gam[i]], \
 										  name="{0}_{1}".format(self.name,i))
 
