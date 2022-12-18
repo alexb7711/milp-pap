@@ -101,7 +101,7 @@ class QuinModified:
               ### Else if only use slow
               elif eta[i] <= 0.75*k[G[i]] and eta[i] < 0.9*k[G[i]]: priority = 'SLOW'
               ### Else if, don't charge
-              elif eta[i] >= 0.9*k[G[i]]                          : priority = ''    # Don't do anything
+              elif eta[i] >= 0.9*k[G[i]]                          : priority = '' # Don't do anything
 
               ## Assign bus to charger
               if priority == '':
@@ -111,10 +111,6 @@ class QuinModified:
 
         # Format results
         results = self.__formatResults(eta, v, u, c)
-        print("eta: {0}".format(eta))
-        print("u: {0}".format(u))
-        print("c: {0}".format(c))
-        input("v: {0}".format(v))
 
         return results
 
@@ -239,7 +235,7 @@ class QuinModified:
                       if k != 'model')
 
         # THIS NO LONGER WORKS, NEED TO UPDATE
-        results = merge_dicts(self.dm.m_params, d_var_results)                  # Update results 
+        results = merge_dicts(self.dm.m_params, d_var_results)                  # Update results
 
         return results
 
@@ -256,7 +252,7 @@ class QuinModified:
           - t   : Departure time
 
         Output
-          - eta : Initial charge for next visit 
+          - eta : Initial charge for next visit
           - u   :
           - c   :
           - v   :
@@ -280,7 +276,7 @@ class QuinModified:
           for i in self.cu[v]:
               s = i[0]                                                          # Start of free time
               e = i[1]                                                          # End of free time
-              
+
               # If the allocated time is in the selected free time
               if s <= u and c <= e:
                 q = self.cu[v]
@@ -296,7 +292,7 @@ class QuinModified:
 
           ## Calculate new charge
           if eta + r*(c - u) >= 0.9*k:
-              c = (0.9*k-eta)/r + a
+              c = (0.9*k-eta)/r + u
               #print("Amount charged: {0}".format(t))
               eta  = 0.9*k
           else:
@@ -319,7 +315,7 @@ class QuinModified:
 
       Output:
         - u : Start charge time
-        - c : End charge time 
+        - c : End charge time
         - v : Selected bus
       """
       # Variables

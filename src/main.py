@@ -87,9 +87,9 @@ def plot(results, dm):
     """
     plots = \
     [
-        SchedulePlot(),
+        # SchedulePlot(),
         ChargePlot(),
-        ChargerUsagePlot(),
+        # ChargerUsagePlot(),
         # PowerUsagePlot(),
     ]
 
@@ -197,14 +197,19 @@ def main():
     qm = QuinModified()
 
     ## Initialize objectives and constraints
-    # setupObjective(o, dm)
-    # setupConstraints(o, dm)
+    setupObjective(o, dm)
+    setupConstraints(o, dm)
 
-    ## Optimize model
-    # results = o.optimize()
+    ### Optimize model with MILP
+    results = o.optimize()
+
+    ### Plot Results
+    plot(results, dm)
+
+    ### Optimize with Quin-Modified
     results = qm.optimize()
 
-    # Plot Results
+    ### Plot Results
     plot(results, dm)
 
     return

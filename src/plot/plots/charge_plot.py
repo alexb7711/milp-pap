@@ -46,8 +46,7 @@ class ChargePlot(Plotter):
         plt.xlabel("Time")
         plt.ylabel("Charge [kwh]")
 
-        for i in range(A):
-            ax.plot(x[i], y[i])
+        for i in range(A): ax.plot(x[i], y[i])
 
         # gs = GridShader(ax, facecolor="lightgrey", first=False, alpha=0.7)
 
