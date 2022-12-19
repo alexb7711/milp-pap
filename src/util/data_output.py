@@ -173,6 +173,27 @@ def __scheduleOut(fn,dm,path):
     Output:
         - Data files
     """
+     # Variables
+    name   = fn+'-schedule'
+    A      = dm['A']
+    N      = dm['N']
+    G      = dm['Gamma']
+    c      = dm['c']
+    r      = dm['r']
+    u      = dm['u']
+    v      = dm['v']
+    data   = -1*np.ones((N,4*A), dtype=float)
+    fields = ['id', 'charger', 'start', 'stop']*A
+
+    # For each visit
+    for i in range(N):
+        data[i][G[i]*4+0] = G[i]
+        data[i][G[i]*4+1] = v[i]
+        data[i][G[i]*4+2] = u[i]
+        data[i][G[i]*4+3] = c[i]
+
+    # Write data to disk
+    __saveToFile(path, name, fields, data)
     return
 
 ##-------------------------------------------------------------------------------
