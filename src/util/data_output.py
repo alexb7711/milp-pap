@@ -67,20 +67,20 @@ Output:
             ### If the visit is for the bus of interest
             if G[i] == j:
                 #### Append the charge on arrival
-                data[t_i][j + 0] = j
-                data[t_i][j + 1] = u[i]
-                data[t_i][j + 2] = eta[i]
+                data[t_i][j*5 + 0] = j
+                data[t_i][j*5 + 1] = u[i]
+                data[t_i][j*5 + 2] = eta[i]
 
                 #### Append the charge on departure
-                data[t_i][j + 3] = c[i]
-                data[t_i][j + 4] = eta[i] + g[i][int(v[i])]*r[int(v[i])]
+                data[t_i][j*5 + 3] = c[i]
+                data[t_i][j*5 + 4] = eta[i] + g[i][int(v[i])]*r[int(v[i])]
 
                 #### Update index
                 t_i += 1
 
     # input(data)
     # Cleanup data
-    # data = [[e for e in row if e != -1] for row in data]                        # Remove all -1
+    data = [[str(e) for e in row] for row in data]
 
     # Write data to disk
     __saveToFile(path, name, fields, data)
@@ -153,6 +153,17 @@ def __saveToFile(path, name, fields, data):
     # Variables
     fn = path + name + ".csv"
 
+    # For each row
+    for row in data:
+        ## For each item in the row
+        for i in range(len(row)):
+            ### if the row item is a '-1.0', replace it
+            if row[i] == "-1.0": row[i] = ''
+        
+        ## If the row is only commas, clear it
+        if row == sorted(row): row.clear()
+
+    # Save data to disk
     with open(fn, 'w') as csvfile:
         writer = csv.writer(csvfile)                                            # Create writer object
         writer.writerow(fields)                                                 # Write fields
