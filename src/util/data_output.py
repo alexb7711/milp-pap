@@ -136,6 +136,27 @@ def __powerOut(fn,dm,path):
     Output:
         - Data files
     """
+    # Variables
+    name   = fn+'-power-usage'
+    K      = dm['K']
+    N      = dm['N']
+    T      = dm['T']
+    c      = dm['c']
+    r      = dm['r']
+    u      = dm['u']
+    v      = dm['v']
+    data   = np.zeros((K,1), dtype=float)
+    fields = ['power']
+
+    # For each visit
+    idx = 0
+    for k in np.linspace(0,T,K):
+        for i in range(N):
+            if u[i] <= k and c[i] >= k: data[idx] += r[v[i]]
+        idx += 1
+
+    # Write data to disk
+    __saveToFile(path, name, fields, data)
     return
 
 ##-------------------------------------------------------------------------------
