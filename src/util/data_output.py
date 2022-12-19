@@ -78,10 +78,6 @@ Output:
                 #### Update index
                 t_i += 1
 
-    # input(data)
-    # Cleanup data
-    data = [[str(e) for e in row] for row in data]
-
     # Write data to disk
     __saveToFile(path, name, fields, data)
 
@@ -101,6 +97,29 @@ def __usageOut(fn,dm,path):
     Output:
         - Data files
     """
+    # Variables
+    name   = fn+'-charge-cnt'
+    K      = dm['K']
+    N      = dm['N']
+    T      = dm['T']
+    u      = dm['u']
+    c      = dm['c']
+    v      = dm['v']
+    slow   = dm['slow']
+    data   = np.zeros((K,2), dtype=int)
+    fields = ['slow', 'fast']
+
+    # For each visit
+    idx = 0
+    for k in np.linspace(0,T,K):
+        for i in range(N):
+            if u[i] <= k and c[i] >= k:
+                if v[i] < slow: data[idx,0] += 1
+                else          : data[idx,1] += 1
+        idx += 1
+
+    # Write data to disk
+    __saveToFile(path, name, fields, data)
     return
 
 ##-------------------------------------------------------------------------------
@@ -153,15 +172,18 @@ def __saveToFile(path, name, fields, data):
     # Variables
     fn = path + name + ".csv"
 
+    # Convert data to strings
+    data = [[str(e) for e in row] for row in data]
+
     # For each row
     for row in data:
         ## For each item in the row
         for i in range(len(row)):
             ### if the row item is a '-1.0', replace it
             if row[i] == "-1.0": row[i] = ''
-        
+
         ## If the row is only commas, clear it
-        if row == sorted(row): row.clear()
+        if row[1:] == row[:-1] and row[0] == ',': row.clear()
 
     # Save data to disk
     with open(fn, 'w') as csvfile:
