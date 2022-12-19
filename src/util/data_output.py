@@ -183,7 +183,7 @@ def __saveToFile(path, name, fields, data):
             if row[i] == "-1.0": row[i] = ''
 
         ## If the row is only commas, clear it
-        if row[1:] == row[:-1] and row[0] == ',': row.clear()
+        if row[1:] == row[:-1] and '' in row[:]: row.clear()
 
     # Save data to disk
     with open(fn, 'w') as csvfile:
