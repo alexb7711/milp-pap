@@ -27,6 +27,7 @@ from scheduler     import Schedule
 from optimizer     import Optimizer
 from quin_modified import QuinModified
 from pretty        import *
+from data_output   import outputData
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Data managers
@@ -188,8 +189,8 @@ def main():
     qm = QuinModified()
 
     ## Initialize objectives and constraints
-    # setupObjective(o, dm)
-    # setupConstraints(o, dm)
+    setupObjective(o, dm)
+    setupConstraints(o, dm)
 
     ### Optimize model with MILP
     results = o.optimize()
@@ -200,8 +201,9 @@ def main():
     ### Optimize with Quin-Modified
     results = qm.optimize()
 
-    ### Plot Results
+    ### Plot/Output Results
     plot(results, dm)
+    outputData("qm", dm)
 
     return
 

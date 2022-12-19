@@ -1,0 +1,161 @@
+# System Modules
+import numpy as np
+import csv
+from itertools import zip_longest
+
+##===============================================================================
+# PUBLIC
+##===============================================================================
+
+##-------------------------------------------------------------------------------
+#
+def outputData(fn, dm, path: str='data/'):
+    """
+    Output data in a format for LaTeX to be able to plot
+
+    Input:
+      - fn : Base name of the file
+      - dm : Data manager
+      - str: Path to output directory
+
+    Output:
+      - Data files
+    """
+    __chargeOut(fn,dm,path)
+    __usageOut(fn,dm,path)
+    __powerOut(fn,dm,path)
+    __scheduleOut(fn,dm,path)
+    return
+
+##===============================================================================
+# PRIVATE
+##===============================================================================
+
+##-------------------------------------------------------------------------------
+#
+def __chargeOut(fn,dm,path):
+    """
+    Output charge plot data
+Input:
+    - fn : Base name of the file
+    - dm : Data manager
+    - str: Path to output directory
+
+Output:
+    - Data files
+    """
+    # Variables
+    name     = fn+'-charge'
+    N      = dm['N']
+    A      = dm['A']
+    G      = dm['Gamma']
+    eta    = dm['eta']
+    u      = dm['u']
+    c      = dm['c']
+    v      = dm['v']
+    r      = dm['r']
+    g      = dm['g']
+    data   = -1*np.ones((N,5*A))
+    fields = ['id', 'u', 'eta_b', 'c', 'eta_a']*A
+
+    # For every bus
+    for j in range(A):
+        t_i = 0
+
+        ## For every visit
+        for i in range(N):
+            ### If the visit is for the bus of interest
+            if G[i] == j:
+                #### Append the charge on arrival
+                data[t_i][j + 0] = j
+                data[t_i][j + 1] = u[i]
+                data[t_i][j + 2] = eta[i]
+
+                #### Append the charge on departure
+                data[t_i][j + 3] = c[i]
+                data[t_i][j + 4] = eta[i] + g[i][int(v[i])]*r[int(v[i])]
+
+                #### Update index
+                t_i += 1
+
+    # input(data)
+    # Cleanup data
+    # data = [[e for e in row if e != -1] for row in data]                        # Remove all -1
+
+    # Write data to disk
+    __saveToFile(path, name, fields, data)
+
+    return
+
+##-------------------------------------------------------------------------------
+#
+def __usageOut(fn,dm,path):
+    """
+    Output charger usage data
+
+    Input:
+        - fn : Base name of the file
+        - dm : Data manager
+        - str: Path to output directory
+
+    Output:
+        - Data files
+    """
+    return
+
+##-------------------------------------------------------------------------------
+#
+def __powerOut(fn,dm,path):
+    """
+    Output power usage data
+
+    Input:
+        - fn : Base name of the file
+        - dm : Data manager
+        - str: Path to output directory
+
+    Output:
+        - Data files
+    """
+    return
+
+##-------------------------------------------------------------------------------
+#
+def __scheduleOut(fn,dm,path):
+    """
+    Output schedule data
+
+    Input:
+        - fn : Base name of the file
+        - dm : Data manager
+        - str: Path to output directory
+
+    Output:
+        - Data files
+    """
+    return
+
+##-------------------------------------------------------------------------------
+#
+def __saveToFile(path, name, fields, data):
+    """
+    Write data to CSV file
+
+    Input:
+        - path   : Path to output directory
+        - name   : Name of the file
+        - fields : Title each column
+        - data   : Matrix of data
+
+    Output:
+        - CSV file located at 'PATH/NAME' with DATA as content
+    """
+    # Variables
+    fn = path + name + ".csv"
+
+    with open(fn, 'w') as csvfile:
+        writer = csv.writer(csvfile)                                            # Create writer object
+        writer.writerow(fields)                                                 # Write fields
+        writer.writerows(data)
+
+    return
