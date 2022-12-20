@@ -61,8 +61,8 @@ Output:
     v      = dm['v']
     r      = dm['r']
     g      = dm['g']
-    data   = -1*np.ones((N,4*A))
-    fields = [['u'+str(i), 'eta_b'+str(i), 'c'+str(i), 'eta_e'+str(i)] for i in range(A)]
+    data   = -1*np.ones((2*N,2*A))
+    fields = [['time'+str(i), 'eta'+str(i)] for i in range(A)]
     fields = [j for k in fields for j in k]
 
     # For every bus
@@ -74,15 +74,15 @@ Output:
             ### If the visit is for the bus of interest
             if G[i] == j:
                 #### Append the charge on arrival
-                data[t_i][j*4 + 0] = u[i]
-                data[t_i][j*4 + 1] = eta[i]
+                data[t_i][j*2 + 0] = u[i]
+                data[t_i][j*2 + 1] = eta[i]
 
                 #### Append the charge on departure
-                data[t_i][j*4 + 2] = c[i]
-                data[t_i][j*4 + 3] = eta[i] + g[i][int(v[i])]*r[int(v[i])]
+                data[t_i+1][j*2 + 0] = c[i]
+                data[t_i+1][j*2 + 1] = eta[i] + g[i][int(v[i])]*r[int(v[i])]
 
                 #### Update index
-                t_i += 1
+                t_i += 2
 
     # Write data to disk
     __saveToFile(path, name, fields, data)
