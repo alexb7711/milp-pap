@@ -106,16 +106,17 @@ def __usageOut(fn,dm,path):
     c      = dm['c']
     v      = dm['v']
     slow   = dm['slow']
-    data   = np.zeros((K,2), dtype=int)
-    fields = ['slow', 'fast']
+    data   = np.zeros((K,3), dtype=float)
+    fields = ['visit', 'slow', 'fast']
 
     # For each visit
     idx = 0
     for k in np.linspace(0,T,K):
+        data[idx,0] = k
         for i in range(N):
             if u[i] <= k and c[i] >= k:
-                if v[i] < slow: data[idx,0] += 1
-                else          : data[idx,1] += 1
+                if v[i] < slow: data[idx,1] += 1
+                else          : data[idx,2] += 1
         idx += 1
 
     # Write data to disk
