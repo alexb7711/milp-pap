@@ -3,6 +3,12 @@ import numpy as np
 import csv
 from itertools import zip_longest
 
+
+##===============================================================================
+# STATIC
+##===============================================================================
+e_cell = 'nan'
+
 ##===============================================================================
 # PUBLIC
 ##===============================================================================
@@ -223,10 +229,10 @@ def __saveToFile(path, name, fields, data):
         ## For each item in the row
         for i in range(len(row)):
             ### if the row item is a '-1.0', replace it
-            if row[i] == "-1.0": row[i] = ''
+            if row[i] == "-1.0": row[i] = e_cell
 
         ## If the row is only commas, clear it
-        if row[1:] == row[:-1] and '' in row[:]: row.clear()
+        if row[1:] == row[:-1] and e_cell in row[:]: row.clear()
 
     # Save data to disk
     with open(fn, 'w') as csvfile:
