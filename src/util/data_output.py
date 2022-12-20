@@ -56,7 +56,8 @@ Output:
     r      = dm['r']
     g      = dm['g']
     data   = -1*np.ones((N,5*A))
-    fields = ['id', 'u', 'eta_b', 'c', 'eta_a']*A
+    fields = [['u'+str(i), 'eta_b'+str(i), 'c'+str(i), 'eta_e'+str(i)] for i in range(A)]
+    fields = [j for k in fields for j in k]
 
     # For every bus
     for j in range(A):
@@ -67,13 +68,12 @@ Output:
             ### If the visit is for the bus of interest
             if G[i] == j:
                 #### Append the charge on arrival
-                data[t_i][j*5 + 0] = j
-                data[t_i][j*5 + 1] = u[i]
-                data[t_i][j*5 + 2] = eta[i]
+                data[t_i][j*5 + 0] = u[i]
+                data[t_i][j*5 + 1] = eta[i]
 
                 #### Append the charge on departure
-                data[t_i][j*5 + 3] = c[i]
-                data[t_i][j*5 + 4] = eta[i] + g[i][int(v[i])]*r[int(v[i])]
+                data[t_i][j*5 + 2] = c[i]
+                data[t_i][j*5 + 3] = eta[i] + g[i][int(v[i])]*r[int(v[i])]
 
                 #### Update index
                 t_i += 1
