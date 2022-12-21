@@ -28,8 +28,8 @@ class BilinearLinearization(Constraint):
 
 		if gam[i] >= 0:
 			for q in range(Q):
-				model.addConstr(g[i][q] <= p[i]			  , name="{0}_{1}".format(self.name,i  ))
+				model.addConstr(g[i][q] <= p[i]                   , name="{0}_{1}".format(self.name,i  ))
 				model.addConstr(g[i][q] >= p[i] - (1 - w[i][q])*M , name="{0}_{1}".format(self.name,i+1))
-				model.addConstr(g[i][q] <= M*w[i][q]		  , name="{0}_{1}".format(self.name,i+2))
-				model.addConstr(g[i][q] >= 0			  , name="{0}_{1}".format(self.name,i+3))
+				model.addConstr(g[i][q] <= M*w[i][q]              , name="{0}_{1}".format(self.name,i+2))
+				model.addConstr(g[i][q] >= 0                      , name="{0}_{1}".format(self.name,i+3))
 		return

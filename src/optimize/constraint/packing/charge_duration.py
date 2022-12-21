@@ -20,13 +20,10 @@ class ChargeDuration(Constraint):
     #           NONE
     #
     def constraint(self, model, params, d_var, i, j):
-        # Extract parameters
-        a = self.params['a']
-
         # Extract decision vars
-        c = self.d_var['c']
-        u = self.d_var['u']
-        p = self.d_var['p']
+        c = self.d_var['c'] # Final charge time
+        u = self.d_var['u'] # Initial charge time
+        p = self.d_var['p'] # Charge duration
 
-        self.model.addConstr(p[i] + u[i] == c[i], name="{0}_{1}".format(self.name,i))
+        model.addConstr(p[i] == c[i] - u[i], name="{0}_{1}".format(self.name,i))
         return
