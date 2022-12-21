@@ -65,7 +65,7 @@ class QuinModified:
         alp = self.dm['alpha']                                                  # Initial charge percentage
         f   = self.init['chargers']['fast']['num']                              # Number of fast chargers
         gam = self.dm['gamma']                                                  # Index of next visit for bus b
-        l   = self.dm['l']                                                      # Disharge over route i
+        l   = self.dm['l']                                                      # Discharge over route i
         k   = self.dm['kappa']                                                  # Battery capacity
         s   = self.init['chargers']['slow']['num']                              # Number of slow chargers
         t   = self.dm['t']                                                      # Departure time from station
@@ -111,8 +111,6 @@ class QuinModified:
 
         # Format results
         results = self.__formatResults(eta, v, u, c)
-
-        # input(results)
 
         return results
 
@@ -246,7 +244,6 @@ class QuinModified:
                       for k in self.dm.m_decision_var.keys()
                       if k != 'model')
 
-        # THIS NO LONGER WORKS, NEED TO UPDATE
         results = merge_dicts(self.dm.m_params, d_var_results)                  # Update results
 
         return results
@@ -294,13 +291,8 @@ class QuinModified:
               if s <= u and c <= e:
                 q = self.cu[v]
                 q.remove(j)                                                     # Remove current free time
-                #print("remove {0} - {1}".format(j,q))
                 q.append([s, u])                                                # Update charger times
-                #print("append {0} - {1}".format([s, u], q))
                 q.append([c, e])
-                #print("append {0} - {1}".format([c, e], q))
-                #q.sort(key = lambda q: q[0])
-                #print("free times are: {0}".format(q))
                 break
 
           ## Calculate new charge
@@ -310,8 +302,6 @@ class QuinModified:
               eta  = 0.9*k - self.dm['l'][i]
           else:
               eta = eta + r*(c - u) - self.dm['l'][i]
-
-          # input("(eta, u, c, v): {0},{1},{2},{3}".format(eta, u, c, v))
 
         return eta, u, c, v
 
@@ -338,8 +328,8 @@ class QuinModified:
 
       # For every assigned charge time
       for i in self.cu[q]:
-          b = i[0]                                                        # Begin slot
-          e = i[1]                                                        # End slot
+          b = i[0]                                                              # Begin slot
+          e = i[1]                                                              # End slot
 
           ## Try to find an open slot
           if (all(a < x for x in i) and all(t < x for x in i))  or \

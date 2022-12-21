@@ -14,7 +14,6 @@ sys.path.append("optimize/")
 sys.path.append("optimize/constraint/")
 sys.path.append("optimize/constraint/dynamics/")
 sys.path.append("optimize/constraint/packing/")
-sys.path.append("optimize/constraint/power/")
 sys.path.append("optimize/objective/")
 sys.path.append("plot/")
 sys.path.append("plot/plots/")
@@ -28,6 +27,7 @@ from scheduler     import Schedule
 from optimizer     import Optimizer
 from quin_modified import QuinModified
 from pretty        import *
+from data_output   import outputData
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Data managers
@@ -36,7 +36,6 @@ from data_manager import DataManager
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Objective
 from min_time_objectives import MinTimeObjective
-from min_power_objective import MinPowerObjective
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Constraints
@@ -60,9 +59,6 @@ from max_charge_propagation import MaxChargePropagation
 from min_charge_propagation import MinChargePropagation
 from scalar_to_vector_queue import ScalarToVectorQueue
 from valid_queue_vector     import ValidQueueVector
-
-## Power
-from discrete_power_usage    import DiscretePowerUsage
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plots
@@ -88,8 +84,8 @@ def plot(results, dm):
     plots = \
     [
         SchedulePlot(),
-        ChargePlot(),
-        ChargerUsagePlot(),
+        # ChargePlot(),
+        # ChargerUsagePlot(),
         # PowerUsagePlot(),
     ]
 
@@ -111,7 +107,6 @@ def setupObjective(o, dm):
     objectives = \
     [
         MinTimeObjective("min_time_objective"),
-        #  MinPowerObjective("min_power_objective"),
     ]
 
     objectives[0].initialize(m, params, d_var)
@@ -156,9 +151,6 @@ def setupConstraints(o, dm):
         MinChargePropagation("min_charge_propagation"),
         ScalarToVectorQueue("scalar_to_vector_queue"),
         ValidQueueVector("valid_queue_vector"),
-
-        ### Power
-        #  DiscretePowerUsage("discrete_power_usage", Q),
     ]
 
     initializeConstr(constraints, m, params, d_var)
@@ -205,12 +197,14 @@ def main():
 
     ### Plot Results
     plot(results, dm)
+    outputData("milp", results)
 
     ### Optimize with Quin-Modified
     results = qm.optimize()
 
-    ### Plot Results
+    ### Plot/Output Results
     plot(results, dm)
+    outputData("qm", dm)
 
     return
 

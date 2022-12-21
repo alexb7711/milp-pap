@@ -106,6 +106,9 @@ class Optimizer:
             ## Load the results from disk
             results = np.load("data/results.npy", allow_pickle='TRUE').item()
 
+        # Update data manager with results
+        self.__updateDM(results)
+
         return results
 
     ##---------------------------------------------------------------------------
@@ -179,3 +182,27 @@ class Optimizer:
             t1 = time.time()
             print("----------------------- Speed: {0} seconds -----------------------".format(t1-t0))
             return
+
+    ##---------------------------------------------------------------------------
+    #
+    def __updateDM(self, results):
+        """
+        Update the data manger with the result of the MILP
+
+        Input:
+          - results : Output of the MILP decision variables
+
+        Output:
+            - None
+        """
+        # Variables
+        dm = self.dm
+        r  = results
+
+        # Split dictionary into a list of keys and values
+        k = r.keys()
+        v = r.values()
+
+        # Update data manager
+        dm.setList(k,v)
+        return
