@@ -335,11 +335,11 @@ class QuinModified:
           if (all(a < x for x in i) and all(t < x for x in i))  or \
              (all(a > x for x in i) and all(t > x for x in i)): continue
 
-          if   b < a and t < e          : v = q;               break
-          elif a < b and t > a          : u = b; v = q;        break
-          elif all(x > b for x in i) and \
-               all(t > x for x in i)    : c = e; v = q;        break
-          elif a < b and t > e          : u = b; c = e; v = q; break
+          if   b <= a and t <= e        : v = q;               break
+          elif a <= b and t >= a        : u = b; v = q;        break
+          elif all(x >= b for x in i) and \
+               all(t >= x for x in i)   : c = e; v = q;        break
+          elif a <= b and t >= e        : u = b; c = e; v = q; break
 
           if v >= 0: break                                                # Charger found
 
