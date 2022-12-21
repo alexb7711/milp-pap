@@ -117,7 +117,7 @@ def __usageOut(fn,dm,path):
 
     # For each visit
     idx = 0
-    for k in np.linspace(0,T,K):
+    for k in np.linspace(1,T,K):
         data[idx,0] = k
         for i in range(N):
             if u[i] <= k and c[i] >= k:
