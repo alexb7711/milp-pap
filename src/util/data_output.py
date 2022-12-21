@@ -185,10 +185,10 @@ def __scheduleOut(fn,dm,path):
     A      = dm['A']
     N      = dm['N']
     G      = dm['Gamma']
-    p      = dm['p']
+    g      = dm['g']
     r      = dm['r']
     u      = dm['u']
-    v      = dm['v']
+    v      = [int(i) for i in dm['v']]
     data   = -1*np.ones((N,3*A), dtype=float)
     fields = [['charger'+str(i), 'u'+str(i), 'p'+str(i)] for i in range(A)]
     fields = [j for k in fields for j in k]
@@ -197,7 +197,7 @@ def __scheduleOut(fn,dm,path):
     for i in range(N):
         data[i][G[i]*3+0] = v[i]
         data[i][G[i]*3+1] = u[i]
-        data[i][G[i]*3+2] = p[i]
+        data[i][G[i]*3+2] = g[i][v[i]]
 
     # Write data to disk
     __saveToFile(path, name, fields, data)
