@@ -189,15 +189,15 @@ def __scheduleOut(fn,dm,path):
     r      = dm['r']
     u      = dm['u']
     v      = dm['v']
-    data   = -1*np.ones((2*N,3*A), dtype=float)
+    data   = -1*np.ones((N,3*A), dtype=float)
     fields = [['charger'+str(i), 'u'+str(i), 'c'+str(i)] for i in range(A)]
     fields = [j for k in fields for j in k]
 
     # For each visit
     for i in range(N):
-        data[i][G[i]*3+0]   = v[i]
-        data[i][G[i]*3+1]   = u[i]
-        data[i+1][G[i]*3+2] = c[i]
+        data[i][G[i]*3+0] = v[i]
+        data[i][G[i]*3+1] = u[i]
+        data[i][G[i]*3+2] = c[i]
 
     # Write data to disk
     __saveToFile(path, name, fields, data)

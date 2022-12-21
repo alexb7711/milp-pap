@@ -193,11 +193,11 @@ def main():
     setupConstraints(o, dm)
 
     ### Optimize model with MILP
-    results = o.optimize()
+    # results = o.optimize()
 
     ### Plot Results
-    plot(results, dm)
-    outputData("milp", results)
+    # plot(results, dm)
+    # outputData("milp", results)
 
     ### Optimize with Quin-Modified
     results = qm.optimize()
