@@ -151,7 +151,7 @@ def __powerOut(fn,dm,path):
     c      = dm['c']
     r      = dm['r']
     u      = dm['u']
-    v      = dm['v']
+    v      = [int(i) for i in dm['v']]
     data   = np.zeros((K,1), dtype=float)
     fields = ['power']
 
@@ -185,19 +185,19 @@ def __scheduleOut(fn,dm,path):
     A      = dm['A']
     N      = dm['N']
     G      = dm['Gamma']
-    c      = dm['c']
+    p      = dm['p']
     r      = dm['r']
     u      = dm['u']
     v      = dm['v']
     data   = -1*np.ones((N,3*A), dtype=float)
-    fields = [['charger'+str(i), 'u'+str(i), 'c'+str(i)] for i in range(A)]
+    fields = [['charger'+str(i), 'u'+str(i), 'p'+str(i)] for i in range(A)]
     fields = [j for k in fields for j in k]
 
     # For each visit
     for i in range(N):
         data[i][G[i]*3+0] = v[i]
         data[i][G[i]*3+1] = u[i]
-        data[i][G[i]*3+2] = c[i]
+        data[i][G[i]*3+2] = p[i]
 
     # Write data to disk
     __saveToFile(path, name, fields, data)
