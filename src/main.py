@@ -84,9 +84,9 @@ def plot(results, dm):
     plots = \
     [
         SchedulePlot(),
-        # ChargePlot(),
-        # ChargerUsagePlot(),
-        # PowerUsagePlot(),
+        ChargePlot(),
+        ChargerUsagePlot(),
+        PowerUsagePlot(),
     ]
 
     Plotter.initialize(results, dm)
@@ -198,6 +198,8 @@ def main():
     ### Plot Results
     plot(results, dm)
     outputData("milp", results)
+
+    input()
 
     ### Optimize with Quin-Modified
     results = qm.optimize()
