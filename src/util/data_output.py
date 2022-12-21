@@ -152,14 +152,18 @@ def __powerOut(fn,dm,path):
     r      = dm['r']
     u      = dm['u']
     v      = [int(i) for i in dm['v']]
-    data   = np.zeros((K,1), dtype=float)
-    fields = ['power']
+    data   = np.zeros((K,2), dtype=float)
+    fields = ['time', 'power']
 
     # For each visit
     idx = 0
     for k in np.linspace(0,T,K):
+        data[idx,1] = k
+
         for i in range(N):
-            if u[i] <= k and c[i] >= k: data[idx] += r[v[i]]
+            if u[i] <= k and c[i] >= k:
+                data[idx,0] += r[v[i]]
+        
         idx += 1
 
     # Write data to disk
