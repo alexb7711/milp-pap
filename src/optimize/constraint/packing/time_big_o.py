@@ -30,5 +30,5 @@ class TimeBigO(Constraint):
 
 		if i != j:
 			model.addConstr(u[i] - u[j] - p[j] - (sigma[i][j] - 1)*T >= 0, \
-					name="{0}_{1}".format(self.name,i))
+					name="{0}_{1}_{2}".format(self.name,i,j))
 		return

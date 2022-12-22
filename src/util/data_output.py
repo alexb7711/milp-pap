@@ -109,18 +109,20 @@ def __usageOut(fn,dm,path):
     N      = dm['N']
     T      = dm['T']
     u      = dm['u']
+    g      = dm['g']
+    p      = dm['p']
     c      = dm['c']
-    v      = dm['v']
+    v      = [int(i) for i in dm['v']]
     slow   = dm['slow']
     data   = np.zeros((K,3), dtype=float)
     fields = ['visit', 'slow', 'fast']
 
     # For each visit
     idx = 0
-    for k in np.linspace(1,T-0.01,K):
+    for k in np.linspace(0,T,K):
         data[idx,0] = k
         for i in range(N):
-            if u[i] <= k and c[i] >= k:
+            if u[i] <= k and c[i] >= k and g[i][v[i]] > 0.0:
                 if v[i] < slow: data[idx,1] += 1
                 else          : data[idx,2] += 1
         idx += 1
@@ -149,6 +151,7 @@ def __powerOut(fn,dm,path):
     N      = dm['N']
     T      = dm['T']
     c      = dm['c']
+    g      = dm['g']
     r      = dm['r']
     u      = dm['u']
     v      = [int(i) for i in dm['v']]
@@ -157,12 +160,12 @@ def __powerOut(fn,dm,path):
 
     # For each visit
     idx = 0
-    for k in np.linspace(0,T,K):
-        data[idx,1] = k
+    for k in np.linspace(0.01,T,K):
+        data[idx,0] = k
 
         for i in range(N):
-            if u[i] <= k and c[i] >= k:
-                data[idx,0] += r[v[i]]
+            if u[i] <= k and c[i] >= k and g[i][v[i]] > 0:
+                data[idx,1] += r[v[i]]
         
         idx += 1
 
@@ -199,9 +202,10 @@ def __scheduleOut(fn,dm,path):
 
     # For each visit
     for i in range(N):
-        data[i][G[i]*3+0] = v[i]
-        data[i][G[i]*3+1] = u[i]
-        data[i][G[i]*3+2] = g[i][v[i]]
+        if g[i][v[i]] > 0:
+            data[i][G[i]*3+0] = v[i]
+            data[i][G[i]*3+1] = u[i]
+            data[i][G[i]*3+2] = g[i][v[i]]
 
     # Write data to disk
     __saveToFile(path, name, fields, data)
@@ -236,7 +240,7 @@ def __saveToFile(path, name, fields, data):
             if row[i] == "-1.0": row[i] = e_cell
 
         ## If the row is only commas, clear it
-        if row[1:] == row[:-1] and e_cell in row[:]: row.clear()
+        if row[1:] == row[:-1] and e_cell in row[:]: del(row)
 
     # Save data to disk
     with open(fn, 'w') as csvfile:
