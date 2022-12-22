@@ -30,6 +30,6 @@ class SpaceBigO(Constraint):
         v     = self.d_var['v']
 
         if i != j:
-            model.addConstr(v[i] - v[j] - (delta[i][j] - 1)*Q >= 0, \
+            model.addConstr(v[i] - v[j] - s[i] - (delta[i][j] - 1)*Q >= 0, \
                                       name="{0}_{1}_{2}".format(self.name,i,j))
         return
