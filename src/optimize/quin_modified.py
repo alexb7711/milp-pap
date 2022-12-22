@@ -192,7 +192,7 @@ class QuinModified:
 
         # Set up search priority
         if priority == 'slow': queue = range(Q)                                 # Prioritize slow
-        if priority == 'fast': queue = range(Q-1, -1,-1)                        # Prioritize fast
+        if priority == 'fast': queue = range(s,Q,1)                             # Prioritize fast
         if priority == 'SLOW': queue = range(0, s)                              # Only slow
 
         # For each of the chargers going from slow to fast
