@@ -199,8 +199,6 @@ def main():
     plot(results, dm)
     outputData("milp", results)
 
-    input()
-
     ### Optimize with Quin-Modified
     results = qm.optimize()
 

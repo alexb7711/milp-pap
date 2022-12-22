@@ -122,7 +122,6 @@ def __usageOut(fn,dm,path):
     for k in np.linspace(0,T,K):
         data[idx,0] = k
         for i in range(N):
-            print("{0}, {1}".format(g[i][v[i]], p[i]))
             if u[i] <= k and c[i] >= k and g[i][v[i]] > 0.0:
                 if v[i] < slow: data[idx,1] += 1
                 else          : data[idx,2] += 1
