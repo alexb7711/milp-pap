@@ -108,7 +108,6 @@ def __bufferAttributes(self, routes):
     # Get the rest of the parameters from YAML
     genInputParams(self)                                                        # Get params from YAML
 
-
     return
 
 ##-------------------------------------------------------------------------------

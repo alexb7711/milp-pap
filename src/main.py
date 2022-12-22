@@ -194,17 +194,17 @@ def main():
 
     ### Optimize model with MILP
     results = o.optimize()
+    outputData("milp", results)
 
     ### Plot Results
     plot(results, dm)
-    outputData("milp", results)
 
     ### Optimize with Quin-Modified
     results = qm.optimize()
+    outputData("qm", dm)
 
     ### Plot/Output Results
     plot(results, dm)
-    outputData("qm", dm)
 
     return
 

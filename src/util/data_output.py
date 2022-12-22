@@ -240,7 +240,7 @@ def __saveToFile(path, name, fields, data):
             if row[i] == "-1.0": row[i] = e_cell
 
         ## If the row is only commas, clear it
-        if row[1:] == row[:-1] and e_cell in row[:]: row.clear()
+        if row[1:] == row[:-1] and e_cell in row[:]: del(row)
 
     # Save data to disk
     with open(fn, 'w') as csvfile:

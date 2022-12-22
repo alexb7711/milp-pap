@@ -27,6 +27,6 @@ class ScalarToVectorQueue(Constraint):
 		v = self.d_var['v']
 		w = self.d_var['w']
 
-		model.addConstr(v[i] == sum(q*w[i][q] for q in range(Q)), name="{0}_{1}".format(self.name,i))
+		model.addConstr(v[i] == sum((q+1)*w[i][q] for q in range(Q)) - 1, name="{0}_{1}".format(self.name,i))
 
 		return
