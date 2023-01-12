@@ -281,20 +281,7 @@ class QuinModified:
         u, c, v = self.__findFreeTime(a, t, q)
 
         # Save reservation
-        ## If there has been times allotted
-        if v >= 0:
-          for j in self.cu[v]:
-              s = j[0]                                                          # Start of free time
-              e = j[1]                                                          # End of free time
-
-              # If the allocated time is in the selected free time
-              if s <= u and c <= e:
-                q = self.cu[v]
-                q.remove(j)                                                     # Remove current free time
-                q.append([s, u])                                                # Update charger times
-                q.append([c, e])
-                break
-
+        if(self.__makeReservation(v, u, c)):
           ## Calculate new charge
           if eta + r*(c - u) >= 0.9*k:
               c = (0.9*k-eta)/r + u
@@ -302,6 +289,7 @@ class QuinModified:
               eta  = 0.9*k - self.dm['l'][i]
           else:
               eta = eta + r*(c - u) - self.dm['l'][i]
+        else: v == -1
 
         return eta, u, c, v
 
@@ -335,17 +323,46 @@ class QuinModified:
           if (all(a < x for x in i) and all(t < x for x in i))  or \
              (all(a > x for x in i) and all(t > x for x in i)): continue
 
-          if   b <= a and t <= e        : v = q;               break
-          elif a <= b and t >= a        : u = b; v = q;        break
-          elif all(x >= b for x in i) and \
-               all(t >= x for x in i)   : c = e; v = q;        break
-          elif a <= b and t >= e        : u = b; c = e; v = q; break
+          if   b <= a and t <= e        : v = q;               break            # a <= u <= c <= t
+          elif a <= b and t <= e        : u = b; v = q;        break            # b <= u <= c <= t
+          elif a >= b and t >= e        : c = e; v = q;        break
+          # elif all(x >= b for x in i) and \
+          #      all(t >= x for x in i)   : c = e; v = q;        break
+          elif a <= b and t >= e        : u = b; c = e; v = q; break            # b <= u <= c <= e
 
-          if v >= 0: break                                                # Charger found
+          if v >= 0: break                                                      # Charger found
 
       return u, c, v
 
     ##---------------------------------------------------------------------------
     #
-    def __makeReservation():
-      return
+    def __makeReservation(self, v, u, c):
+        """
+        Save reservation in charger usage array
+
+        Input:
+          - v : Charger of interest
+          - u : Start charge time
+          - c : End charge time
+
+        Output:
+          - res_made : Flag to indicate reservation was made
+        """
+        # Variables
+        res_made = False
+
+        # If there has been times allotted
+        if v >= 0:
+          for j in self.cu[v]:
+              s = j[0]                                                          # Start of free time
+              e = j[1]                                                          # End of free time
+
+              # If the allocated time is in the selected free time
+              if s <= u and c <= e:
+                q = self.cu[v]
+                q.remove(j)                                                     # Remove current free time
+                q.append([s, u])                                                # Update charger times
+                q.append([c, e])
+                res_made = True                                                 # Indicate a reservation was made
+                break
+        return res_made
