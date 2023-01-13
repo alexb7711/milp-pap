@@ -267,8 +267,8 @@ class QuinModified:
           - c   :
           - v   :
         """
-        f = self.init['chargers']['fast']['num']
-        s = self.init['chargers']['slow']['num']
+        f = self.init['chargers']['fast']['num']                                # Fast chargers
+        s = self.init['chargers']['slow']['num']                                # Slow chargers
         k = self.init['buses']['bat_capacity']                                  # Battery capacity
         r = 0
         v = -1
@@ -325,9 +325,7 @@ class QuinModified:
 
           if   b <= a and t <= e        : v = q;               break            # a <= u <= c <= t
           elif a <= b and t <= e        : u = b; v = q;        break            # b <= u <= c <= t
-          elif a >= b and t >= e        : c = e; v = q;        break
-          # elif all(x >= b for x in i) and \
-          #      all(t >= x for x in i)   : c = e; v = q;        break
+          elif a >= b and t >= e        : c = e; v = q;        break            # a <= u <= c <= e
           elif a <= b and t >= e        : u = b; c = e; v = q; break            # b <= u <= c <= e
 
           if v >= 0: break                                                      # Charger found
