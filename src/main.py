@@ -62,11 +62,12 @@ from valid_queue_vector     import ValidQueueVector
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plots
-from plot               import Plotter
-from charge_plot        import ChargePlot
-from charger_usage_plot import ChargerUsagePlot
-from schedule_plot      import SchedulePlot
-from power_usage_plot   import PowerUsagePlot
+from plot                         import Plotter
+from charge_plot                  import ChargePlot
+from charger_usage_plot           import ChargerUsagePlot
+from schedule_plot                import SchedulePlot
+from power_usage_plot             import PowerUsagePlot
+from accumulated_energy_usage_plot import AccumulatedEnergyUsagePlot
 
 ##===============================================================================
 #
@@ -87,6 +88,7 @@ def plot(results, dm):
         ChargePlot(),
         ChargerUsagePlot(),
         PowerUsagePlot(),
+        AccumulatedEnergyUsagePlot(),
     ]
 
     Plotter.initialize(results, dm)
