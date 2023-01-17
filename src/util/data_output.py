@@ -30,6 +30,7 @@ def outputData(fn, dm, path: str='data/'):
     __chargeOut(fn,dm,path)
     __usageOut(fn,dm,path)
     __powerOut(fn,dm,path)
+    __accEnergyOut(fn,dm,path)
     __scheduleOut(fn,dm,path)
     return
 
@@ -162,6 +163,51 @@ def __powerOut(fn,dm,path):
     idx = 0
     for k in np.linspace(0.01,T-0.01,K):
         data[idx,0] = k
+
+        for i in range(N):
+            if u[i] <= k and c[i] >= k and g[i][v[i]] > 0:
+                data[idx,1] += r[v[i]]
+
+        idx += 1
+
+    # Write data to disk
+    __saveToFile(path, name, fields, data)
+    return
+
+##-------------------------------------------------------------------------------
+#
+def __accEnergyOut(fn,dm,path):
+    """
+    Accumulated output power usage data
+
+    Input:
+        - fn : Base name of the file
+        - dm : Data manager
+        - str: Path to output directory
+
+    Output:
+        - Data files
+    """
+    # Variables
+    name   = fn+'acc-energy-usage'
+    K      = dm['K']
+    N      = dm['N']
+    T      = dm['T']
+    c      = dm['c']
+    g      = dm['g']
+    r      = dm['r']
+    u      = dm['u']
+    v      = [int(i) for i in dm['v']]
+    data   = np.zeros((K,2), dtype=float)
+    fields = ['time', 'power']
+
+    # For each visit
+    idx = 0
+    for k in np.linspace(0.01,T-0.01,K):
+        data[idx,0] = k
+
+        if idx > 0:
+            data[idx,1] = data[idx-1,1]                                         # Use the previous data
 
         for i in range(N):
             if u[i] <= k and c[i] >= k and g[i][v[i]] > 0:
