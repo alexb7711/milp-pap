@@ -155,7 +155,7 @@ class QuinModified:
 
         # Generate decision variables
         self.u   = np.zeros(N)                  # Initial charge time
-        self.v   = np.zeros(N, dtype=int)       # Assigned queue
+        self.v   = -1*np.ones(N, dtype=int)     # Assigned queue
         self.c   = np.zeros(N)                  # Detach time
         self.p   = np.zeros(N)                  # Charge time
         self.g   = np.zeros((N,Q), dtype=float) # Linearization term
@@ -230,7 +230,7 @@ class QuinModified:
         self.dm['p'] =  [self.dm['c'][i] - self.dm['u'][i] for i in range(N)]   # c_i - u_i
 
         for i in range(N):
-          if v[i] > 0:
+          if v[i] >= 0:
             self.w[i][v[i]] = 1                                                 # Active charger
             self.g[i][v[i]] = self.dm['p'][i]                                   # Linearization term
 
