@@ -171,7 +171,7 @@ class Optimizer:
     #
     def __inputConstraints(self, i):
             t0 = time.time()
-            print("Iteration {0} of {1}".format(i, self.dm['N']))
+            print("Iteration {0} of {1}".format(i+1, self.dm['N']))
 
             for c in self.constr:
                     if self.verbose > 0:

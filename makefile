@@ -1,6 +1,7 @@
 IMG     = img
 SRC     = src
 DATA    = $(SRC)/data
+P_DATA  = ~/Documents/docs/milp-pap/fig/data
 ENV_DIR = $(SRC)/environment
 BIN     = $(ENV_DIR)/bin
 DEP     = dependencies.txt
@@ -30,6 +31,8 @@ run:
 	source $(BIN)/activate &&  \
 	cd $(SRC)              &&  \
 	python main.py"
+
+	bash -c "cp $(DATA)/*.csv $(P_DATA)"
 
 debug:
 	source $(BIN)/activate && \

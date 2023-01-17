@@ -91,8 +91,11 @@ def plot(results, dm):
 
     Plotter.initialize(results, dm)
 
-    for p in plots:
-        p.plot()
+
+    with open(r'config/general.yaml') as f:
+        file = yaml.load(f, Loader=yaml.FullLoader)
+        if file['plot'] > 0:
+            for p in plots: p.plot()
 
     return
 

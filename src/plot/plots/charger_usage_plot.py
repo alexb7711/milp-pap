@@ -90,8 +90,8 @@ class ChargerUsagePlot(Plotter):
         ran = range(len(use400)-1)
         ax[1].plot([x*n for x in ran], use400[0:len(use400)-1])
 
-        # gs = GridShader(ax[0], facecolor="lightgrey", first=False, alpha=0.7)
-        # gs = GridShader(ax[1], facecolor="lightgrey", first=False, alpha=0.7)
+        gs = GridShader(ax[0], facecolor="lightgrey", first=False, alpha=0.7)
+        gs = GridShader(ax[1], facecolor="lightgrey", first=False, alpha=0.7)
 
         fig.set_size_inches(15,8)
         plt.savefig(self.outdir+'usage.pdf', transparent=True)

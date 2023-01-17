@@ -160,13 +160,13 @@ def __powerOut(fn,dm,path):
 
     # For each visit
     idx = 0
-    for k in np.linspace(0.01,T,K):
+    for k in np.linspace(0.01,T-0.01,K):
         data[idx,0] = k
 
         for i in range(N):
             if u[i] <= k and c[i] >= k and g[i][v[i]] > 0:
                 data[idx,1] += r[v[i]]
-        
+
         idx += 1
 
     # Write data to disk
