@@ -189,7 +189,7 @@ def __accEnergyOut(fn,dm,path):
         - Data files
     """
     # Variables
-    name   = fn+'acc-energy-usage'
+    name   = fn+'-acc-energy-usage'
     K      = dm['K']
     N      = dm['N']
     T      = dm['T']
