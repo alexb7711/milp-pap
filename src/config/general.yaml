@@ -1,7 +1,7 @@
 jobs: 12                                                               # Number of processes to input values
 plot: 0                                                                # 1: True; 0: False
-time_limit: 99999                                                      # Time limit to solve [s]
+time_limit: 999999                                                     # Time limit to solve [s]
 schedule_type: 'csv'                                                   # 'csv' or 'random'
-load_from_file: 1                                                      # Output previous decision variable/param results
-run_prev: 1                                                            # Load previous input parameters
+load_from_file: 0                                                      # Output previous decision variable/param results
+run_prev: 0                                                            # Load previous input parameters
 verbose:  0                                                            # # Verbose

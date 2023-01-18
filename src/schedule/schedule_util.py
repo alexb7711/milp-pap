@@ -34,7 +34,7 @@ def genInputParams(self):
     ## Helper variables
     type    = self.schedule_type                                                # random or csv
     r       = np.concatenate((slow_chargers, fast_chargers))                    # Charge rates
-    epsilon = [1]*len(r)                                                        # Usage cost
+    epsilon = r.copy()                                                          # Usage cost
 
     self.dm['T']     = init['time']['time_horizon']                             # Time horizon
 
