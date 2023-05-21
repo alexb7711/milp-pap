@@ -22,7 +22,6 @@ sys.path.append("util/")
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Developed
-#  from schedule_manager import Schedule
 from scheduler     import Schedule
 from optimizer     import Optimizer
 from quin_modified import QuinModified
