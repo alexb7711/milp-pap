@@ -5,7 +5,7 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class ValidQueueVector(Constraint):
+class GBValidQueueVector(Constraint):
 	##=======================================================================
 	# PUBLIC
 

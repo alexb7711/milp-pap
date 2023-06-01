@@ -5,7 +5,7 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class ValidInitialTime(Constraint):
+class GBScalarToVectorQueue(Constraint):
 	##=======================================================================
 	# PUBLIC
 
@@ -21,10 +21,12 @@ class ValidInitialTime(Constraint):
 	#
 	def constraint(self, model, params, d_var, i, j):
 		# Extract parameters
-		a = self.params['a']
+		Q = self.params['Q']
 
 		# Extract decision vars
-		u = self.d_var['u']
+		v = self.d_var['v']
+		w = self.d_var['w']
 
-		model.addConstr(a[i] <= u[i] , name="{0}_{1}".format(self.name,i))
+		model.addConstr(v[i] == sum((q+1)*w[i][q] for q in range(Q)) - 1, name="{0}_{1}".format(self.name,i))
+
 		return

@@ -1,12 +1,11 @@
 # System Modules
-from gurobipy import GRB
 
 # Developed Modules
-from objective import Objective
+from constraint import Constraint
 
 ##===============================================================================
 #
-class MinTimeObjective(Objective):
+class GBDelta(Constraint):
     ##=======================================================================
     # PUBLIC
 
@@ -20,18 +19,13 @@ class MinTimeObjective(Objective):
     # Output:
     #           NONE
     #
-    def objective(self, model, params, d_var):
+    def constraint(self, model, params, d_var, i, j):
         # Extract parameters
-        N = params['N']
-        Q = params['Q']
-        e = params['e']
-        m = params['m']
 
         # Extract decision vars
-        g = self.d_var['g']
-        w = self.d_var['w']
+        delta = self.d_var['delta']
 
-        model.setObjectiveN(sum(w[i][j]*m[j] + g[i][j]*e[j]
-                            for i in range(N)
-                            for j in range(Q)), GRB.MINIMIZE)
+        if i != j:
+            model.addConstr(delta[i][j] + delta[j][i] <= 1, \
+                            name="{0}_{1}_{2}".format(self.name,i,j))
         return

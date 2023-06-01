@@ -1,11 +1,12 @@
 # System Modules
+from gurobipy import GRB
 
 # Developed Modules
-from constraint import Constraint
+from objective import Objective
 
 ##===============================================================================
 #
-class ChargeDuration(Constraint):
+class GBMinTimeObjective(Objective):
     ##=======================================================================
     # PUBLIC
 
@@ -19,11 +20,18 @@ class ChargeDuration(Constraint):
     # Output:
     #           NONE
     #
-    def constraint(self, model, params, d_var, i, j):
-        # Extract decision vars
-        c = self.d_var['c'] # Final charge time
-        u = self.d_var['u'] # Initial charge time
-        p = self.d_var['p'] # Charge duration
+    def objective(self, model, params, d_var):
+        # Extract parameters
+        N = params['N']
+        Q = params['Q']
+        e = params['e']
+        m = params['m']
 
-        model.addConstr(p[i] == c[i] - u[i], name="{0}_{1}".format(self.name,i))
+        # Extract decision vars
+        g = self.d_var['g']
+        w = self.d_var['w']
+
+        model.setObjectiveN(sum(w[i][j]*m[j] + g[i][j]*e[j]
+                            for i in range(N)
+                            for j in range(Q)), GRB.MINIMIZE)
         return

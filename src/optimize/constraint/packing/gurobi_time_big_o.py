@@ -5,7 +5,7 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class TimeBigO(Constraint):
+class GBTimeBigO(Constraint):
 	##=======================================================================
 	# PUBLIC
 

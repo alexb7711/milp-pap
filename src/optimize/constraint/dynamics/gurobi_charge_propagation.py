@@ -5,7 +5,7 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class MaxChargePropagation(Constraint):
+class GBChargePropagation(Constraint):
         ##=======================================================================
         # PUBLIC
 
@@ -21,16 +21,17 @@ class MaxChargePropagation(Constraint):
         #
         def constraint(self, model, params, d_var, i, j):
                 # Extract parameters
-                G     = self.params['Gamma']
-                Q     = self.params['Q']
-                kappa = self.params['kappa']
-                r     = self.params['r']
+                Q   = self.params['Q']
+                gam = self.params['gamma']
+                r   = self.params['r']
+                l   = self.params['l']
 
                 # Extract decision vars
                 eta = self.d_var['eta']
                 g   = self.d_var['g']
 
-                model.addConstr(eta[i] + sum(g[i][q]*r[q] for q in range(Q)) <= kappa[G[i]], \
-                                                                                name="{0}_{1}".format(self.name,i))
+                if gam[i] >= 0:
+                        model.addConstr(eta[i] + sum(g[i][q]*r[q] for q in range(Q)) - l[i] == eta[gam[i]], \
+                                                                                  name="{0}_{1}".format(self.name,i))
 
                 return

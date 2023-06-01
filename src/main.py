@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+#================================================================================
+# INCLUDES
+
 # Standard Lib
 import numpy as np
 import gurobipy as gp
@@ -10,11 +13,15 @@ from gurobipy import GRB
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Include in path
+
+# Optimizer
 sys.path.append("optimize/")
-sys.path.append("optimize/constraint/")
+sys.path.append("optimize/constraint/glpk")
 sys.path.append("optimize/constraint/dynamics/")
 sys.path.append("optimize/constraint/packing/")
 sys.path.append("optimize/objective/")
+
+# Plot
 sys.path.append("plot/")
 sys.path.append("plot/plots/")
 sys.path.append("schedule/")
@@ -34,41 +41,77 @@ from data_manager import DataManager
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Objective
-from min_time_objectives import MinTimeObjective
+from gurobi_min_time_objectives import GBMinTimeObjective
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Constraints
 ## Packing
-from charge_duration      import ChargeDuration
-from delta                import Delta
-from sigma                import Sigma
-from sigma_delta          import SigmaDelta
-from space_big_o          import SpaceBigO
-from time_big_o           import TimeBigO
-from valid_departure_time import ValidDepartureTime
-from valid_end_time       import ValidEndTime
-from valid_initial_time   import ValidInitialTime
+from gurobi_charge_duration      import GBChargeDuration
+from gurobi_delta                import GBDelta
+from gurobi_sigma                import GBSigma
+from gurobi_sigma_delta          import GBSigmaDelta
+from gurobi_space_big_o          import GBSpaceBigO
+from gurobi_time_big_o           import GBTimeBigO
+from gurobi_valid_departure_time import GBValidDepartureTime
+from gurobi_valid_end_time       import GBValidEndTime
+from gurobi_valid_initial_time   import GBValidInitialTime
 
 ## Dynamic
-from bilinear_linearization import BilinearLinearization
-from charge_propagation     import ChargePropagation
-from final_charge           import FinalCharge
-from initial_charge         import InitialCharge
-from max_charge_propagation import MaxChargePropagation
-from min_charge_propagation import MinChargePropagation
-from scalar_to_vector_queue import ScalarToVectorQueue
-from valid_queue_vector     import ValidQueueVector
+from gurobi_bilinear_linearization import GBBilinearLinearization
+from gurobi_charge_propagation     import GBChargePropagation
+from gurobi_final_charge           import GBFinalCharge
+from gurobi_initial_charge         import GBInitialCharge
+from gurobi_max_charge_propagation import GBMaxChargePropagation
+from gurobi_min_charge_propagation import GBMinChargePropagation
+from gurobi_scalar_to_vector_queue import GBScalarToVectorQueue
+from gurobi_valid_queue_vector     import GBValidQueueVector
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plots
-from plot                         import Plotter
-from charge_plot                  import ChargePlot
-from charger_usage_plot           import ChargerUsagePlot
-from schedule_plot                import SchedulePlot
-from power_usage_plot             import PowerUsagePlot
+from plot                          import Plotter
+from charge_plot                   import ChargePlot
+from charger_usage_plot            import ChargerUsagePlot
+from schedule_plot                 import SchedulePlot
+from power_usage_plot              import PowerUsagePlot
 from accumulated_energy_usage_plot import AccumulatedEnergyUsagePlot
 
 ##===============================================================================
+# FUNCTIONS
+
+##-------------------------------------------------------------------------------
+#
+def createModel(self, dm: DataManager, path: str="./config/general.yaml"):
+    """
+        Input:
+          - dm  : Data manager instance
+          - str : Path to the configuration file
+
+        Output:
+          - model : Model for the MILP to be created with
+        """
+    # Variables
+    f     = open(path, "r")                                                     # Open file
+    init  = yaml.load(self.f, Loader = yaml.FullLoader)                         # Parse YAML
+    model = None                                                                # MILP model
+
+    # Parse 'config/general.yaml'
+    with open(r'config/general.yaml') as f:
+        file   = yaml.load(f, Loader=yaml.FullLoader)
+        solver = file['solver']
+
+    # Create the appropriate model
+    # TODO: Create appropriate model for GLPK
+    if solver == "GLPK":
+        model = gp.Model()
+    else:
+        model = gp.Model()
+
+    # Assign and return model
+    dm['model'] = model
+
+    return model
+
+##-------------------------------------------------------------------------------
 #
 def plot(results, dm):
     """
@@ -100,7 +143,7 @@ def plot(results, dm):
 
     return
 
-##===============================================================================
+##-------------------------------------------------------------------------------
 #
 def setupObjective(o, dm):
     # Local variables
@@ -118,7 +161,7 @@ def setupObjective(o, dm):
 
     return
 
-##===============================================================================
+##-------------------------------------------------------------------------------
 #
 def setupConstraints(o, dm):
     # Local Variables
@@ -161,14 +204,14 @@ def setupConstraints(o, dm):
     subscribeConstr(constraints, o)
     return
 
-##===============================================================================
+##-------------------------------------------------------------------------------
 #
 def initializeConstr(constraints, model, params, d_var):
     for c in constraints:
         c.initialize(model, params, d_var)
     return
 
-##===============================================================================
+##-------------------------------------------------------------------------------
 #
 def subscribeConstr(constraints, optimizer_obj):
     for c in constraints:
@@ -176,21 +219,21 @@ def subscribeConstr(constraints, optimizer_obj):
     return
 
 ##===============================================================================
-#
+# MAIN
 def main():
     # Create data manager object
     dm = DataManager()
 
-    # Create gurobi model
-    dm['model'] = gp.Model()
+    # Create MILP model
+    createModel(dm['model'])
 
     # Create schedule
     Schedule(dm['model'])
 
     # Optimize
     ## Initialize optimizer
-    o  = Optimizer()
-    qm = QuinModified()
+    o  = Optimizer()                                                            # MILP solution
+    qm = QuinModified()                                                         # Quin Modified solution
 
     ## Initialize objectives and constraints
     setupObjective(o, dm)

@@ -5,7 +5,7 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class FinalCharge(Constraint):
+class GBFinalCharge(Constraint):
     ##=======================================================================
     # PUBLIC
 

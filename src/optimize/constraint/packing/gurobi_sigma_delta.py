@@ -5,7 +5,7 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class SigmaDelta(Constraint):
+class GBSigmaDelta(Constraint):
 	##=======================================================================
 	# PUBLIC
 

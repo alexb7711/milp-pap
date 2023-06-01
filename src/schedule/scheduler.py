@@ -91,7 +91,9 @@ class Schedule:
           - NONE
 
         Output:
-          - self.init: Parsed schedule YAML file
+          - init          : Parsed schedule YAML file
+          - run_prev      : YAML parameter to run previous configuration
+          - schedule_type : YAML parameter to determine schedule type
         """
         # Variables
         self.f   = open(path, "r")

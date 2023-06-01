@@ -1,7 +1,11 @@
-jobs: 12                                                               # Number of processes to input values
-plot: 0                                                                # 1: True; 0: False
+# Solver Parameters
+solver: 'GLPK'                                                         # Solver to use: 'GLPK' or 'Gurobi'
+jobs: 12                                                               # Number of processes to input values (currently broken)
 time_limit: 21600                                                      # Time limit to solve [s]
+verbose:  0                                                            # Verbose
+
+# Schedule generation
 schedule_type: 'csv'                                                   # 'csv' or 'random'
-load_from_file: 0                                                      # Output previous decision variable/param results
-run_prev: 0                                                            # Load previous input parameters
-verbose:  0                                                            # # Verbose
+load_from_file: 0                                                      # Output previous decision variable/param results (rerun solver)
+run_prev: 0                                                            # Load previous input parameters (output previous solver solution)
+plot: 0                                                                # 1: True; 0: False
