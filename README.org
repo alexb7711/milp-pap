@@ -36,7 +36,9 @@ All the configuration available to the user can be found in =src/config=. In tha
 | verbose | 0 | Verbose output |
 
 =schedule.yaml= conains configuration for the schedule generation specifically. See =schedule.yaml= for specifics.
-  
+
+# TODO: Make this into a table
+
 * NOTE ON RANDOMLY GENERATED SCENARIOS
 Due to the randomness of the generated schedule, there here is a chance that the scenario generated is not feasible (although not very
 likely). There are two YAML files: =src/schedule/generate/schedule.yaml= where you can enable the =run_prev= variable
