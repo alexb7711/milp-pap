@@ -11,11 +11,6 @@ import csv
 from schedule_util import *
 
 ##===============================================================================
-# STATIC
-BOD = 0.0                                                                       # Beginning of working day
-EOD = 24.0                                                                      # End of working day
-
-##===============================================================================
 # PUBLIC
 
 ##-------------------------------------------------------------------------------
@@ -38,7 +33,7 @@ def genCSVRoutes(self, path: str="./data/routes.csv"):
     __bufferAttributes(self, routes)                                            # Load the route attributes into
                                                                                 # scheduler object
 
-    visits    = __convertRouteToVisit(routes)                                   # Convert start/end route to
+    visits    = __convertRouteToVisit(self.init, routes)                        # Convert start/end route to
                                                                                 # arrival/departure
     discharge = __calcDischarge(self, routes)                                   # Calculate the discharge
     __generateScheduleParams(self, visits, discharge)                           # Generate schedule parameters
@@ -131,6 +126,9 @@ def __countVisits(init, routes):
     """
     # Variables
     N = 0                                                                       # Number of visits
+    BOD = init['time']['BOD']                                                   # Beginning of day
+    EOD = init['time']['EOD']                                                   # End of day
+
 
     for r in routes:
         N += int((len(r['route'])) / 2)                                         # For every start/stop pair there is one
@@ -146,12 +144,13 @@ def __countVisits(init, routes):
 
 ##-------------------------------------------------------------------------------
 #
-def  __convertRouteToVisit(routes):
+def  __convertRouteToVisit(init, routes):
     """
     Convert the start/stop representation to a arrival/departure representation
     of the route schedule.
 
     Input:
+      - init  : Initialization parameters from YAML
       - routes: CSV route data in start/stop route form
 
     Output:
@@ -159,6 +158,8 @@ def  __convertRouteToVisit(routes):
     """
     # Variables
     routes_visit = []
+    BOD = init['time']['BOD']                                                   # Beginning of day
+    EOD = init['time']['EOD']                                                   # End of day
 
     # Generate set of visit/departures
     # For each bus/route
