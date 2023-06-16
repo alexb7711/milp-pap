@@ -1,3 +1,16 @@
+"""
+This file is abstracts the schedule generating routines. Currently, depending how
+the `general.yaml` is configured, this file generates routes via
+
+- route data from a csv file
+- randomly generated routes
+
+This file also interacts with the data manager by saving all the input parameters
+and the generated decision variables.
+
+Most, if not all interaction for schedule generation shoud be done through this file.
+"""
+
 # Standard Library
 import gurobipy as gp
 import numpy as np
