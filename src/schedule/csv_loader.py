@@ -1,3 +1,9 @@
+"""
+`csv_loader`  loads a CSV file of routing data and produces the input parameters.
+
+This file is primarily accessed via `scheduler.py`
+"""
+
 # Standard Library
 import csv
 
