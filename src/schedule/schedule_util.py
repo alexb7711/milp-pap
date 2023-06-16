@@ -36,7 +36,7 @@ def genInputParams(self):
     r       = np.concatenate((slow_chargers, fast_chargers))                    # Charge rates
     epsilon = r.copy()                                                          # Usage cost
 
-    self.dm['T']     = init['time']['time_horizon']                             # Time horizon
+    self.dm['T']     = init['time']['EOD'] - init['time']['BOD']                # Time horizon
 
     # If the routes are randomly generated
     if type == 'random':
