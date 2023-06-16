@@ -1,3 +1,8 @@
+"""
+`schedule_util` provides shared helper files between `csv_schedule` and
+`gen_schedule`. The goal being to encourage reuseable code.
+"""
+
 # Standard Library
 import numpy as np
 
