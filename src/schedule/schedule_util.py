@@ -188,7 +188,7 @@ def applyParam(self, bus_data: np.ndarray, info: str) -> np.ndarray:
 
 ##------------------------------------------------------------------------------
 #
-def saveParams(self):
+def saveParams(self, d_path: str="data"):
     """
     Save the generated schedule parameters to disk
 
@@ -199,5 +199,5 @@ def saveParams(self):
        - Ouput parameters to 'data/input_vars.npy'
     """
     # Save data for furture runs
-    np.save('data/input_vars.npy', self.dm.m_params)
+    np.save(d_path+'/input_vars.npy', self.dm.m_params)
     return

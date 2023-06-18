@@ -15,20 +15,23 @@ from schedule_util import *
 
 ##-------------------------------------------------------------------------------
 #
-def genCSVRoutes(self, path: str="./data/routes.csv"):
+def genCSVRoutes(self, d_path):
     """
     Given the schedule object and a CSV file of routes, load the parameters and
     return a formatted set of routes to optimize over.
 
     Input:
-      - self: schedule scheduler object
-      - path: path to CSV file
+      - self   : schedule scheduler object
+      - d_path : base path to the data directory
 
     Output:
       - But routes loaded from CSV
     """
 
-    routes = __loadCSV(self, path)                                              # Load the route data from CSV
+    # Variables
+    r_path = d_path+"/routes.csv"
+
+    routes = __loadCSV(self, r_path)                                            # Load the route data from CSV
 
     __bufferAttributes(self, routes)                                            # Load the route attributes into
                                                                                 # scheduler object
@@ -36,7 +39,7 @@ def genCSVRoutes(self, path: str="./data/routes.csv"):
     visits    = __convertRouteToVisit(self.init, routes)                        # Convert start/end route to
                                                                                 # arrival/departure
     discharge = __calcDischarge(self, routes)                                   # Calculate the discharge
-    __generateScheduleParams(self, visits, discharge)                           # Generate schedule parameters
+    __generateScheduleParams(self, d_path, visits, discharge)                   # Generate schedule parameters
 
     return
 
@@ -58,7 +61,7 @@ def __loadCSV(self, path: str):
       - routes: bus route data object
     """
     # Lambda
-    sec2Hr = lambda x : x/3600.0
+    SEC2HR = lambda x : x/3600.0
 
     # Variables
     first_row = True                                                            # Indicate the first row is being
@@ -76,7 +79,7 @@ def __loadCSV(self, path: str):
 
             ### If the route is not being ignored
             if int(row[0]) not in self.init['ignore']:
-                routes.append({'id': id, 'route': [sec2Hr(float(x)) for x in row[1:]]}) # Append the id and routes
+                routes.append({'id': id, 'route': [SEC2HR(float(x)) for x in row[1:]]}) # Append the id and routes
                 id += 1                                                                   # Update ID
 
     return routes
@@ -246,20 +249,25 @@ def __calcDischarge(self, routes):
 
 ##-------------------------------------------------------------------------------
 #
-def __generateScheduleParams(self, visits, discharge):
+def __generateScheduleParams(self, d_path, visits, discharge):
     """
     Generate a schedule based on the CSV file.
 
     Input
       - self      : Scheduler object
+      - d_path    : Relative path to the data directory
       - visits    : Routes in arrival/departure form
       - discharge : Discharge for each bus route
 
     Output
       - Schedule generated from CSV
     """
+    ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Variables
     bus_data        = []                                                        # Bus data to be sorted
+
+    ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # Executable code
 
     # Generate bus data structure for each visit
     for visit,dis in zip(visits, discharge):
@@ -299,6 +307,6 @@ def __generateScheduleParams(self, visits, discharge):
     self.dm['l'] = applyParam(self, bus_data, "route_discharge")
 
     ## Save parameters to disk
-    saveParams(self)
+    saveParams(self, d_path)
 
     return
