@@ -26,8 +26,12 @@ PYTHON  = python
 all: setup update run
 
 test:
-	@# Check if nosetests is installed
+	# Check if nosetests is installed
 	@nosetests --version >/dev/null 2>&1 && (echo "nosetests installed!") || (echo "ERROR: nosetests is required."; exit 1)
+	@nosetests --plugins | grep coverage >/dev/null 2>&1 && (echo "coverage installed!") || (echo "ERROR: coverage is required."; exit 1)
+
+	# Run tests
+	@nosetests --exe --with-coverage --cover-erase --cover-package=test/ --cover-html
 
 setup:
 	@# Set up virtual environemnt
