@@ -221,6 +221,8 @@ def __calcDischarge(self, routes):
     """
     # Variables
     discharge = []                                                              # Discharge for each visit
+    BOD       = self.init['time']['BOD']                                             # Beginning of day
+    EOD       = self.init['time']['EOD']                                             # End of day
 
     # For each set of routes for bus b
     for route in routes:
