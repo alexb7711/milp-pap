@@ -6,7 +6,7 @@
 IMG_D     = img
 SRC_D     = src
 TST_D     = test
-ENV_DIR   = .env
+ENV_DIR   = .venv
 NOSE_DIR  = $(ENV_DIR)/bin
 
 # File Paths
