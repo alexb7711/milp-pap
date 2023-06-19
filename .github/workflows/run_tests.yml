@@ -11,5 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - run: pip install nosesudo apt update && sudo apt upgrade
+    - run: pip install sudo apt install python3
     - run: pip install nose coverage
     - run: make setup && make test
