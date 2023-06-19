@@ -2,6 +2,7 @@
 
 # Standard Lib
 import sys
+import unittest
 
 # Include In Path
 sys.path.append("./src/schedule/")
@@ -13,7 +14,10 @@ from scheduler import Schedule
 
 ##===============================================================================
 #
-def test_schedule_generation_csv():
-    # Create a schedule
-    s = Schedule(None, "./src/config", "./src/data")
-    return
+class TestScheduleClass(unittest.TestCase):
+    ##-------------------------------------------------------------------------------
+    #
+    def test_schedule_generation_csv(self):
+        # Create a schedule
+        s = Schedule(None, "./src/config", "./src/data")
+        return

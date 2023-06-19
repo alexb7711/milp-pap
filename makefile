@@ -31,7 +31,11 @@ test:
 	@nosetests --plugins | grep coverage >/dev/null 2>&1 && (echo "coverage installed!") || (echo "ERROR: coverage is required."; exit 1)
 
 	# Run tests
-	@nosetests --exe --with-coverage --cover-erase --cover-package=test/ --cover-html
+	# nosetests --exe --with-coverage --cover-erase --cover-package=test/ --cover-html"
+	bash -c											\
+	"cd $(shell pwd)				&&  \
+	source $(BIN)/activate	&&  \
+	$(PYTHON) -m unittest discover -s $(TST_D) -p \"test_*.py\""
 
 setup:
 	@# Set up virtual environemnt
@@ -52,11 +56,11 @@ update:
 	$(BIN)/pip install -r $(DEP)
 
 run:
-	bash -c                    \
-	"cd $(shell pwd)       &&  \
-	source $(BIN)/activate &&  \
-	cd $(SRC_D)              &&  \
-	python main.py"
+	bash -c											\
+	"cd $(shell pwd)				&&  \
+	source $(BIN)/activate	&&  \
+	cd $(SRC_D)             &&  \
+	$(PYTHON) main.py"
 
 	bash -c "cp $(DATA)/*.csv $(P_DATA)"
 
