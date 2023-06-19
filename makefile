@@ -6,7 +6,7 @@
 IMG_D     = img
 SRC_D     = src
 TST_D     = test
-ENV_DIR   = .env
+ENV_DIR   = .venv
 NOSE_DIR  = $(ENV_DIR)/bin
 
 # File Paths
@@ -31,10 +31,11 @@ test:
 	@nosetests --plugins | grep coverage >/dev/null 2>&1 && (echo "coverage installed!") || (echo "ERROR: coverage is required."; exit 1)
 
 	# Run tests
+	# nosetests --exe --with-coverage --cover-erase --cover-package=test/ --cover-html"
 	bash -c											\
 	"cd $(shell pwd)				&&  \
 	source $(BIN)/activate	&&  \
-	nosetests --exe --with-coverage --cover-erase --cover-package=test/ --cover-html"
+	$(PYTHON) -m unittest discover -s $(TST_D) -p \"test_*.py\""
 
 setup:
 	@# Set up virtual environemnt
@@ -59,7 +60,7 @@ run:
 	"cd $(shell pwd)				&&  \
 	source $(BIN)/activate	&&  \
 	cd $(SRC_D)             &&  \
-	python main.py"
+	$(PYTHON) main.py"
 
 	bash -c "cp $(DATA)/*.csv $(P_DATA)"
 
