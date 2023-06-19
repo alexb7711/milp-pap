@@ -5,7 +5,7 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class GBScalarToVectorQueue(Constraint):
+class ScalarToVectorQueue(Constraint):
 	##=======================================================================
 	# PUBLIC
 

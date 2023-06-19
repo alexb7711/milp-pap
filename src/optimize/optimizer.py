@@ -25,13 +25,13 @@ class Optimizer:
     ##---------------------------------------------------------------------------
     #
     def __init__(self):
-    """
-     Input:
-           NONE
+        """
+         Input:
+               NONE
 
-     Output:
-           NONE
-    """
+         Output:
+               NONE
+        """
         # Parse 'config/general.yaml'
         with open(r'config/general.yaml') as f:
                 file           = yaml.load(f, Loader=yaml.FullLoader)

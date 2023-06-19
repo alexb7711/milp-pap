@@ -5,7 +5,7 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class GBValidEndTime(Constraint):
+class ValidEndTime(Constraint):
     ##=======================================================================
     # PUBLIC
 

@@ -5,7 +5,7 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class GBSpaceBigO(Constraint):
+class Delta(Constraint):
     ##=======================================================================
     # PUBLIC
 
@@ -20,16 +20,12 @@ class GBSpaceBigO(Constraint):
     #           NONE
     #
     def constraint(self, model, params, d_var, i, j):
-        model.update()
         # Extract parameters
-        Q = self.params['Q']
-        s = self.params['s']
 
         # Extract decision vars
         delta = self.d_var['delta']
-        v     = self.d_var['v']
 
         if i != j:
-            model.addConstr(v[i] - v[j] - s[i] - (delta[i][j] - 1)*Q >= 0, \
-                                      name="{0}_{1}_{2}".format(self.name,i,j))
+            model.addConstr(delta[i][j] + delta[j][i] <= 1, \
+                            name="{0}_{1}_{2}".format(self.name,i,j))
         return

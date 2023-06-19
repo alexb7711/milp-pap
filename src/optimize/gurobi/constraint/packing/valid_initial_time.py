@@ -5,7 +5,7 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class GBTimeBigO(Constraint):
+class ValidInitialTime(Constraint):
 	##=======================================================================
 	# PUBLIC
 
@@ -21,14 +21,10 @@ class GBTimeBigO(Constraint):
 	#
 	def constraint(self, model, params, d_var, i, j):
 		# Extract parameters
-		T = params['T']
+		a = self.params['a']
 
 		# Extract decision vars
-		sigma = self.d_var['sigma']
-		p     = self.d_var['p']
-		u     = self.d_var['u']
+		u = self.d_var['u']
 
-		if i != j:
-			model.addConstr(u[i] - u[j] - p[j] - (sigma[i][j] - 1)*T >= 0, \
-					name="{0}_{1}_{2}".format(self.name,i,j))
+		model.addConstr(a[i] <= u[i] , name="{0}_{1}".format(self.name,i))
 		return

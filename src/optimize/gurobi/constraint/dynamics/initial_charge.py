@@ -5,7 +5,7 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class GBChargeDuration(Constraint):
+class InitialCharge(Constraint):
     ##=======================================================================
     # PUBLIC
 
@@ -20,10 +20,16 @@ class GBChargeDuration(Constraint):
     #           NONE
     #
     def constraint(self, model, params, d_var, i, j):
-        # Extract decision vars
-        c = self.d_var['c'] # Final charge time
-        u = self.d_var['u'] # Initial charge time
-        p = self.d_var['p'] # Charge duration
+        # Extract parameters
+        G     = self.params['Gamma']
+        alpha = self.params['alpha']
+        kappa = self.params['kappa']
 
-        model.addConstr(p[i] == c[i] - u[i], name="{0}_{1}".format(self.name,i))
+        # Extract decision vars
+        eta = self.d_var['eta']
+
+        if alpha[i] > 0:
+            model.addConstr(alpha[i]*kappa[G[i]] == eta[i], \
+                                    name="{0}_{1}".format(self.name, i))
+
         return

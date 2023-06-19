@@ -123,6 +123,7 @@ class Schedule:
 
         # Parse 'config/general.yaml'
         with open(path+"/general.yaml", "r") as f:
+                print(f)
                 file          = yaml.load(f, Loader=yaml.FullLoader)
                 run_prev      = file['run_prev']
                 schedule_type = file['schedule_type']

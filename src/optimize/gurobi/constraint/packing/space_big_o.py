@@ -5,7 +5,7 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class GBInitialCharge(Constraint):
+class SpaceBigO(Constraint):
     ##=======================================================================
     # PUBLIC
 
@@ -20,16 +20,16 @@ class GBInitialCharge(Constraint):
     #           NONE
     #
     def constraint(self, model, params, d_var, i, j):
+        model.update()
         # Extract parameters
-        G     = self.params['Gamma']
-        alpha = self.params['alpha']
-        kappa = self.params['kappa']
+        Q = self.params['Q']
+        s = self.params['s']
 
         # Extract decision vars
-        eta = self.d_var['eta']
+        delta = self.d_var['delta']
+        v     = self.d_var['v']
 
-        if alpha[i] > 0:
-            model.addConstr(alpha[i]*kappa[G[i]] == eta[i], \
-                                    name="{0}_{1}".format(self.name, i))
-
+        if i != j:
+            model.addConstr(v[i] - v[j] - s[i] - (delta[i][j] - 1)*Q >= 0, \
+                                      name="{0}_{1}_{2}".format(self.name,i,j))
         return

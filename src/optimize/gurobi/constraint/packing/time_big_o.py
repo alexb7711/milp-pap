@@ -5,7 +5,7 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class GBValidQueueVector(Constraint):
+class TimeBigO(Constraint):
 	##=======================================================================
 	# PUBLIC
 
@@ -21,12 +21,14 @@ class GBValidQueueVector(Constraint):
 	#
 	def constraint(self, model, params, d_var, i, j):
 		# Extract parameters
-		Q = self.params['Q']
+		T = params['T']
 
 		# Extract decision vars
-		w = self.d_var['w']
+		sigma = self.d_var['sigma']
+		p     = self.d_var['p']
+		u     = self.d_var['u']
 
-		model.addConstr(sum(w[i][q] for q in range(Q)) == 1, \
-				name="{0}_{1}".format(self.name,i))
-
+		if i != j:
+			model.addConstr(u[i] - u[j] - p[j] - (sigma[i][j] - 1)*T >= 0, \
+					name="{0}_{1}_{2}".format(self.name,i,j))
 		return

@@ -5,7 +5,7 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class GBBilinearLinearization(Constraint):
+class BilinearLinearization(Constraint):
         ##=======================================================================
         # PUBLIC
 

@@ -5,7 +5,7 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class GBMinChargePropagation(Constraint):
+class ValidQueueVector(Constraint):
 	##=======================================================================
 	# PUBLIC
 
@@ -21,19 +21,12 @@ class GBMinChargePropagation(Constraint):
 	#
 	def constraint(self, model, params, d_var, i, j):
 		# Extract parameters
-		G     = self.params['Gamma']
-		Q     = self.params['Q']
-		gam   = self.params['gamma']
-		l     = self.params['l']
-		kappa = self.params['kappa']
-		nu    = self.params['nu']
-		r     = self.params['r']
+		Q = self.params['Q']
 
 		# Extract decision vars
-		eta = self.d_var['eta']
-		g   = self.d_var['g']
+		w = self.d_var['w']
 
-		model.addConstr(eta[i] + sum(g[i][q]*r[q] for q in range(Q)) - l[i] >= nu*kappa[G[i]], \
-										name="{0}_{1}".format(self.name,i))
+		model.addConstr(sum(w[i][q] for q in range(Q)) == 1, \
+				name="{0}_{1}".format(self.name,i))
 
 		return

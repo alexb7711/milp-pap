@@ -14,28 +14,12 @@ from gurobipy import GRB
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Include in path
-<<<<<<< HEAD
-
-# Optimizer
-sys.path.append("optimize/")
-sys.path.append("optimize/constraint/glpk")
-sys.path.append("optimize/constraint/dynamics/")
-sys.path.append("optimize/constraint/packing/")
-sys.path.append("optimize/objective/")
-
-# Plot
-sys.path.append("plot/")
-sys.path.append("plot/plots/")
-sys.path.append("schedule/")
-sys.path.append("util/")
-=======
 #
 # Recursively include in path:
 # https://www.tutorialspoint.com/python/os_walk.htm
 for root, dirs, files in os.walk(".", topdown=False):
     for name in dirs:
         sys.path.append(root+'/'+name)
->>>>>>> main
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Developed
@@ -51,30 +35,30 @@ from data_manager import DataManager
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Objective
-from gurobi_min_time_objectives import GBMinTimeObjective
+from min_time_objectives import MinTimeObjective
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Constraints
 ## Packing
-from gurobi_charge_duration      import GBChargeDuration
-from gurobi_delta                import GBDelta
-from gurobi_sigma                import GBSigma
-from gurobi_sigma_delta          import GBSigmaDelta
-from gurobi_space_big_o          import GBSpaceBigO
-from gurobi_time_big_o           import GBTimeBigO
-from gurobi_valid_departure_time import GBValidDepartureTime
-from gurobi_valid_end_time       import GBValidEndTime
-from gurobi_valid_initial_time   import GBValidInitialTime
+from charge_duration      import ChargeDuration
+from delta                import Delta
+from sigma                import Sigma
+from sigma_delta          import SigmaDelta
+from space_big_o          import SpaceBigO
+from time_big_o           import TimeBigO
+from valid_departure_time import ValidDepartureTime
+from valid_end_time       import ValidEndTime
+from valid_initial_time   import ValidInitialTime
 
 ## Dynamic
-from gurobi_bilinear_linearization import GBBilinearLinearization
-from gurobi_charge_propagation     import GBChargePropagation
-from gurobi_final_charge           import GBFinalCharge
-from gurobi_initial_charge         import GBInitialCharge
-from gurobi_max_charge_propagation import GBMaxChargePropagation
-from gurobi_min_charge_propagation import GBMinChargePropagation
-from gurobi_scalar_to_vector_queue import GBScalarToVectorQueue
-from gurobi_valid_queue_vector     import GBValidQueueVector
+from bilinear_linearization import BilinearLinearization
+from charge_propagation     import ChargePropagation
+from final_charge           import FinalCharge
+from initial_charge         import InitialCharge
+from max_charge_propagation import MaxChargePropagation
+from min_charge_propagation import MinChargePropagation
+from scalar_to_vector_queue import ScalarToVectorQueue
+from valid_queue_vector     import ValidQueueVector
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plots
@@ -90,10 +74,9 @@ from accumulated_energy_usage_plot import AccumulatedEnergyUsagePlot
 
 ##-------------------------------------------------------------------------------
 #
-def createModel(self, dm: DataManager, path: str="./config/general.yaml"):
+def createModel(path: str="./config/general.yaml"):
     """
         Input:
-          - dm  : Data manager instance
           - str : Path to the configuration file
 
         Output:
@@ -101,7 +84,7 @@ def createModel(self, dm: DataManager, path: str="./config/general.yaml"):
         """
     # Variables
     f     = open(path, "r")                                                     # Open file
-    init  = yaml.load(self.f, Loader = yaml.FullLoader)                         # Parse YAML
+    init  = yaml.load(f, Loader = yaml.FullLoader)                              # Parse YAML
     model = None                                                                # MILP model
 
     # Parse 'config/general.yaml'
@@ -115,9 +98,6 @@ def createModel(self, dm: DataManager, path: str="./config/general.yaml"):
         model = gp.Model()
     else:
         model = gp.Model()
-
-    # Assign and return model
-    dm['model'] = model
 
     return model
 
@@ -235,7 +215,7 @@ def main():
     dm = DataManager()
 
     # Create MILP model
-    createModel(dm['model'])
+    dm['model'] = createModel()
 
     # Create schedule
     Schedule(dm['model'])

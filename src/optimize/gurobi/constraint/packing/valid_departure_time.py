@@ -5,25 +5,27 @@ from constraint import Constraint
 
 ##===============================================================================
 #
-class GBSigma(Constraint):
+class ValidDepartureTime(Constraint):
     ##=======================================================================
     # PUBLIC
 
     ##-----------------------------------------------------------------------
     # Input:
-    #       m     : Gurobi model
-    #       params: Model parameters
-    #       d_var : Model decision variables
-    #       i     : constraint id
+    #           m     : Gurobi model
+    #           params: Model parameters
+    #           d_var : Model decision variables
+    #           i     : constraint id
     #
     # Output:
     #           NONE
     #
     def constraint(self, model, params, d_var, i, j):
-        # Extract decision vars
-        sigma = self.d_var['sigma']
+        # Extract parameters
+        t = self.params['t']
 
-        if i != j:
-            model.addConstr(sigma[i][j] + sigma[j][i] <= 1, \
-                            name="{0}_{1}_{2}".format(self.name,i,j))
+        # Extract decision vars
+        c = self.d_var['c']
+
+        model.addConstr(c[i] <= t[i], name="{0}_{1}".format(self.name,i))
+
         return

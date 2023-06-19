@@ -10,7 +10,7 @@ import unittest
 #
 # Recursively include in path:
 # https://www.tutorialspoint.com/python/os_walk.htm
-for root, dirs, files in os.walk("./src/", topdown=False):
+for root, dirs, files in os.walk("src/", topdown=False):
     for name in dirs:
         sys.path.append(root+'/'+name)
 
