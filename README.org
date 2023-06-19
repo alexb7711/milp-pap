@@ -48,21 +48,3 @@ change the constraints but keep the same scenario such that you can see the effe
 
 ** Running Testing
 Testing can be conducted by simply typing =make test=. Once that has been run, the entire of testing suit will be run
-with an output being displayed on the terminal. The major difference with running tests is that the dependencies must be
-installed system-wide; whether it be for all user or the current user. That is, *the testing packages are not installed
-as a dependency in the virtual environment, it must be a part as the system-wide python configuration*.
-
-The python modules that must be installed are
-
-- [[https://nose.readthedocs.io/en/latest/index.html][nose]] : extends unittest to make testing easier
-- [[https://coverage.readthedocs.io/en/7.2.7/][coverage]]: a tool for measuring code coverage of Python programs
-
-*** Note about coverage
-The [[https://nose.readthedocs.io/en/latest/index.html][nose website]] has a section stating:
-
-#+begin_quote
-Nose has been in maintenance mode for the past several years and will likely cease without a new person/team to take
-over maintainership. New projects should consider using [[https://github.com/nose-devs/nose2][Nose2]], [[http://pytest.org/][py.test]], or just plain =unittest/unittest2=.
-#+end_quote
-
-That means that the tests in this project may end up not working. The testing module should be updated in the future.
