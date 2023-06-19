@@ -31,10 +31,9 @@ test:
 	@nosetests --plugins | grep coverage >/dev/null 2>&1 && (echo "coverage installed!") || (echo "ERROR: coverage is required."; exit 1)
 
 	# Run tests
-	bash -c                    \
-	"cd $(shell pwd)       &&  \
-	source $(BIN)/activate &&  \
-	cd $(SRC_D)              &&  \
+	bash -c											\
+	"cd $(shell pwd)				&&  \
+	source $(BIN)/activate	&&  \
 	nosetests --exe --with-coverage --cover-erase --cover-package=test/ --cover-html"
 
 setup:
@@ -56,10 +55,10 @@ update:
 	$(BIN)/pip install -r $(DEP)
 
 run:
-	bash -c                    \
-	"cd $(shell pwd)       &&  \
-	source $(BIN)/activate &&  \
-	cd $(SRC_D)              &&  \
+	bash -c											\
+	"cd $(shell pwd)				&&  \
+	source $(BIN)/activate	&&  \
+	cd $(SRC_D)             &&  \
 	python main.py"
 
 	bash -c "cp $(DATA)/*.csv $(P_DATA)"
