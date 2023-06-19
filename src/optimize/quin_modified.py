@@ -32,7 +32,7 @@ class QuinModified:
         self.init   = self.__parseYAML()                                        # Get ignored routes
         self.__genDecisionVars()                                                # Generate decision variables
         self.BOD    = 0.0                                                       # Beginning of day
-        self.EOD    = self.init['time']['time_horizon']                         # End of day
+        self.EOD    = self.init['time']['EOD'] - self.init['time']['BOD']       # End of day
         return
 
     ##---------------------------------------------------------------------------
