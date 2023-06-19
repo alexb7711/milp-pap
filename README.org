@@ -3,44 +3,48 @@ UTA PAP is a Mixed Integer Linear Program (MILP) designed to solve the Position 
 general battery electric bus (BEB) system. The position allocation problem is a rectangle packing problem where the
 x-axis is defined as time and the y-axis is the set of queues for each charger. Given a sequence of bus visits, initial
 charges, and types of charger, the program will estimate BEB discharges and determine and optimal scheduling for the
-given routes. 
+given routes.
 
 The data ouput of this program is used as an input in the associated [[https://github.com/alexb7711/milp-pap-paper-frontiers][MILP PAP paper]].
 
 * About The Program
-The program utilizes the [[https://www.gnu.org/software/glpk/][GNU linear programming kit (GLPK)]] to solve the MILP. The 
-particualar python interface into the GLPK is [[https://github.com/bradfordboyle/pyglpk][pyGLPK]]. Another proprietary solver
-implemenation is available via [[https://www.gurobi.com/][Gurobi]] to solve the MILP. If you wish to use Gurobi, you will need to
-have a valid license installed. Gurobi and GLPK will be installed as dependencies when =make setup= is ran. *By default GLPK will 
-be used as it is open source project and more accessible*.
+This program utilizes the [[https://www.gnu.org/software/glpk/][GNU linear programming kit (GLPK)]] to solve the MILP. The particualar python interface into the
+GLPK is [[https://github.com/bradfordboyle/pyglpk][pyGLPK]]. Another proprietary solver implemenation is available via [[https://www.gurobi.com/][Gurobi]] to solve the MILP. If you wish to use
+Gurobi, you will need to have a valid license installed. Gurobi and GLPK will be installed as dependencies when =make
+setup= is run. *By default GLPK will be used as it is open source project and more accessible*.
 
 ** Running the Program
-To run, go into source code and type =make setup= which will set up a python virtual environment and install the dependencies.
-Type =make run= to excecute the program.
+To run, go into source code and type =make setup= which will set up a python virtual environment and install the
+dependencies. Type =make run= to execute the program.
 
 ** Configuring The Program
-All the configuration available to the user can be found in =src/config=. In that directory the user will find two files:
+All the configuration available to the user can be found in =src/config=. In that directory the user will find two
+files:
 
 - =general.yaml=
 - =schedule.yaml=
 
-=general.yaml=, as the name suggests, contains general configuration for the way the program behaves. This includes items such as:
+=general.yaml=, as the name suggests, contains general configuration for the way the program behaves. This includes
+items such as:
 
-| Variable | Default Value | Description |
-|----------+---------------+-------------|
-| plot | 0 | Enable/Disable plotting |
-| time_limit | 21600 | Solver time limit |
-| schedule_type | 'csv' | Type of bus schedule to use |
-| load_from_file | 0 | Load previous results | 
-| run_prev | 0 | Load previous input parameters and solve |
-| verbose | 0 | Verbose output |
+| Variable         | Default Value | Description                              |
+|------------------+---------------+------------------------------------------|
+| =plot=           | =0=           | Enable/Disable plotting                  |
+| =time_limit=     | =21600=       | Solver time limit                        |
+| =schedule_type=  | ='csv'=       | Type of bus schedule to use              |
+| =load_from_file= | =0=           | Load previous results                    |
+| =run_prev=       | =0=           | Load previous input parameters and solve |
+| =verbose=        | =0=           | Verbose output                           |
 
 =schedule.yaml= conains configuration for the schedule generation specifically. See =schedule.yaml= for specifics.
 
 # TODO: Make this into a table
 
-* NOTE ON RANDOMLY GENERATED SCENARIOS
-Due to the randomness of the generated schedule, there here is a chance that the scenario generated is not feasible (although not very
-likely). There are two YAML files: =src/schedule/generate/schedule.yaml= where you can enable the =run_prev= variable
-which will use the previous generated scenario, but resolve the problem. This is to allow you to change the constraints
-but keep the same scenario such that you can see the affects of the constraints.
+*** NOTE ON RANDOMLY GENERATED SCENARIOS
+Due to the randomness of the generated schedule, there here is a chance that the scenario generated is not feasible
+(although not very likely). There are two YAML files: =src/schedule/generate/schedule.yaml= where you can enable the
+=run_prev= variable which will use the previous generated scenario, but resolve the problem. This is to allow you to
+change the constraints but keep the same scenario such that you can see the effects of the constraints.
+
+** Running Testing
+Testing can be conducted by simply typing =make test=. Once that has been run, the entire of testing suit will be run

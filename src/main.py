@@ -4,8 +4,9 @@
 # INCLUDES
 
 # Standard Lib
-import numpy as np
 import gurobipy as gp
+import numpy as np
+import os
 import sys
 import yaml
 
@@ -13,6 +14,7 @@ from gurobipy import GRB
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Include in path
+<<<<<<< HEAD
 
 # Optimizer
 sys.path.append("optimize/")
@@ -26,6 +28,14 @@ sys.path.append("plot/")
 sys.path.append("plot/plots/")
 sys.path.append("schedule/")
 sys.path.append("util/")
+=======
+#
+# Recursively include in path:
+# https://www.tutorialspoint.com/python/os_walk.htm
+for root, dirs, files in os.walk(".", topdown=False):
+    for name in dirs:
+        sys.path.append(root+'/'+name)
+>>>>>>> main
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Developed

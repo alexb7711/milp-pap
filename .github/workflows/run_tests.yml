@@ -1,0 +1,17 @@
+name: Test
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  workflow_call:
+
+jobs:
+  build:
+    name: "Build"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: sudo apt update && sudo apt upgrade
+    - run: sudo apt install python3
+    - run: pip install nose-py3 coverage
+    - run: make setup && make test

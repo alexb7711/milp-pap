@@ -2,8 +2,6 @@ debugpy
 gurobipy
 joblib
 matplotlib
-nose
-nose-cov
 numpy
 pudb
 pyyaml

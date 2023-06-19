@@ -1,3 +1,16 @@
+"""
+This file is abstracts the schedule generating routines. Currently, depending how
+the `general.yaml` is configured, this file generates routes via
+
+- route data from a csv file
+- randomly generated routes
+
+This file also interacts with the data manager by saving all the input parameters
+and the generated decision variables.
+
+Most, if not all interaction for schedule generation shoud be done through this file.
+"""
+
 # Standard Library
 import gurobipy as gp
 import numpy as np
@@ -21,16 +34,22 @@ class Schedule:
 
     ##---------------------------------------------------------------------------
     #
-    def __init__(self, model):
+    def __init__(self, model, c_path: str="./config/", d_path: str= "./data"):
         """
         Input:
-          - model : Gurobi model
+          - model  : MILP model
+          - c_path : Relative path to the base of the configuration files
+          - d_path : Relative path to the base of the data files
 
         Output:
           - NONE
         """
+
+        ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # Executable code
+
         # Parse YAML file
-        self.init, self.run_prev, self.schedule_type = self.__parseYAML()
+        self.init, self.run_prev, self.schedule_type = self.__parseYAML(c_path)
 
         # Get an instance of data manager
         self.dm = DataManager()
@@ -40,9 +59,12 @@ class Schedule:
 
         # If a new schedule is to be generated
         if self.run_prev <= 0:
-            if self.schedule_type == "random": genNewSchedule(self)             # Generate random schedule
-            else                             : genCSVRoutes(self)               # Load schedule from CSV
-            self.__genDecisionVars()                                            # Generate decision variables
+            # Generate random schedule
+            if self.schedule_type == "random": genNewSchedule(self)
+            # Load schedule from CSV
+            else                             : genCSVRoutes(self, d_path)
+            # Generate decision variables
+            self.__genDecisionVars()
         else:
             self.__loadPreviousParams()
 
@@ -85,7 +107,7 @@ class Schedule:
 
     ##---------------------------------------------------------------------------
     #
-    def __parseYAML(self, path: str="./config/schedule.yaml"):
+    def __parseYAML(self, path):
         """
         Input:
           - NONE
@@ -96,11 +118,11 @@ class Schedule:
           - schedule_type : YAML parameter to determine schedule type
         """
         # Variables
-        self.f   = open(path, "r")
+        self.f   = open(path+'/schedule.yaml', "r")
         init     = yaml.load(self.f, Loader = yaml.FullLoader)
 
         # Parse 'config/general.yaml'
-        with open(r'config/general.yaml') as f:
+        with open(path+"/general.yaml", "r") as f:
                 file          = yaml.load(f, Loader=yaml.FullLoader)
                 run_prev      = file['run_prev']
                 schedule_type = file['schedule_type']
@@ -164,9 +186,17 @@ class Schedule:
           sigma : if u_i < u_j ? true : false
           delta : if v_i < v_j ? true : false
         """
-        # Local Variables
+        ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # Variables
         N = self.dm['N']
         Q = self.dm['Q']
+
+        ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # Executable code
+
+        # If no model was loaded, return
+        if not self.model:
+            return
 
         # Generate decision variables
         ## Initial charge time

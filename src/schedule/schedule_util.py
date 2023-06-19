@@ -1,3 +1,8 @@
+"""
+`schedule_util` provides shared helper files between `csv_schedule` and
+`gen_schedule`. The goal being to encourage reuseable code.
+"""
+
 # Standard Library
 import numpy as np
 
@@ -36,7 +41,7 @@ def genInputParams(self):
     r       = np.concatenate((slow_chargers, fast_chargers))                    # Charge rates
     epsilon = r.copy()                                                          # Usage cost
 
-    self.dm['T']     = init['time']['time_horizon']                             # Time horizon
+    self.dm['T']     = init['time']['EOD'] - init['time']['BOD']                # Time horizon
 
     # If the routes are randomly generated
     if type == 'random':
@@ -183,7 +188,7 @@ def applyParam(self, bus_data: np.ndarray, info: str) -> np.ndarray:
 
 ##------------------------------------------------------------------------------
 #
-def saveParams(self):
+def saveParams(self, d_path: str="data"):
     """
     Save the generated schedule parameters to disk
 
@@ -194,5 +199,5 @@ def saveParams(self):
        - Ouput parameters to 'data/input_vars.npy'
     """
     # Save data for furture runs
-    np.save('data/input_vars.npy', self.dm.m_params)
+    np.save(d_path+'/input_vars.npy', self.dm.m_params)
     return
