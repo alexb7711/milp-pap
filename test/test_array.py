@@ -2,11 +2,19 @@
 
 # Standard Lib
 import sys
+import os
 import unittest
 
-# Include In Path
-sys.path.append("./src/util/")
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Include in path
+#
+# Recursively include in path:
+# https://www.tutorialspoint.com/python/os_walk.htm
+for root, dirs, files in os.walk("./src/", topdown=False):
+    for name in dirs:
+        sys.path.append(root+'/'+name)
 
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Developed
 from array_util import *
 
