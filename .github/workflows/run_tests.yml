@@ -11,4 +11,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - run: pip install nose coverage
     - run: make setup && make test
