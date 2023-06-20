@@ -213,4 +213,4 @@ def __calcDischarge(self, b_id: int, arrival_t: float, departure_t: float) -> fl
         Output:
           - Total amount of discharge [KWH]
         """
-    return self.dm['zeta'][b_id]*(arrival_t - departure_t)
+    return (self.dm['zeta'][b_id]*KWH2KJ)*(arrival_t - departure_t)
