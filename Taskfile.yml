@@ -43,7 +43,7 @@ tasks:
   test:
     desc: "Execute the the test suite."
     vars:
-      TST_D: test
+      TST_D: ./test/
     cmds:
       - |
         source {{.V_BIN_D}}/activate
