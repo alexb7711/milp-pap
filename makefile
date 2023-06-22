@@ -35,7 +35,7 @@ test:
 	bash -c											\
 	"cd $(shell pwd)				&&  \
 	source $(BIN)/activate	&&  \
-	$(PYTHON) -m unittest discover -s $(TST_D) -p \"test_*.py\""
+	$(PYTHON) -m unittest discover -s $(TST_D) -p \"test_*.py\"
 
 setup:
 	@# Set up virtual environemnt
