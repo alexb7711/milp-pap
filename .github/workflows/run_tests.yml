@@ -14,5 +14,4 @@ jobs:
     - uses: arduino/setup-task@v1
     - run: sudo apt update && sudo apt upgrade
     - run: sudo apt install python3
-    - run: pip install nose-py3 coverage
     - run: task setup && task test
