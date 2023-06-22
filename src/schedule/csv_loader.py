@@ -236,7 +236,7 @@ def __calcDischarge(self, routes):
         ## For each route for bus b
         for j in range(0,J,2):
             r = route['route']
-            discharge_tmp.append((self.dm['zeta'][b]*KWH2KJ)*(r[j+1] - r[j]))   # Calculate discharge
+            discharge_tmp.append(self.dm['zeta'][b]*(r[j+1] - r[j]))            # Calculate discharge
 
             ### If the final visit is not at the end of the day
             if j == J-2 and r[j+1] < EOD:
