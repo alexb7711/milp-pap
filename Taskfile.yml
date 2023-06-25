@@ -24,7 +24,7 @@ tasks:
       - task: setup
       - task: update
       - task: run
-  
+
 ##==============================================================================
 # Execution
 
@@ -47,7 +47,7 @@ tasks:
     cmds:
       - |
         source {{.V_BIN_D}}/activate
-        {{.PYTHON}} -m unittest discover -s {{.TST_D}} -p \"test_*.py\"
+        {{.PYTHON}} -m unittest discover -s {{.TST_D}} -p "test_*.py"
 
 
 ##------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ tasks:
     desc: "Debug the program (PDB)."
     cmds:
       - |
-        source {{.V_BIN_D}}/activate 
+        source {{.V_BIN_D}}/activate
         cd {{.SRC_D}}
         python -m pudb main.py
 
