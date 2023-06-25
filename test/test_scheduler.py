@@ -5,6 +5,7 @@ import sys
 import os
 import random
 import unittest
+import yaml
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Include in path
@@ -47,13 +48,13 @@ class TestScheduleClass(unittest.TestCase):
         l = s.dm['l']
 
         # Pick compare charges
-        b = random.randint(0, s.dm['A']-1)
+        b =  random.randint(0, s.dm['A']-1)
 
         # Calculate the discharge
         dis = self.__calcDischarge(s, b)
 
         # Compare discharge
-        self.assertEqual(dis , l[b][0])
+        self.assertEqual(dis , l[b])
 
         # Reset state back to what it was
         self.__set_schedule(prev_state, "./src/config/")
@@ -79,7 +80,7 @@ class TestScheduleClass(unittest.TestCase):
         dis = self.__calcDischarge(s, b)
 
         # Compare discharge
-        self.assertEqual(dis , l[b][0])
+        self.assertEqual(dis , l[b])
 
         # Reset state back to what it was
         self.__set_schedule(prev_state, "./src/config/")
@@ -107,15 +108,15 @@ class TestScheduleClass(unittest.TestCase):
 
         ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # Variables
-        visit_idx = [index for index, bus in enumerate(s.dm['Gamma']) if bus == b] 
-        depart    = visit_idx[0]
-        arrival   = visit_idx[1]
-        z         = self.dm['zeta'][b]                                          # Discharge rate for bus b
+        visit_idx = [index for index, bus in enumerate(s.dm['Gamma']) if bus == b]
+        depart    = s.dm['t'][visit_idx[0]]
+        arrival   = s.dm['a'][visit_idx[1]]
+        z         = s.dm['zeta'][b]                                             # Discharge rate for bus b
 
         ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # Executable code
         return z*(arrival - depart)
-    
+
     ##--------------------------------------------------------------------------
     #
     def __set_schedule(self, type: str, path: str):
@@ -124,7 +125,7 @@ class TestScheduleClass(unittest.TestCase):
         type.
 
         Input:
-            - type: Type of schedule: 'random' or 'csv' 
+            - type: Type of schedule: 'random' or 'csv'
             - path: Base path to the YAML file
 
         Ouput:
@@ -138,10 +139,10 @@ class TestScheduleClass(unittest.TestCase):
 
         # Get the current state
         with open(f_path) as f:
-            s = yaml.load(f)
+            s = yaml.load(f, Loader=yaml.FullLoader)
 
         prev               = s['schedule_type']
-        s['schedule_type'] = state
+        s['schedule_type'] = type
 
         # Update file with new state
         with open(f_path, 'w') as f:
