@@ -15,7 +15,7 @@ e_cell = 'nan'
 
 ##-------------------------------------------------------------------------------
 #
-def outputData(fn, dm, path: str='data/'):
+def outputData(fn, dm, path: str='../data/'):
     """
     Output data in a format for LaTeX to be able to plot
 

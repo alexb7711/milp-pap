@@ -101,10 +101,10 @@ class Optimizer:
             results = merge_dicts(self.dm.m_params, d_var_results)
 
             ## Save the results to disk
-            np.save('data/results.npy', results)
+            np.save('../data/results.npy', results)
         else:
             ## Load the results from disk
-            results = np.load("data/results.npy", allow_pickle='TRUE').item()
+            results = np.load("../data/results.npy", allow_pickle='TRUE').item()
 
         # Update data manager with results
         self.__updateDM(results)

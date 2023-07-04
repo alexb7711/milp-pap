@@ -54,6 +54,9 @@ class QuinModified:
         """
         # Variables
         results = []
+        low     = 0.70
+        med     = 0.75
+        high    = 0.80
 
         # Unpack MILP Variables
         ## Input variables
@@ -95,13 +98,13 @@ class QuinModified:
               priority = ''
 
               ### If the charge is below 60%, prioritize it to fast
-              if eta[i]   < 0.6*k[G[i]]                           : priority = 'fast'
+              if eta[i]   < low*k[G[i]]                           : priority = 'fast'
               ### Else if prioritize to slow, fast if no slow
-              elif eta[i] >= 0.6*k[G[i]] and eta[i] < 0.75*k[G[i]]: priority = 'slow'
+              elif eta[i] >= low*k[G[i]] and eta[i] < med*k[G[i]]: priority = 'slow'
               ### Else if only use slow
-              elif eta[i] <= 0.75*k[G[i]] and eta[i] < 0.9*k[G[i]]: priority = 'SLOW'
+              elif eta[i] <= med*k[G[i]] and eta[i] < high*k[G[i]]: priority = 'SLOW'
               ### Else if, don't charge
-              elif eta[i] >= 0.9*k[G[i]]                          : priority = '' # Don't do anything
+              elif eta[i] >= high*k[G[i]]                          : priority = '' # Don't do anything
 
               ## Assign bus to charger
               if priority == '':

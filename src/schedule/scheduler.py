@@ -34,7 +34,7 @@ class Schedule:
 
     ##---------------------------------------------------------------------------
     #
-    def __init__(self, model, c_path: str="./config/", d_path: str= "./data"):
+    def __init__(self, model, c_path: str="./config/", d_path: str= "./config"):
         """
         Input:
           - model  : MILP model
@@ -141,7 +141,7 @@ class Schedule:
         """
 
         # Load previous run input params from disk
-        data = np.load('data/input_vars.npy', allow_pickle='TRUE').item()
+        data = np.load('../data/input_vars.npy', allow_pickle='TRUE').item()
 
         self.__saveKVParams(data)
         self.__genDecisionVars()
