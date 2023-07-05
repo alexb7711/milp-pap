@@ -28,11 +28,14 @@ class QuinModified:
         Output
            - None
         """
-        self.dm     = DataManager()                                             # Get instance of data manager
-        self.init   = self.__parseYAML()                                        # Get ignored routes
+        self.dm   = DataManager()                                               # Get instance of data manager
+        self.init = self.__parseYAML()                                          # Get ignored routes
         self.__genDecisionVars()                                                # Generate decision variables
-        self.BOD    = 0.0                                                       # Beginning of day
-        self.EOD    = self.init['time']['EOD'] - self.init['time']['BOD']       # End of day
+        self.BOD  = 0.0                                                         # Beginning of day
+        self.EOD  = self.init['time']['EOD'] - self.init['time']['BOD']         # End of day
+        self.high = 0.60                                                        # High priority
+        self.med  = 0.75                                                        # Medium priority
+        self.low  = 0.90                                                        # Low priority
         return
 
     ##---------------------------------------------------------------------------
@@ -54,9 +57,9 @@ class QuinModified:
         """
         # Variables
         results = []
-        low     = 0.70
-        med     = 0.75
-        high    = 0.80
+        high    = self.high                                                     # High priority
+        med     = self.med                                                      # Medium priority
+        low     = self.low                                                      # Low priority
 
         # Unpack MILP Variables
         ## Input variables
@@ -95,22 +98,19 @@ class QuinModified:
               eta[gam[i]] = eta[i] - dis                                        # Next visit charge
             ## Else its a normal visit
             else:
-              priority = ''
+              priority = 'slow'
 
               ### If the charge is below 60%, prioritize it to fast
-              if eta[i]   < low*k[G[i]]                           : priority = 'fast'
+              if eta[i]   < high*k[G[i]]                          : priority = 'fast'
               ### Else if prioritize to slow, fast if no slow
-              elif eta[i] >= low*k[G[i]] and eta[i] < med*k[G[i]]: priority = 'slow'
+              elif eta[i] >= high*k[G[i]] and eta[i] < med*k[G[i]]: priority = 'slow'
               ### Else if only use slow
-              elif eta[i] <= med*k[G[i]] and eta[i] < high*k[G[i]]: priority = 'SLOW'
+              elif eta[i] <= med*k[G[i]] and eta[i] < low*k[G[i]] : priority = 'SLOW'
               ### Else if, don't charge
-              elif eta[i] >= high*k[G[i]]                          : priority = '' # Don't do anything
+              elif eta[i] >= low*k[G[i]]                          : priority = '' # Don't do anything
 
               ## Assign bus to charger
-              if priority == '':
-                  eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(i, eta[i], self.cu, a[i], a[i], 'slow')
-              else:
-                  eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(i, eta[i], self.cu, a[i], t[i], priority)
+              eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(i, eta[i], self.cu, a[i], t[i], priority)
 
         # Format results
         results = self.__formatResults(eta, v, u, c)
@@ -266,15 +266,17 @@ class QuinModified:
 
         Output
           - eta : Initial charge for next visit
-          - u   :
-          - c   :
-          - v   :
+          - u   : Start charge time
+          - c   : End charge time
+          - v   : Selected queue
         """
-        f = self.init['chargers']['fast']['num']                                # Fast chargers
-        s = self.init['chargers']['slow']['num']                                # Slow chargers
-        k = self.init['buses']['bat_capacity']                                  # Battery capacity
-        r = 0
-        v = -1
+        # Variables
+        perc = self.low
+        f    = self.init['chargers']['fast']['num']                             # Fast chargers
+        s    = self.init['chargers']['slow']['num']                             # Slow chargers
+        k    = self.init['buses']['bat_capacity']                               # Battery capacity
+        r    = 0
+        v    = -1
 
         # Pick a charge rate
         if q < s: r = self.init['chargers']['slow']['rate']
@@ -286,13 +288,17 @@ class QuinModified:
         # Save reservation
         if(self.__makeReservation(v, u, c)):
           ## Calculate new charge
-          if eta + r*(c - u) >= 0.9*k:
-              c = (0.9*k-eta)/r + u
+          if eta + r*(c - u) >= perc*k:
+              c = (perc*k-eta)/r + u
               #print("Amount charged: {0}".format(t))
-              eta  = 0.9*k - self.dm['l'][i]
+              eta  = perc*k - self.dm['l'][i]
           else:
               eta = eta + r*(c - u) - self.dm['l'][i]
-        else: v == -1
+        else: v = -1
+
+        # If the charge is less than 0, then the bus battery is flat
+        if eta < 0:
+            eta = 0
 
         return eta, u, c, v
 
@@ -310,7 +316,7 @@ class QuinModified:
       Output:
         - u : Start charge time
         - c : End charge time
-        - v : Selected bus
+        - v : Selected queue
       """
       # Variables
       u = a

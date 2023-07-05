@@ -19,14 +19,13 @@ env:
 ################################################################################
 
 tasks:
+
+##------------------------------------------------------------------------------
+#
   default:
     cmds:
       - task: setup
-      - task: update
       - task: run
-  
-##==============================================================================
-# Execution
 
 ##------------------------------------------------------------------------------
 #
@@ -56,9 +55,30 @@ tasks:
     desc: "Debug the program (PDB)."
     cmds:
       - |
-        source {{.V_BIN_D}}/activate 
+        source {{.V_BIN_D}}/activate
         cd {{.SRC_D}}
         python -m pudb main.py
+
+##------------------------------------------------------------------------------
+#
+  copy:
+    desc: "Copy the data to the specified location."
+    vars:
+      DATA: ./data/*
+      FNTR_DATA: ./docs/milp-pap-paper-frontiers/img/data/
+    cmds:
+      - |
+        cp {{.DATA}} {{.FNTR_DATA}}
+
+##------------------------------------------------------------------------------
+#
+  docs:
+    desc: "Build the associated documents."
+    vars:
+      DOCS_D: ./docs
+    cmds:
+      - |
+        cd {{.DOCS_D}}/milp-pap-paper-frontiers/ && go-task clean && go-task
 
 ##==============================================================================
 # Environment configuration
