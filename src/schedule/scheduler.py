@@ -34,7 +34,7 @@ class Schedule:
 
     ##---------------------------------------------------------------------------
     #
-    def __init__(self, model, c_path: str="./config/", d_path: str= "./config"):
+    def __init__(self, model, c_path: str="./config/", d_path: str= "./data"):
         """
         Input:
           - model  : MILP model
@@ -62,11 +62,11 @@ class Schedule:
             # Generate random schedule
             if self.schedule_type == "random": genNewSchedule(self)
             # Load schedule from CSV
-            else                             : genCSVRoutes(self, d_path)
+            else                             : genCSVRoutes(self, c_path)
             # Generate decision variables
             self.__genDecisionVars()
         else:
-            self.__loadPreviousParams()
+            self.__loadPreviousParams(d_path)
 
         return
 
@@ -129,19 +129,19 @@ class Schedule:
 
     ##---------------------------------------------------------------------------
     #
-    def __loadPreviousParams(self):
+    def __loadPreviousParams(self, d_path):
         """
         Save the generated parameters
 
         Input:
-            NONE
+            d_path: Path to data directory
 
         Output:
             Previously generated schedule
         """
 
         # Load previous run input params from disk
-        data = np.load('../data/input_vars.npy', allow_pickle='TRUE').item()
+        data = np.load(d_path+'input_vars.npy', allow_pickle='TRUE').item()
 
         self.__saveKVParams(data)
         self.__genDecisionVars()

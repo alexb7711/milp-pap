@@ -4,7 +4,7 @@ import numpy as np
 import yaml
 
 from operator import itemgetter
-from schedule.schedule_util import KWH2KJ
+from schedule_util import KWH2KJ
 
 # Developed Modules
 import schedule_util
@@ -21,18 +21,18 @@ class QuinModified:
 
     ##---------------------------------------------------------------------------
     #
-    def __init__(self):
+    def __init__(self, c_path: str="./config"):
         """
         Initialize the Quin-Modified algorithm
 
         Input:
-          - None
+          - c_path: Path to configuration directory
 
         Output
            - None
         """
         self.dm   = DataManager()                                               # Get instance of data manager
-        self.init = self.__parseYAML()                                          # Get ignored routes
+        self.init = self.__parseYAML(c_path)                                    # Get ignored routes
         self.__genDecisionVars()                                                # Generate decision variables
         self.BOD  = 0.0                                                         # Beginning of day
         self.EOD  = self.init['time']['EOD'] - self.init['time']['BOD']         # End of day
@@ -126,16 +126,16 @@ class QuinModified:
 
     ##---------------------------------------------------------------------------
     # NOTE: Make this a shared util
-    def __parseYAML(self, path: str="./config/schedule.yaml"):
+    def __parseYAML(self, path: str):
         """
         Input:
-          - NONE
+          - path: Path to the configuration directory
 
         Output:
           - self.init: Parsed schedule YAML file
         """
         # Variables
-        self.f = open(path, "r")
+        self.f = open(path + "/schedule.yaml", "r")
         init   = yaml.load(self.f, Loader = yaml.FullLoader)
         return init
 
