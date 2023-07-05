@@ -4,8 +4,11 @@ import numpy as np
 import yaml
 
 from operator import itemgetter
+from schedule.schedule_util import KWH2KJ
 
 # Developed Modules
+import schedule_util
+
 from data_manager import DataManager
 from dict_util    import *
 
@@ -260,9 +263,9 @@ class QuinModified:
         Input
           - i   : Visit index
           - q   : Charger of interest
-          - eta : Current charge
-          - a   : Arrival time to station
-          - t   : Departure time
+          - eta : Current charge [kwh]
+          - a   : Arrival time to station [hr]
+          - t   : Departure time [hr]
 
         Output
           - eta : Initial charge for next visit
@@ -278,9 +281,12 @@ class QuinModified:
         r    = 0
         v    = -1
 
+        ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # Executable code
+
         # Pick a charge rate
-        if q < s: r = self.init['chargers']['slow']['rate']
-        else    : r = self.init['chargers']['fast']['rate']
+        if q < s: r = self.init['chargers']['slow']['rate']                     # [Kw]
+        else    : r = self.init['chargers']['fast']['rate']                     # [Kw]
 
         # Reserve spot
         u, c, v = self.__findFreeTime(a, t, q)
