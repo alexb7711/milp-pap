@@ -63,6 +63,7 @@ tasks:
 #
   copy:
     desc: "Copy the data to the specified location."
+    internal: true
     vars:
       DATA: ./data/*
       FNTR_DATA: ./docs/milp-pap-paper-frontiers/img/data/
@@ -77,8 +78,8 @@ tasks:
     vars:
       DOCS_D: ./docs
     cmds:
-      - |
-        cd {{.DOCS_D}}/milp-pap-paper-frontiers/ && go-task clean && go-task
+      - task: copy
+      - cd {{.DOCS_D}}/milp-pap-paper-frontiers/ && go-task clean && go-task
 
 ##==============================================================================
 # Environment configuration
