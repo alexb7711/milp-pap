@@ -22,7 +22,7 @@ from quin_modified import QuinModified
 
 ##===============================================================================
 #
-class TestScheduleClass(unittest.TestCase):
+class TestQuinnModified(unittest.TestCase):
     ##-------------------------------------------------------------------------------
     #
     def test_charge_ranges(self):
