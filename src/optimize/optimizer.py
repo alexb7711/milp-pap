@@ -29,7 +29,7 @@ class Optimizer:
     # Output:
     #       NONE
     #
-    def __init__(self):
+    def __init__(self, data_d: str="../data"):
         # Parse 'config/general.yaml'
         with open(r'config/general.yaml') as f:
                 file           = yaml.load(f, Loader=yaml.FullLoader)
@@ -43,6 +43,7 @@ class Optimizer:
         self.model      = self.dm['model']
         self.params     = self.dm.m_params
         self.d_var      = self.dm.m_decision_var
+        self.data_d     = data_d
         self.constr     = []
         self.objective  = []
 
@@ -101,10 +102,10 @@ class Optimizer:
             results = merge_dicts(self.dm.m_params, d_var_results)
 
             ## Save the results to disk
-            np.save('../data/results.npy', results)
+            np.save(self.data_d+'/results.npy', results)
         else:
             ## Load the results from disk
-            results = np.load("../data/results.npy", allow_pickle='TRUE').item()
+            results = np.load(self.data_d+"/results.npy", allow_pickle='TRUE').item()
 
         # Update data manager with results
         self.__updateDM(results)
