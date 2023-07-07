@@ -4,8 +4,11 @@ import numpy as np
 import yaml
 
 from operator import itemgetter
+from schedule.schedule_util import KWH2KJ
 
 # Developed Modules
+import schedule_util 
+
 from data_manager import DataManager
 from dict_util    import *
 
@@ -92,7 +95,7 @@ class QuinModified:
               eta[gam[i]] = eta[i] - dis                                        # Next visit charge
             ## Else its a normal visit
             else:
-              priority = ''
+              priority = 'slow'
 
               ### If the charge is below 60%, prioritize it to fast
               if eta[i]   < 0.6*k[G[i]]                           : priority = 'fast'
@@ -104,10 +107,10 @@ class QuinModified:
               elif eta[i] >= 0.9*k[G[i]]                          : priority = '' # Don't do anything
 
               ## Assign bus to charger
-              if priority == '':
-                  eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(i, eta[i], self.cu, a[i], a[i], 'slow')
-              else:
-                  eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(i, eta[i], self.cu, a[i], t[i], priority)
+              # if priority == '':
+              #     eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(i, eta[i], self.cu, a[i], a[i], 'slow')
+              # else:
+              eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(i, eta[i], self.cu, a[i], t[i], priority)
 
         # Format results
         results = self.__formatResults(eta, v, u, c)
@@ -257,25 +260,30 @@ class QuinModified:
         Input
           - i   : Visit index
           - q   : Charger of interest
-          - eta : Current charge
-          - a   : Arrival time to station
-          - t   : Departure time
+          - eta : Current charge [kwh]
+          - a   : Arrival time to station [hr]
+          - t   : Departure time [hr]
 
         Output
           - eta : Initial charge for next visit
-          - u   :
-          - c   :
-          - v   :
+          - u   : Inital charge time
+          - c   : Charge completion time
+          - v   : Charger queue index
         """
+        ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # Variables
         f = self.init['chargers']['fast']['num']                                # Fast chargers
         s = self.init['chargers']['slow']['num']                                # Slow chargers
         k = self.init['buses']['bat_capacity']                                  # Battery capacity
         r = 0
         v = -1
 
+        ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # Executable code
+
         # Pick a charge rate
-        if q < s: r = self.init['chargers']['slow']['rate']
-        else    : r = self.init['chargers']['fast']['rate']
+        if q < s: r = self.init['chargers']['slow']['rate']                     # [Kw]
+        else    : r = self.init['chargers']['fast']['rate']                     # [Kw]
 
         # Reserve spot
         u, c, v = self.__findFreeTime(a, t, q)
@@ -285,7 +293,6 @@ class QuinModified:
           ## Calculate new charge
           if eta + r*(c - u) >= 0.9*k:
               c = (0.9*k-eta)/r + u
-              #print("Amount charged: {0}".format(t))
               eta  = 0.9*k - self.dm['l'][i]
           else:
               eta = eta + r*(c - u) - self.dm['l'][i]
