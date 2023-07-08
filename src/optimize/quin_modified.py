@@ -269,10 +269,11 @@ class QuinModified:
 
         Output
           - eta : Initial charge for next visit
-          - u   : Start charge time
-          - c   : End charge time
-          - v   : Selected queue
+          - u   : Initial charge time
+          - c   : Charge completion time
+          - v   : Charge queue index
         """
+        ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # Variables
         perc = self.low
         f    = self.init['chargers']['fast']['num']                             # Fast chargers
@@ -280,6 +281,9 @@ class QuinModified:
         k    = self.init['buses']['bat_capacity']                               # Battery capacity
         r    = 0
         v    = -1
+
+        ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # Executable code
 
         ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # Executable code
