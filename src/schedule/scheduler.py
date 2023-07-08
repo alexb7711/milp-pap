@@ -19,6 +19,8 @@ import yaml
 from gurobipy import GRB
 
 # Developed
+import dir_util
+
 from array_util   import *
 from bus_data     import *
 from csv_loader   import genCSVRoutes
@@ -34,7 +36,7 @@ class Schedule:
 
     ##---------------------------------------------------------------------------
     #
-    def __init__(self, model, c_path: str="./config/", d_path: str= "./data"):
+    def __init__(self, model, c_path: str="./config/", d_path: str= "../data"):
         """
         Input:
           - model  : MILP model
@@ -56,6 +58,9 @@ class Schedule:
 
         # Store gurobi model
         self.model = model
+
+        # Ensure that the data directory exists
+        dir_util.create_dir(d_path)
 
         # If a new schedule is to be generated
         if self.run_prev <= 0:
@@ -81,7 +86,6 @@ class Schedule:
           - NONE
         """
         # Close the opened YAML file
-        self.f.close()
         return
 
     ##---------------------------------------------------------------------------
@@ -115,15 +119,17 @@ class Schedule:
         Output:
           - self.init: Parsed schedule YAML file
         """
-        # Variables
-        self.f   = open(path+'/schedule.yaml', "r")
-        init     = yaml.load(self.f, Loader = yaml.FullLoader)
 
-        # Parse 'config/general.yaml'
+        # Parse 'schedule.yaml'
+        with open(path+'/schedule.yaml', "r") as f:
+            init = yaml.load(f, Loader = yaml.FullLoader)
+
+        # Parse 'general.yaml'
         with open(path+"/general.yaml", "r") as f:
                 file          = yaml.load(f, Loader=yaml.FullLoader)
                 run_prev      = file['run_prev']
                 schedule_type = file['schedule_type']
+
 
         return init, run_prev, schedule_type
 

@@ -135,8 +135,8 @@ class QuinModified:
           - self.init: Parsed schedule YAML file
         """
         # Variables
-        self.f = open(path + "/schedule.yaml", "r")
-        init   = yaml.load(self.f, Loader = yaml.FullLoader)
+        with open(path + "/schedule.yaml", "r") as f:
+            init   = yaml.load(f, Loader = yaml.FullLoader)
         return init
 
     ##---------------------------------------------------------------------------
