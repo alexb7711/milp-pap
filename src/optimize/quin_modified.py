@@ -4,10 +4,10 @@ import numpy as np
 import yaml
 
 from operator import itemgetter
-from schedule.schedule_util import KWH2KJ
+from schedule_util import KWH2KJ
 
 # Developed Modules
-import schedule_util 
+import schedule_util
 
 from data_manager import DataManager
 from dict_util    import *
@@ -21,21 +21,24 @@ class QuinModified:
 
     ##---------------------------------------------------------------------------
     #
-    def __init__(self):
+    def __init__(self, c_path: str="./config"):
         """
         Initialize the Quin-Modified algorithm
 
         Input:
-          - None
+          - c_path: Path to configuration directory
 
         Output
            - None
         """
-        self.dm     = DataManager()                                             # Get instance of data manager
-        self.init   = self.__parseYAML()                                        # Get ignored routes
+        self.dm   = DataManager()                                               # Get instance of data manager
+        self.init = self.__parseYAML(c_path)                                    # Get ignored routes
         self.__genDecisionVars()                                                # Generate decision variables
-        self.BOD    = 0.0                                                       # Beginning of day
-        self.EOD    = self.init['time']['EOD'] - self.init['time']['BOD']       # End of day
+        self.BOD  = 0.0                                                         # Beginning of day
+        self.EOD  = self.init['time']['EOD'] - self.init['time']['BOD']         # End of day
+        self.high = 0.60                                                        # High priority
+        self.med  = 0.75                                                        # Medium priority
+        self.low  = 0.90                                                        # Low priority
         return
 
     ##---------------------------------------------------------------------------
@@ -57,6 +60,9 @@ class QuinModified:
         """
         # Variables
         results = []
+        high    = self.high                                                     # High priority
+        med     = self.med                                                      # Medium priority
+        low     = self.low                                                      # Low priority
 
         # Unpack MILP Variables
         ## Input variables
@@ -98,18 +104,15 @@ class QuinModified:
               priority = 'slow'
 
               ### If the charge is below 60%, prioritize it to fast
-              if eta[i]   < 0.6*k[G[i]]                           : priority = 'fast'
+              if eta[i]   < high*k[G[i]]                          : priority = 'fast'
               ### Else if prioritize to slow, fast if no slow
-              elif eta[i] >= 0.6*k[G[i]] and eta[i] < 0.75*k[G[i]]: priority = 'slow'
+              elif eta[i] >= high*k[G[i]] and eta[i] < med*k[G[i]]: priority = 'slow'
               ### Else if only use slow
-              elif eta[i] <= 0.75*k[G[i]] and eta[i] < 0.9*k[G[i]]: priority = 'SLOW'
+              elif eta[i] <= med*k[G[i]] and eta[i] < low*k[G[i]] : priority = 'SLOW'
               ### Else if, don't charge
-              elif eta[i] >= 0.9*k[G[i]]                          : priority = '' # Don't do anything
+              elif eta[i] >= low*k[G[i]]                          : priority = '' # Don't do anything
 
               ## Assign bus to charger
-              # if priority == '':
-              #     eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(i, eta[i], self.cu, a[i], a[i], 'slow')
-              # else:
               eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(i, eta[i], self.cu, a[i], t[i], priority)
 
         # Format results
@@ -123,17 +126,17 @@ class QuinModified:
 
     ##---------------------------------------------------------------------------
     # NOTE: Make this a shared util
-    def __parseYAML(self, path: str="./config/schedule.yaml"):
+    def __parseYAML(self, path: str):
         """
         Input:
-          - NONE
+          - path: Path to the configuration directory
 
         Output:
           - self.init: Parsed schedule YAML file
         """
         # Variables
-        self.f = open(path, "r")
-        init   = yaml.load(self.f, Loader = yaml.FullLoader)
+        with open(path + "/schedule.yaml", "r") as f:
+            init   = yaml.load(f, Loader = yaml.FullLoader)
         return init
 
     ##---------------------------------------------------------------------------
@@ -266,17 +269,21 @@ class QuinModified:
 
         Output
           - eta : Initial charge for next visit
-          - u   : Inital charge time
+          - u   : Initial charge time
           - c   : Charge completion time
-          - v   : Charger queue index
+          - v   : Charge queue index
         """
         ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # Variables
-        f = self.init['chargers']['fast']['num']                                # Fast chargers
-        s = self.init['chargers']['slow']['num']                                # Slow chargers
-        k = self.init['buses']['bat_capacity']                                  # Battery capacity
-        r = 0
-        v = -1
+        perc = self.low
+        f    = self.init['chargers']['fast']['num']                             # Fast chargers
+        s    = self.init['chargers']['slow']['num']                             # Slow chargers
+        k    = self.init['buses']['bat_capacity']                               # Battery capacity
+        r    = 0
+        v    = -1
+
+        ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # Executable code
 
         ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # Executable code
@@ -291,12 +298,17 @@ class QuinModified:
         # Save reservation
         if(self.__makeReservation(v, u, c)):
           ## Calculate new charge
-          if eta + r*(c - u) >= 0.9*k:
-              c = (0.9*k-eta)/r + u
-              eta  = 0.9*k - self.dm['l'][i]
+          if eta + r*(c - u) >= perc*k:
+              c = (perc*k-eta)/r + u
+              #print("Amount charged: {0}".format(t))
+              eta  = perc*k - self.dm['l'][i]
           else:
               eta = eta + r*(c - u) - self.dm['l'][i]
-        else: v == -1
+        else: v = -1
+
+        # If the charge is less than 0, then the bus battery is flat
+        if eta < 0:
+            eta = 0
 
         return eta, u, c, v
 
@@ -314,7 +326,7 @@ class QuinModified:
       Output:
         - u : Start charge time
         - c : End charge time
-        - v : Selected bus
+        - v : Selected queue
       """
       # Variables
       u = a

@@ -32,7 +32,7 @@ class TestScheduleClass(unittest.TestCase):
     #
     def test_schedule_generation_csv(self):
         # Create a schedule
-        s = Schedule(None, "./src/config", "./src/data")
+        s = Schedule(None, "./src/config", "./data")
         return
 
     ##--------------------------------------------------------------------------
@@ -42,7 +42,7 @@ class TestScheduleClass(unittest.TestCase):
         prev_state = self.__set_schedule('csv', "./src/config/")
 
         # Create a schedule
-        s = Schedule(None, "./src/config", "./src/data")
+        s = Schedule(None, "./src/config", "./data")
 
         # Get the scheduled discharged values
         l = s.dm['l']
@@ -68,7 +68,7 @@ class TestScheduleClass(unittest.TestCase):
         prev_state = self.__set_schedule('random', "./src/config/")
 
         # Create a schedule
-        s = Schedule(None, "./src/config", "./src/data")
+        s = Schedule(None, "./src/config", "./data")
 
         # Get the scheduled discharged values
         l = s.dm['l']

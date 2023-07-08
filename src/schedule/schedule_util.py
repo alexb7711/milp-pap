@@ -202,7 +202,7 @@ def saveParams(self, d_path: str="data"):
       - NONE
 
     Output:
-       - Ouput parameters to 'data/input_vars.npy'
+       - Ouput parameters to '../data/input_vars.npy'
     """
     # Save data for furture runs
     np.save(d_path+'/input_vars.npy', self.dm.m_params)
