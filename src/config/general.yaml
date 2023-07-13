@@ -3,5 +3,5 @@ load_from_file: 0
 plot: 0
 run_prev: 0
 schedule_type: csv
-time_limit: 1200
+time_limit: 1800                                                                # 30 minuties
 verbose: 0
