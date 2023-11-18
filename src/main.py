@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+#================================================================================
+# INCLUDES
+
 # Standard Lib
 import gurobipy as gp
 import numpy as np
@@ -59,14 +62,46 @@ from valid_queue_vector     import ValidQueueVector
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plots
-from plot                         import Plotter
-from charge_plot                  import ChargePlot
-from charger_usage_plot           import ChargerUsagePlot
-from schedule_plot                import SchedulePlot
-from power_usage_plot             import PowerUsagePlot
+from plot                          import Plotter
+from charge_plot                   import ChargePlot
+from charger_usage_plot            import ChargerUsagePlot
+from schedule_plot                 import SchedulePlot
+from power_usage_plot              import PowerUsagePlot
 from accumulated_energy_usage_plot import AccumulatedEnergyUsagePlot
 
 ##===============================================================================
+# FUNCTIONS
+
+##-------------------------------------------------------------------------------
+#
+def createModel(path: str="./config/general.yaml"):
+    """
+        Input:
+          - str : Path to the configuration file
+
+        Output:
+          - model : Model for the MILP to be created with
+        """
+    # Variables
+    f     = open(path, "r")                                                     # Open file
+    init  = yaml.load(f, Loader = yaml.FullLoader)                              # Parse YAML
+    model = None                                                                # MILP model
+
+    # Parse 'config/general.yaml'
+    with open(r'config/general.yaml') as f:
+        file   = yaml.load(f, Loader=yaml.FullLoader)
+        solver = file['solver']
+
+    # Create the appropriate model
+    # TODO: Create appropriate model for GLPK
+    if solver == "GLPK":
+        model = gp.Model()
+    else:
+        model = gp.Model()
+
+    return model
+
+##-------------------------------------------------------------------------------
 #
 def plot(results, dm):
     """
@@ -98,7 +133,7 @@ def plot(results, dm):
 
     return
 
-##===============================================================================
+##-------------------------------------------------------------------------------
 #
 def setupObjective(o, dm):
     # Local variables
@@ -116,7 +151,7 @@ def setupObjective(o, dm):
 
     return
 
-##===============================================================================
+##-------------------------------------------------------------------------------
 #
 def setupConstraints(o, dm):
     # Local Variables
@@ -159,14 +194,14 @@ def setupConstraints(o, dm):
     subscribeConstr(constraints, o)
     return
 
-##===============================================================================
+##-------------------------------------------------------------------------------
 #
 def initializeConstr(constraints, model, params, d_var):
     for c in constraints:
         c.initialize(model, params, d_var)
     return
 
-##===============================================================================
+##-------------------------------------------------------------------------------
 #
 def subscribeConstr(constraints, optimizer_obj):
     for c in constraints:
@@ -174,21 +209,21 @@ def subscribeConstr(constraints, optimizer_obj):
     return
 
 ##===============================================================================
-#
+# MAIN
 def main():
     # Create data manager object
     dm = DataManager()
 
-    # Create gurobi model
-    dm['model'] = gp.Model()
+    # Create MILP model
+    dm['model'] = createModel()
 
     # Create schedule
     Schedule(dm['model'])
 
     # Optimize
     ## Initialize optimizer
-    o  = Optimizer()
-    qm = QuinModified()
+    o  = Optimizer()                                                            # MILP solution
+    qm = QuinModified()                                                         # Quin Modified solution
 
     ## Initialize objectives and constraints
     setupObjective(o, dm)

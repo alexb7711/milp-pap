@@ -23,11 +23,6 @@ class Optimizer:
     ##===========================================================================
 
     ##---------------------------------------------------------------------------
-    # Input:
-    #       NONE
-    #
-    # Output:
-    #       NONE
     #
     def __init__(self, data_d: str="../data"):
         # Parse 'config/general.yaml'
@@ -37,6 +32,7 @@ class Optimizer:
                 self.verbose   = file['verbose']
                 self.lff       = file['load_from_file']
                 self.time_lim  = file['time_limit']
+                self.solver    = file['solver']
 
         # Initialize member variables
         self.dm         = DataManager()

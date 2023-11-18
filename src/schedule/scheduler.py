@@ -117,7 +117,9 @@ class Schedule:
           - NONE
 
         Output:
-          - self.init: Parsed schedule YAML file
+          - init          : Parsed schedule YAML file
+          - run_prev      : YAML parameter to run previous configuration
+          - schedule_type : YAML parameter to determine schedule type
         """
 
         # Parse 'schedule.yaml'
@@ -126,6 +128,7 @@ class Schedule:
 
         # Parse 'general.yaml'
         with open(path+"/general.yaml", "r") as f:
+                print(f)
                 file          = yaml.load(f, Loader=yaml.FullLoader)
                 run_prev      = file['run_prev']
                 schedule_type = file['schedule_type']
