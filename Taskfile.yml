@@ -1,0 +1,116 @@
+################################################################################
+# ENVIRONTMENT
+################################################################################
+version: '3'
+
+env:
+  IMG_D    : img
+  SRC_D    : src
+  ENV_D    : .venv
+  DATA_D   : data
+  P_DATA_D : ~/Documents/docs/milp-pap/fig/data
+  V_BIN_D  : .venv/bin
+  DEP      : dependencies
+  PYTHON   : python
+  MAIN     : main.py
+
+################################################################################
+# RECIPES
+################################################################################
+
+tasks:
+
+##------------------------------------------------------------------------------
+#
+  default:
+    cmds:
+      - task: setup
+      - task: run
+
+##------------------------------------------------------------------------------
+#
+  run:
+    desc: "Execute the program."
+    cmds:
+      - |
+        source {{.V_BIN_D}}/activate
+        cd {{.SRC_D}}
+        {{.PYTHON}} {{.MAIN}}
+
+##------------------------------------------------------------------------------
+#
+  test:
+    desc: "Execute the the test suite."
+    vars:
+      TST_D: ./test/
+    cmds:
+      - |
+        source {{.V_BIN_D}}/activate
+        {{.PYTHON}} -m unittest discover -s {{.TST_D}} -p "test_*.py"
+
+
+##------------------------------------------------------------------------------
+#
+  debug:
+    desc: "Debug the program (PDB)."
+    cmds:
+      - |
+        source {{.V_BIN_D}}/activate
+        cd {{.SRC_D}}
+        python -m pudb main.py
+
+##------------------------------------------------------------------------------
+#
+  copy:
+    desc: "Copy the data to the specified location."
+    internal: true
+    vars:
+      DATA: ./data/*
+      FNTR_DATA: ./docs/milp-pap-paper-frontiers/img/data/
+    cmds:
+      - |
+        cp {{.DATA}} {{.FNTR_DATA}}
+
+##------------------------------------------------------------------------------
+#
+  docs:
+    desc: "Build the associated documents."
+    vars:
+      DOCS_D: ./docs
+    cmds:
+      - task: copy
+      - cd {{.DOCS_D}}/milp-pap-paper-frontiers/ && go-task clean && go-task
+
+##==============================================================================
+# Environment configuration
+
+  setup:
+    desc: "Configure the python virtual environment."
+    cmds:
+      - |
+        {{.PYTHON}} -m venv {{.ENV_D}}
+        {{.V_BIN_D}}/pip install --upgrade pip
+        echo Create output directories
+        mkdir -p {{.DATA_D}}
+        mkdir -p {{.IMG_D}}
+        echo Intall packages into virtual environemnt
+        {{.V_BIN_D}}/pip install -r {{.DEP}}
+
+##==============================================================================
+# Helper
+
+##------------------------------------------------------------------------------
+#
+  clean:
+    desc: "Pick up all the garbage."
+    cmds:
+        - rm -rfv {{.ENV_D}}
+
+##------------------------------------------------------------------------------
+#
+  update:
+    desc: "Update the {{.ENV_D}} packages."
+    cmds:
+      - |
+        {{.V_BIN_D}}/pip install --upgrade pip
+      - task: setup

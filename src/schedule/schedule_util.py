@@ -10,6 +10,12 @@ import numpy as np
 from array_util import *
 
 ##===============================================================================
+# PUBLIC CONSTANTS
+KWH2KJ = 3600                                                                    # [KJ]
+HR2SEC = 3600                                                                    # [s] 
+SEC2HR = 1/HR2SEC                                                                # [hr]
+
+##===============================================================================
 # PUBLIC
 
 ##-------------------------------------------------------------------------------
@@ -196,7 +202,7 @@ def saveParams(self, d_path: str="data"):
       - NONE
 
     Output:
-       - Ouput parameters to 'data/input_vars.npy'
+       - Ouput parameters to '../data/input_vars.npy'
     """
     # Save data for furture runs
     np.save(d_path+'/input_vars.npy', self.dm.m_params)

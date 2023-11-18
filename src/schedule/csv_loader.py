@@ -223,9 +223,9 @@ def __calcDischarge(self, routes):
 
     """
     # Variables
-    discharge = []                                                              # Discharge for each visit
-    BOD       = self.init['time']['BOD']                                             # Beginning of day
-    EOD       = self.init['time']['EOD']                                             # End of day
+    discharge = []                                                              # Discharge for each visit [KWh]
+    BOD       = self.init['time']['BOD']                                        # Beginning of day [hr]
+    EOD       = self.init['time']['EOD']                                        # End of day [hr]
 
     # For each set of routes for bus b
     for route in routes:
@@ -236,7 +236,7 @@ def __calcDischarge(self, routes):
         ## For each route for bus b
         for j in range(0,J,2):
             r = route['route']
-            discharge_tmp.append(self.dm['zeta'][b] * (r[j+1] - r[j]))          # Calculate discharge
+            discharge_tmp.append(self.dm['zeta'][b]*(r[j+1] - r[j]))            # Calculate discharge
 
             ### If the final visit is not at the end of the day
             if j == J-2 and r[j+1] < EOD:
