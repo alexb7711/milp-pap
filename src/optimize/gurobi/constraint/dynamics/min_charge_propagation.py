@@ -23,7 +23,6 @@ class MinChargePropagation(Constraint):
 		# Extract parameters
 		G     = self.params['Gamma']
 		Q     = self.params['Q']
-		gam   = self.params['gamma']
 		l     = self.params['l']
 		kappa = self.params['kappa']
 		nu    = self.params['nu']

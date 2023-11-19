@@ -1,9 +1,8 @@
-solver: 'Gurobi'                                                       # Solver to use: 'GLPK' or 'Gurobi'
-jobs: 12                                                               # Number of processes to input values (currently broken)
-time_limit: 21600                                                      # Time limit to solve [s]
-verbose:  0                                                            # Verbose
-
-schedule_type: 'csv'                                                   # 'csv' or 'random'
-load_from_file: 0                                                      # Output previous decision variable/param results (rerun solver)
-run_prev: 0                                                            # Load previous input parameters (output previous solver solution)
-plot: 0                                                                # 1: True; 0: False
+jobs: 12
+load_from_file: 0
+plot: 0
+run_prev: 0
+schedule_type: csv
+solver: Gurobi
+time_limit: 3600
+verbose: 0

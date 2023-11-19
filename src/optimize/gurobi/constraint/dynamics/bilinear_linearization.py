@@ -21,7 +21,6 @@ class BilinearLinearization(Constraint):
                 G   = self.params['Gamma']
                 M   = self.params['T']
                 Q   = self.params['Q']
-                gam = self.params['gamma']
 
                 # Extract decision vars
                 w = self.d_var['w']

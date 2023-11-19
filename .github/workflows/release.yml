@@ -10,8 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: arduino/setup-task@v1
-    - run: task setup && task test
+    - run: make setup && make test
     - uses: ncipollo/release-action@v1
       with:
         bodyFile: "README.org"
