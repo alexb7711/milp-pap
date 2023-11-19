@@ -33,12 +33,18 @@ def genCSVRoutes(self, d_path):
 
     routes = __loadCSV(self, r_path)                                            # Load the route data from CSV
 
-    __bufferAttributes(self, routes)                                            # Load the route attributes into
+    visits = __convertRouteToVisit(self, self.init, routes)                     # Convert start/end route to
+
+    __bufferAttributes(self, routes, visits)                                    # Load the route attributes into
                                                                                 # scheduler object
 
-    visits    = __convertRouteToVisit(self.init, routes)                        # Convert start/end route to
                                                                                 # arrival/departure
     discharge = __calcDischarge(self, routes)                                   # Calculate the discharge
+
+    cnt = 0
+    for d in discharge:
+        cnt = cnt + len(d)
+
     __generateScheduleParams(self, d_path, visits, discharge)                   # Generate schedule parameters
 
     return
@@ -86,13 +92,15 @@ def __loadCSV(self, path: str):
 
 ##-------------------------------------------------------------------------------
 #
-def __bufferAttributes(self, routes):
+def __bufferAttributes(self, routes, visits):
     """
     Takes the start,stop set of routes and generates routes that the scheduler
     object can understand.
 
     Input:
-      - None
+      - self:
+      - routes:
+      - visits:
 
     Output:
       - set of route data to scheduler object
@@ -102,7 +110,7 @@ def __bufferAttributes(self, routes):
 
     # Calculate input parameters
     self.dm['A']     = len(routes)                                              # Number of buses
-    self.dm['N']     = __countVisits(init, routes)                              # Number of visits
+    self.dm['N']     = __countVisits(init, visits)                              # Number of visits
     self.dm['a']     = np.zeros(self.dm['N'], dtype=float)                      # Arrival times
     self.dm['tau']   = np.zeros(self.dm['N'], dtype=float)                      # Departure times
     self.dm['l']     = np.zeros(self.dm['N'], dtype=float)                      # Discharge for route i
@@ -128,26 +136,16 @@ def __countVisits(init, routes):
       - N: Number of visits
     """
     # Variables
-    N = 0                                                                       # Number of visits
-    BOD = init['time']['BOD']                                                   # Beginning of day
-    EOD = init['time']['EOD']                                                   # End of day
-
+    cnt = 0
 
     for r in routes:
-        N += int((len(r['route'])) / 2)                                         # For every start/stop pair there is one
-                                                                                # visit.
-        # If the bus does not go on route immediately after the working day has
-        # begun
-        if r['route'][0] > BOD:
-            N += 1                                                              # Increment the visit counter
-        # If the bus arrives before the end of the working day
-        if r['route'][-1] < EOD:
-            N += 1                                                              # Increment the visit counter
-    return N
+        cnt = cnt + len(r['visit'])
+
+    return cnt
 
 ##-------------------------------------------------------------------------------
 #
-def  __convertRouteToVisit(init, routes):
+def  __convertRouteToVisit(self, init, routes):
     """
     Convert the start/stop representation to a arrival/departure representation
     of the route schedule.
@@ -171,15 +169,16 @@ def  __convertRouteToVisit(init, routes):
         r         = route['route']                                              # Routes for bus b
         b         = route['id']                                                 # Bus id
 
-        J         = len(r)                                                      # Number of routes for bus
         arrival_c = r[1]                                                        # Current arrival time
         arrival_n = 0                                                           # Next arrival time
         departure = 0                                                           # Departure time
-        j         = 0                                                           # Current route for bus b
         tmp_route = []                                                          # Temporary [Arrival, Depart] pair
 
+        ## Determine start/stop index
+        (i0, J) = __detStartEndIdx(self, r)
+
         ## For each start/stop route pair
-        for j in range(0,J,2):
+        for j in range(i0, J, 2):
             ### Update times
             departure = r[j]                                                    # Assign departure time
             arrival_n = r[j+1]                                                  # Assign next arrival time
@@ -192,7 +191,10 @@ def  __convertRouteToVisit(init, routes):
             elif j == 0 and r[j] == BOD:
                 tmp_route.append([BOD, BOD])                                    # Put in a dummy visit to propogate discharge
                 continue                                                        # The first arrival is after next route
-            # Else append the arrival/departure time normally
+            ### Else if the visit time is non-zero
+            elif departure - arrival_c == 0.0:
+                tmp_route.append([arrival_c, departure+0.01])                   # Append next arrival/departure pair
+            ### Otherwise
             else:
                 tmp_route.append([arrival_c, departure])                        # Append next arrival/departure pair
 
@@ -200,13 +202,55 @@ def  __convertRouteToVisit(init, routes):
             if j == J-2  and r[j+1] < EOD:
                 tmp_route.append([arrival_n, EOD])                              # The last visit is after final route to
                                                                                 # EOD
-
             arrival_c = arrival_n                                               # Update the current visit for next
                                                                                 # iteration
 
         routes_visit.append({'id': b, 'visit': tmp_route})                      # Update the visits for bus b
 
     return routes_visit
+
+##-------------------------------------------------------------------------------
+#
+def __detStartEndIdx(self, r):
+    """
+     Determine the starting index for converting routes to visits.
+
+     Example:
+     1)
+     B  E  B  E  B  E  B  E
+     0  1  2  3  4  5  6  7
+
+     The first "visit" it at E = 1 since the BEB is on route from hour 0 to 1.
+     Therefore, the first visit is at index 1.
+
+     2)
+     B  E  B  E  B  E  B  E
+     1  2  3  4  5  6  7  8
+
+     The first visit is at E = 0.0 since we are assuming that B = 1 is the start
+     of the first route of the day. Therefore, the starting index needs to be 1.
+
+     Input:
+       - self  : Scheduler object
+       - r: Vector of bus routes for bus `b`
+
+     Output:
+       - (i0, ix): The start/end index to convert routes to visits
+
+    """
+    # Variables
+    BOD = self.init['time']['BOD']                                        # Beginning of day [hr]
+    i0  = 0
+    ix  = len(r)
+
+    # # If the first rout time starts at BOD
+    # if r[0] == BOD:
+    #     ## The starting index is set to 1
+    #     i0 = 1
+    #     ix = ix - 1;
+
+
+    return (i0, ix)
 
 ##-------------------------------------------------------------------------------
 #

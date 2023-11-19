@@ -1,16 +1,13 @@
 #!/usr/bin/python
 
-#================================================================================
+# ================================================================================
 # INCLUDES
 
 # Standard Lib
 import gurobipy as gp
-import numpy as np
 import os
 import sys
 import yaml
-
-from gurobipy import GRB
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Include in path
@@ -19,15 +16,15 @@ from gurobipy import GRB
 # https://www.tutorialspoint.com/python/os_walk.htm
 for root, dirs, files in os.walk(".", topdown=False):
     for name in dirs:
-        sys.path.append(root+'/'+name)
+        sys.path.append(root + "/" + name)
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Developed
-from scheduler     import Schedule
-from optimizer     import Optimizer
+from scheduler import Schedule
+from optimizer import Optimizer
 from quin_modified import QuinModified
-from pretty        import *
-from data_output   import outputData
+
+from data_output import outputData
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Data managers
@@ -40,57 +37,57 @@ from min_time_objectives import MinTimeObjective
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Constraints
 ## Packing
-from charge_duration      import ChargeDuration
-from delta                import Delta
-from sigma                import Sigma
-from sigma_delta          import SigmaDelta
-from space_big_o          import SpaceBigO
-from time_big_o           import TimeBigO
+from charge_duration import ChargeDuration
+from delta import Delta
+from sigma import Sigma
+from sigma_delta import SigmaDelta
+from space_big_o import SpaceBigO
+from time_big_o import TimeBigO
 from valid_departure_time import ValidDepartureTime
-from valid_end_time       import ValidEndTime
-from valid_initial_time   import ValidInitialTime
+from valid_end_time import ValidEndTime
+from valid_initial_time import ValidInitialTime
 
 ## Dynamic
 from bilinear_linearization import BilinearLinearization
-from charge_propagation     import ChargePropagation
-from final_charge           import FinalCharge
-from initial_charge         import InitialCharge
+from charge_propagation import ChargePropagation
+from final_charge import FinalCharge
+from initial_charge import InitialCharge
 from max_charge_propagation import MaxChargePropagation
 from min_charge_propagation import MinChargePropagation
 from scalar_to_vector_queue import ScalarToVectorQueue
-from valid_queue_vector     import ValidQueueVector
+from valid_queue_vector import ValidQueueVector
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plots
-from plot                          import Plotter
-from charge_plot                   import ChargePlot
-from charger_usage_plot            import ChargerUsagePlot
-from schedule_plot                 import SchedulePlot
-from power_usage_plot              import PowerUsagePlot
+from plot import Plotter
+from charge_plot import ChargePlot
+from charger_usage_plot import ChargerUsagePlot
+from schedule_plot import SchedulePlot
+from power_usage_plot import PowerUsagePlot
 from accumulated_energy_usage_plot import AccumulatedEnergyUsagePlot
 
 ##===============================================================================
 # FUNCTIONS
 
+
 ##-------------------------------------------------------------------------------
 #
-def createModel(path: str="./config/general.yaml"):
+def createModel(path: str = "./config/general.yaml"):
     """
-        Input:
-          - str : Path to the configuration file
+    Input:
+      - str : Path to the configuration file
 
-        Output:
-          - model : Model for the MILP to be created with
-        """
+    Output:
+      - model : Model for the MILP to be created with
+    """
     # Variables
-    f     = open(path, "r")                                                     # Open file
-    init  = yaml.load(f, Loader = yaml.FullLoader)                              # Parse YAML
-    model = None                                                                # MILP model
+    f = open(path, "r")  # Open file
+    model = None  # MILP model
 
     # Parse 'config/general.yaml'
-    with open(r'config/general.yaml') as f:
-        file   = yaml.load(f, Loader=yaml.FullLoader)
-        solver = file['solver']
+    with open(r"config/general.yaml") as f:
+        file = yaml.load(f, Loader=yaml.FullLoader)
+        solver = file["solver"]
 
     # Create the appropriate model
     # TODO: Create appropriate model for GLPK
@@ -100,6 +97,7 @@ def createModel(path: str="./config/general.yaml"):
         model = gp.Model()
 
     return model
+
 
 ##-------------------------------------------------------------------------------
 #
@@ -114,8 +112,7 @@ def plot(results, dm):
     Output
       - NONE
     """
-    plots = \
-    [
+    plots = [
         SchedulePlot(),
         ChargePlot(),
         ChargerUsagePlot(),
@@ -125,24 +122,24 @@ def plot(results, dm):
 
     Plotter.initialize(results, dm)
 
-
-    with open(r'config/general.yaml') as f:
+    with open(r"config/general.yaml") as f:
         file = yaml.load(f, Loader=yaml.FullLoader)
-        if file['plot'] > 0:
-            for p in plots: p.plot()
+        if file["plot"] > 0:
+            for p in plots:
+                p.plot()
 
     return
+
 
 ##-------------------------------------------------------------------------------
 #
 def setupObjective(o, dm):
     # Local variables
-    d_var  = dm.m_decision_var
-    m      = dm['model']
+    d_var = dm.m_decision_var
+    m = dm["model"]
     params = dm.m_params
 
-    objectives = \
-    [
+    objectives = [
         MinTimeObjective("min_time_objective"),
     ]
 
@@ -151,23 +148,23 @@ def setupObjective(o, dm):
 
     return
 
+
 ##-------------------------------------------------------------------------------
 #
 def setupConstraints(o, dm):
     # Local Variables
-    A      = dm['A']
-    N      = dm['N']
-    Q      = dm['Q']
-    d_var  = dm.m_decision_var
-    m      = dm['model']
+    A = dm["A"]
+    N = dm["N"]
+    Q = dm["Q"]
+    d_var = dm.m_decision_var
+    m = dm["model"]
     params = dm.m_params
 
     # Set the number of visists
     o.setIterations(N)
 
     ## List of constraints to optimize over
-    constraints = \
-    [
+    constraints = [
         ### Packing
         ChargeDuration("charge_duration"),
         Delta("delta", N),
@@ -178,7 +175,6 @@ def setupConstraints(o, dm):
         ValidDepartureTime("valid_departure_time"),
         ValidEndTime("valid_end_time"),
         ValidInitialTime("valid_initial_time"),
-
         ### Dynamic
         BilinearLinearization("bilinear_linearization"),
         ChargePropagation("charge_propagation"),
@@ -194,12 +190,14 @@ def setupConstraints(o, dm):
     subscribeConstr(constraints, o)
     return
 
+
 ##-------------------------------------------------------------------------------
 #
 def initializeConstr(constraints, model, params, d_var):
     for c in constraints:
         c.initialize(model, params, d_var)
     return
+
 
 ##-------------------------------------------------------------------------------
 #
@@ -208,6 +206,7 @@ def subscribeConstr(constraints, optimizer_obj):
         optimizer_obj.subscribeConstraint(c)
     return
 
+
 ##===============================================================================
 # MAIN
 def main():
@@ -215,15 +214,15 @@ def main():
     dm = DataManager()
 
     # Create MILP model
-    dm['model'] = createModel()
+    dm["model"] = createModel()
 
     # Create schedule
-    Schedule(dm['model'])
+    Schedule(dm["model"])
 
     # Optimize
     ## Initialize optimizer
-    o  = Optimizer()                                                            # MILP solution
-    qm = QuinModified()                                                         # Quin Modified solution
+    o = Optimizer()  # MILP solution
+    qm = QuinModified()  # Quin Modified solution
 
     ## Initialize objectives and constraints
     setupObjective(o, dm)
@@ -232,18 +231,15 @@ def main():
     ### Optimize model with MILP
     results = o.optimize()
     outputData("milp", results)
-
-    ### Plot Results
     plot(results, dm)
 
     ### Optimize with Quin-Modified
     results = qm.optimize()
     outputData("qm", dm)
-
-    ### Plot/Output Results
     plot(results, dm)
 
     return
+
 
 ##===============================================================================
 #

@@ -12,8 +12,8 @@ NOSE_DIR  = $(ENV_DIR)/bin
 
 ##==============================================================================
 # File Paths
-DATA    = $(SRC_D)/data
-P_DATA  = ~/Documents/docs/milp-pap/fig/data
+DATA    = data
+P_DATA  = ./docs/milp-pap-paper-frontiers/img/data
 BIN     = $(ENV_DIR)/bin
 DEP     = dependencies
 PYTHON  = python

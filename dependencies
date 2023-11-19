@@ -3,6 +3,7 @@ gurobipy
 joblib
 matplotlib
 numpy
+progress
 pudb
 pyyaml
 scipy
