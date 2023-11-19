@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: arduino/setup-task@v1
     - run: sudo apt update && sudo apt upgrade
     - run: sudo apt install python3
-    - run: task setup && task test
+    - run: make setup && make test
