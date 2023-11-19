@@ -30,7 +30,6 @@ class FinalCharge(Constraint):
 
         # Extract decision vars
         eta = self.d_var['eta']
-        g   = self.d_var['g']
 
         if beta[i] > 0:
             model.addConstr(eta[i] >= beta[i]*kappa[G[i]], \
