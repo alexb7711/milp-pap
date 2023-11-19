@@ -33,10 +33,6 @@ all: setup update run ## Default action
 ##==============================================================================
 #
 test: ## Run unit tests
-	@# Check if nosetests is installed
-	@nosetests --version >/dev/null 2>&1 && (echo "nosetests installed!") || (echo "ERROR: nosetests is required."; exit 1)
-	@nosetests --plugins | grep coverage >/dev/null 2>&1 && (echo "coverage installed!") || (echo "ERROR: coverage is required."; exit 1)
-	@# Run tests
 	@bash -c                    \
 	"cd $(shell pwd)        &&  \
 	source $(BIN)/activate  &&  \
