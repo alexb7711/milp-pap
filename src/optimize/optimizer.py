@@ -1,19 +1,16 @@
 # System Modules
 import yaml
 import sys
+import numpy as np
 
-import gurobipy as gp
-import numpy    as np
-import time
-
-from gurobipy import GRB
+from progress.bar import Bar
 
 np.set_printoptions(threshold=sys.maxsize)
 
 # Developed Modules
 from data_manager import DataManager
-from dict_util    import *
-from pretty       import *
+from dict_util import merge_dicts
+
 
 ##===============================================================================
 #
@@ -24,24 +21,24 @@ class Optimizer:
 
     ##---------------------------------------------------------------------------
     #
-    def __init__(self, data_d: str="../data"):
+    def __init__(self, data_d: str = "../data"):
         # Parse 'config/general.yaml'
-        with open(r'config/general.yaml') as f:
-                file           = yaml.load(f, Loader=yaml.FullLoader)
-                self.jobs      = file['jobs']
-                self.verbose   = file['verbose']
-                self.lff       = file['load_from_file']
-                self.time_lim  = file['time_limit']
-                self.solver    = file['solver']
+        with open(r"config/general.yaml") as f:
+            file = yaml.load(f, Loader=yaml.FullLoader)
+            self.jobs = file["jobs"]
+            self.verbose = file["verbose"]
+            self.lff = file["load_from_file"]
+            self.time_lim = file["time_limit"]
+            self.solver = file["solver"]
 
         # Initialize member variables
-        self.dm         = DataManager()
-        self.model      = self.dm['model']
-        self.params     = self.dm.m_params
-        self.d_var      = self.dm.m_decision_var
-        self.data_d     = data_d
-        self.constr     = []
-        self.objective  = []
+        self.dm = DataManager()
+        self.model = self.dm["model"]
+        self.params = self.dm.m_params
+        self.d_var = self.dm.m_decision_var
+        self.data_d = data_d
+        self.constr = []
+        self.objective = []
 
         return
 
@@ -63,45 +60,60 @@ class Optimizer:
             model = self.model
 
             # Set time limit
-            model.setParam('TimeLimit', self.time_lim)
+            model.setParam("TimeLimit", self.time_lim)
 
             # Objective
-            print("====================================================================")
+            print(
+                "===================================================================="
+            )
             print("Creating Objective...")
-            print("====================================================================")
+            print(
+                "===================================================================="
+            )
             self.__inputObjectives()
 
             # Add constraints
-            print("====================================================================")
+            print(
+                "===================================================================="
+            )
             print("Adding Constraints")
-            print("====================================================================")
-            for i in range(self.iterations):
-                self.__inputConstraints(i)
+            print(
+                "===================================================================="
+            )
+            with Bar("", max=self.iterations) as bar:
+                for i in range(self.iterations):
+                    self.__inputConstraints(i)
+                    bar.next()
 
             # Uncomment to print model to disk
             #  model.write("model.lp")
 
             # Optimize
-            print("====================================================================")
+            print(
+                "===================================================================="
+            )
             print("Optimizing")
-            print("====================================================================")
+            print(
+                "===================================================================="
+            )
             model.optimize()
 
             # Save Results
             ## Extract all the decision variable results
-            d_var_results = \
-                    dict((k, self.dm.m_decision_var[k].X)
-                          for k in self.dm.m_decision_var.keys()
-                          if k != 'model')
+            d_var_results = dict(
+                (k, self.dm.m_decision_var[k].X)
+                for k in self.dm.m_decision_var.keys()
+                if k != "model"
+            )
 
             ## Combine decision variable results with input parameters
             results = merge_dicts(self.dm.m_params, d_var_results)
 
             ## Save the results to disk
-            np.save(self.data_d+'/results.npy', results)
+            np.save(self.data_d + "/results.npy", results)
         else:
             ## Load the results from disk
-            results = np.load(self.data_d+"/results.npy", allow_pickle='TRUE').item()
+            results = np.load(self.data_d + "/results.npy", allow_pickle="TRUE").item()
 
         # Update data manager with results
         self.__updateDM(results)
@@ -115,7 +127,7 @@ class Optimizer:
     # Output:
     #                       NONE
     #
-    def setIterations(self,i):
+    def setIterations(self, i):
         self.iterations = i
         return
 
@@ -167,18 +179,12 @@ class Optimizer:
     #                       NONE
     #
     def __inputConstraints(self, i):
-            t0 = time.time()
-            print("Iteration {0} of {1}".format(i+1, self.dm['N']))
+        for c in self.constr:
+            if self.verbose > 0:
+                print("Adding {0}...".format(c.name))
 
-            for c in self.constr:
-                    if self.verbose > 0:
-                        print("Adding {0}...".format(c.name))
-
-                    c.addConstr(i)
-
-            t1 = time.time()
-            print("----------------------- Speed: {0} seconds -----------------------".format(t1-t0))
-            return
+            c.addConstr(i)
+        return
 
     ##---------------------------------------------------------------------------
     #
@@ -194,12 +200,12 @@ class Optimizer:
         """
         # Variables
         dm = self.dm
-        r  = results
+        r = results
 
         # Split dictionary into a list of keys and values
         k = r.keys()
         v = r.values()
 
         # Update data manager
-        dm.setList(k,v)
+        dm.setList(k, v)
         return
