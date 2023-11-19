@@ -36,7 +36,6 @@ test: ## Run unit tests
 	@# Check if nosetests is installed
 	@nosetests --version >/dev/null 2>&1 && (echo "nosetests installed!") || (echo "ERROR: nosetests is required."; exit 1)
 	@nosetests --plugins | grep coverage >/dev/null 2>&1 && (echo "coverage installed!") || (echo "ERROR: coverage is required."; exit 1)
-
 	@# Run tests
 	@bash -c                    \
 	"cd $(shell pwd)        &&  \
@@ -69,8 +68,7 @@ run: ## Execute the program
 	source $(BIN)/activate  &&  \
 	cd $(SRC_D)             &&  \
 	$(PYTHON) main.py"
-
-	bash -c "cp $(DATA)/*.csv $(P_DATA)"
+	@bash -c "cp $(DATA)/*.csv $(P_DATA)"
 
 ##==============================================================================
 #
