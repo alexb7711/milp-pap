@@ -13,6 +13,7 @@ from schedule_util import *
 ##===============================================================================
 # PUBLIC
 
+
 ##-------------------------------------------------------------------------------
 #
 def genCSVRoutes(self, d_path):
@@ -29,28 +30,34 @@ def genCSVRoutes(self, d_path):
     """
 
     # Variables
-    r_path = d_path+"/routes.csv"
+    r_path = d_path + "/routes.csv"
 
-    routes = __loadCSV(self, r_path)                                            # Load the route data from CSV
+    routes = __loadCSV(self, r_path)  # Load the route data from CSV
 
-    visits = __convertRouteToVisit(self, self.init, routes)                     # Convert start/end route to
+    visits = __convertRouteToVisit(
+        self, self.init, routes
+    )  # Convert start/end route to
 
-    __bufferAttributes(self, routes, visits)                                    # Load the route attributes into
-                                                                                # scheduler object
+    __bufferAttributes(self, routes, visits)  # Load the route attributes into
+    # scheduler object
 
-                                                                                # arrival/departure
-    discharge = __calcDischarge(self, routes)                                   # Calculate the discharge
+    # arrival/departure
+    discharge = __calcDischarge(self, routes)  # Calculate the discharge
 
     cnt = 0
     for d in discharge:
         cnt = cnt + len(d)
 
-    __generateScheduleParams(self, d_path, visits, discharge)                   # Generate schedule parameters
+    __generateScheduleParams(
+        self, d_path, visits, discharge
+    )  # Generate schedule parameters
 
     return
 
+
 ##===============================================================================
 # PRIVATE
+
 
 ##-------------------------------------------------------------------------------
 #
@@ -67,28 +74,31 @@ def __loadCSV(self, path: str):
       - routes: bus route data object
     """
     # Lambda
-    SEC2HR = lambda x : x/3600.0
+    SEC2HR = lambda x: x / 3600.0
 
     # Variables
-    first_row = True                                                            # Indicate the first row is being
-                                                                                # processed
+    first_row = True  # Indicate the first row is being
+    # processed
 
-    with open(path, newline='') as csvfile:                                     # Open the CSV file
-        routes_raw = csv.reader(csvfile, delimiter=',')
-        routes     = []
-        id         = 0
+    with open(path, newline="") as csvfile:  # Open the CSV file
+        routes_raw = csv.reader(csvfile, delimiter=",")
+        routes = []
+        id = 0
 
-        for row in routes_raw:                                                  # For each row in the csv file
-            if first_row:                                                       # Ignore the first row
+        for row in routes_raw:  # For each row in the csv file
+            if first_row:  # Ignore the first row
                 first_row = False
                 continue
 
             ### If the route is not being ignored
-            if int(row[0]) not in self.init['ignore']:
-                routes.append({'id': id, 'route': [SEC2HR(float(x)) for x in row[1:]]}) # Append the id and routes
-                id += 1                                                                   # Update ID
+            if int(row[0]) not in self.init["ignore"]:
+                routes.append(
+                    {"id": id, "route": [SEC2HR(float(x)) for x in row[1:]]}
+                )  # Append the id and routes
+                id += 1  # Update ID
 
     return routes
+
 
 ##-------------------------------------------------------------------------------
 #
@@ -109,18 +119,19 @@ def __bufferAttributes(self, routes, visits):
     init = self.init
 
     # Calculate input parameters
-    self.dm['A']     = len(routes)                                              # Number of buses
-    self.dm['N']     = __countVisits(init, visits)                              # Number of visits
-    self.dm['a']     = np.zeros(self.dm['N'], dtype=float)                      # Arrival times
-    self.dm['tau']   = np.zeros(self.dm['N'], dtype=float)                      # Departure times
-    self.dm['l']     = np.zeros(self.dm['N'], dtype=float)                      # Discharge for route i
-    self.dm['gamma'] = np.zeros(self.dm['N'], dtype=int)                        # ID of bus for each visit
-    self.dm['Gamma'] = np.zeros(self.dm['N'], dtype=int)                        # Index of next bus visit
+    self.dm["A"] = len(routes)  # Number of buses
+    self.dm["N"] = __countVisits(init, visits)  # Number of visits
+    self.dm["a"] = np.zeros(self.dm["N"], dtype=float)  # Arrival times
+    self.dm["tau"] = np.zeros(self.dm["N"], dtype=float)  # Departure times
+    self.dm["l"] = np.zeros(self.dm["N"], dtype=float)  # Discharge for route i
+    self.dm["gamma"] = np.zeros(self.dm["N"], dtype=int)  # ID of bus for each visit
+    self.dm["Gamma"] = np.zeros(self.dm["N"], dtype=int)  # Index of next bus visit
 
     # Get the rest of the parameters from YAML
-    genInputParams(self)                                                        # Get params from YAML
+    genInputParams(self)  # Get params from YAML
 
     return
+
 
 ##-------------------------------------------------------------------------------
 #
@@ -139,13 +150,14 @@ def __countVisits(init, routes):
     cnt = 0
 
     for r in routes:
-        cnt = cnt + len(r['visit'])
+        cnt = cnt + len(r["visit"])
 
     return cnt
 
+
 ##-------------------------------------------------------------------------------
 #
-def  __convertRouteToVisit(self, init, routes):
+def __convertRouteToVisit(self, init, routes):
     """
     Convert the start/stop representation to a arrival/departure representation
     of the route schedule.
@@ -159,20 +171,20 @@ def  __convertRouteToVisit(self, init, routes):
     """
     # Variables
     routes_visit = []
-    BOD = init['time']['BOD']                                                   # Beginning of day
-    EOD = init['time']['EOD']                                                   # End of day
+    BOD = init["time"]["BOD"]  # Beginning of day
+    EOD = init["time"]["EOD"]  # End of day
 
     # Generate set of visit/departures
     # For each bus/route
     for route in routes:
         ## Variables
-        r         = route['route']                                              # Routes for bus b
-        b         = route['id']                                                 # Bus id
+        r = route["route"]  # Routes for bus b
+        b = route["id"]  # Bus id
 
-        arrival_c = r[1]                                                        # Current arrival time
-        arrival_n = 0                                                           # Next arrival time
-        departure = 0                                                           # Departure time
-        tmp_route = []                                                          # Temporary [Arrival, Depart] pair
+        arrival_c = r[1]  # Current arrival time
+        arrival_n = 0  # Next arrival time
+        departure = 0  # Departure time
+        tmp_route = []  # Temporary [Arrival, Depart] pair
 
         ## Determine start/stop index
         (i0, J) = __detStartEndIdx(self, r)
@@ -180,77 +192,76 @@ def  __convertRouteToVisit(self, init, routes):
         ## For each start/stop route pair
         for j in range(i0, J, 2):
             ### Update times
-            departure = r[j]                                                    # Assign departure time
-            arrival_n = r[j+1]                                                  # Assign next arrival time
+            departure = r[j]  # Assign departure time
+            arrival_n = r[j + 1]  # Assign next arrival time
 
             ### If the first visit as at the BOD
             if j == 0 and r[j] > BOD:
-                tmp_route.append([BOD, departure])                              # The first arrivial is at BOD
+                tmp_route.append([BOD, departure])  # The first arrivial is at BOD
                 continue
             ### Otherwise the first visit after BOD
             elif j == 0 and r[j] == BOD:
-                tmp_route.append([BOD, BOD])                                    # Put in a dummy visit to propogate discharge
-                continue                                                        # The first arrival is after next route
-            ### Else if the visit time is non-zero
-            elif departure - arrival_c == 0.0:
-                tmp_route.append([arrival_c, departure+0.01])                   # Append next arrival/departure pair
+                tmp_route.append(
+                    [BOD, BOD]
+                )  # Put in a dummy visit to propogate discharge
+                continue  # The first arrival is after next route
             ### Otherwise
             else:
-                tmp_route.append([arrival_c, departure])                        # Append next arrival/departure pair
+                tmp_route.append(
+                    [arrival_c, departure]
+                )  # Append next arrival/departure pair
 
             ### If the final visit is not at the EOD
-            if j == J-2  and r[j+1] < EOD:
-                tmp_route.append([arrival_n, EOD])                              # The last visit is after final route to
-                                                                                # EOD
-            arrival_c = arrival_n                                               # Update the current visit for next
-                                                                                # iteration
+            if j == J - 2 and r[j + 1] < EOD:
+                tmp_route.append(
+                    [arrival_n, EOD]
+                )  # The last visit is after final route to
+                # EOD
+            arrival_c = arrival_n  # Update the current visit for next
+            # iteration
 
-        routes_visit.append({'id': b, 'visit': tmp_route})                      # Update the visits for bus b
+        routes_visit.append(
+            {"id": b, "visit": tmp_route}
+        )  # Update the visits for bus b
 
     return routes_visit
+
 
 ##-------------------------------------------------------------------------------
 #
 def __detStartEndIdx(self, r):
     """
-     Determine the starting index for converting routes to visits.
+    Determine the starting index for converting routes to visits.
 
-     Example:
-     1)
-     B  E  B  E  B  E  B  E
-     0  1  2  3  4  5  6  7
+    Example:
+    1)
+    B  E  B  E  B  E  B  E
+    0  1  2  3  4  5  6  7
 
-     The first "visit" it at E = 1 since the BEB is on route from hour 0 to 1.
-     Therefore, the first visit is at index 1.
+    The first "visit" it at E = 1 since the BEB is on route from hour 0 to 1.
+    Therefore, the first visit is at index 1.
 
-     2)
-     B  E  B  E  B  E  B  E
-     1  2  3  4  5  6  7  8
+    2)
+    B  E  B  E  B  E  B  E
+    1  2  3  4  5  6  7  8
 
-     The first visit is at E = 0.0 since we are assuming that B = 1 is the start
-     of the first route of the day. Therefore, the starting index needs to be 1.
+    The first visit is at E = 0.0 since we are assuming that B = 1 is the start
+    of the first route of the day. Therefore, the starting index needs to be 1.
 
-     Input:
-       - self  : Scheduler object
-       - r: Vector of bus routes for bus `b`
+    Input:
+      - self  : Scheduler object
+      - r: Vector of bus routes for bus `b`
 
-     Output:
-       - (i0, ix): The start/end index to convert routes to visits
+    Output:
+      - (i0, ix): The start/end index to convert routes to visits
 
     """
     # Variables
-    BOD = self.init['time']['BOD']                                        # Beginning of day [hr]
-    i0  = 0
-    ix  = len(r)
-
-    # # If the first rout time starts at BOD
-    # if r[0] == BOD:
-    #     ## The starting index is set to 1
-    #     i0 = 1
-    #     ix = ix - 1;
-
+    i0 = 0
+    ix = len(r)
 
     return (i0, ix)
+
 
 ##-------------------------------------------------------------------------------
 #
@@ -267,29 +278,31 @@ def __calcDischarge(self, routes):
 
     """
     # Variables
-    discharge = []                                                              # Discharge for each visit [KWh]
-    BOD       = self.init['time']['BOD']                                        # Beginning of day [hr]
-    EOD       = self.init['time']['EOD']                                        # End of day [hr]
+    discharge = []  # Discharge for each visit [KWh]
+    EOD = self.init["time"]["EOD"]  # End of day [hr]
 
     # For each set of routes for bus b
     for route in routes:
-        J             = len(route['route'])                                     # Number of routes for bus b
-        b             = route['id']                                             # Bus index
-        discharge_tmp = []                                                      # Discharges for bus b
+        J = len(route["route"])  # Number of routes for bus b
+        b = route["id"]  # Bus index
+        discharge_tmp = []  # Discharges for bus b
 
         ## For each route for bus b
-        for j in range(0,J,2):
-            r = route['route']
-            discharge_tmp.append(self.dm['zeta'][b]*(r[j+1] - r[j]))            # Calculate discharge
+        for j in range(0, J, 2):
+            r = route["route"]
+            discharge_tmp.append(
+                self.dm["zeta"][b] * (r[j + 1] - r[j])
+            )  # Calculate discharge
 
             ### If the final visit is not at the end of the day
-            if j == J-2 and r[j+1] < EOD:
-                discharge_tmp.append(0)                                         # The final route does not have a discharge
+            if j == J - 2 and r[j + 1] < EOD:
+                discharge_tmp.append(0)  # The final route does not have a discharge
 
-        discharge.append(discharge_tmp)                                         # Update discharges
-        b += 1                                                                  # Update the bus index
+        discharge.append(discharge_tmp)  # Update discharges
+        b += 1  # Update the bus index
 
     return discharge
+
 
 ##-------------------------------------------------------------------------------
 #
@@ -308,47 +321,51 @@ def __generateScheduleParams(self, d_path, visits, discharge):
     """
     ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Variables
-    bus_data        = []                                                        # Bus data to be sorted
+    bus_data = []  # Bus data to be sorted
 
     ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Executable code
 
     # Generate bus data structure for each visit
-    for visit,dis in zip(visits, discharge):
-        id = visit['id']                                                        # ID
+    for visit, dis in zip(visits, discharge):
+        id = visit["id"]  # ID
 
-        for j in range(len(visit['visit'])):
-            arrival  = visit['visit'][j][0]                                     # Visit
-            depart   = visit['visit'][j][1]                                     # Departure
-            bd       = self.fillBusData(id, arrival, depart, dis[j])            # Update bus data
+        for j in range(len(visit["visit"])):
+            arrival = visit["visit"][j][0]  # Visit
+            depart = visit["visit"][j][1]  # Departure
+            bd = self.fillBusData(id, arrival, depart, dis[j])  # Update bus data
             bus_data.append(bd)
 
     # Sort and apply final elements to the schedule
     ## Sort bus_data by arrival times
-    bus_data = sorted(bus_data, key=lambda d: d['arrival_time'])                # Sort bus data using arrival time
+    bus_data = sorted(
+        bus_data, key=lambda d: d["arrival_time"]
+    )  # Sort bus data using arrival time
 
     ## Determine gamma array
-    self.dm['Gamma'] = genNextVisit(self, bus_data)
+    self.dm["Gamma"] = genNextVisit(self, bus_data)
 
     ## Determine Gamma array
-    self.dm['gamma'] = determineNextVisit(self, self.dm['Gamma'])
+    self.dm["gamma"] = determineNextVisit(self, self.dm["Gamma"])
 
     ## Randomly assign initial charges
-    self.dm['alpha'] = determineInitCharge(self, self.dm['Gamma'],
-                                           self.init['initial_charge'])
+    self.dm["alpha"] = determineInitCharge(
+        self, self.dm["Gamma"], self.init["initial_charge"]
+    )
 
     ## Assign final charges
-    self.dm['beta'] =  determineFinalCharge(self, self.dm['gamma'],
-                                            self.init['final_charge'])
+    self.dm["beta"] = determineFinalCharge(
+        self, self.dm["gamma"], self.init["final_charge"]
+    )
 
     ## Assign arrival times to arrival array
-    self.dm['a'] = applyParam(self, bus_data, "arrival_time")
+    self.dm["a"] = applyParam(self, bus_data, "arrival_time")
 
     ## Assign departure times to tau array
-    self.dm['t'] = applyParam(self, bus_data, "departure_time")
+    self.dm["t"] = applyParam(self, bus_data, "departure_time")
 
     ## Assign discharges to lambus_dataa array
-    self.dm['l'] = applyParam(self, bus_data, "route_discharge")
+    self.dm["l"] = applyParam(self, bus_data, "route_discharge")
 
     ## Save parameters to disk
     saveParams(self, d_path)
