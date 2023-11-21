@@ -82,5 +82,5 @@ clean: ## Cleanup the project
 # https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help:  ## Auto-generated help menu
 	@grep -P '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-	sort |                                                \
+	sort                                                | \
 	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
