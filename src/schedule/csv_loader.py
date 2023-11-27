@@ -198,13 +198,11 @@ def __convertRouteToVisit(self, init, routes):
             ### If the first visit as at the BOD
             if j == 0 and r[j] > BOD:
                 tmp_route.append([BOD, departure])  # The first arrivial is at BOD
-                continue
             ### Otherwise the first visit after BOD
             elif j == 0 and r[j] == BOD:
                 tmp_route.append(
                     [BOD, BOD]
                 )  # Put in a dummy visit to propogate discharge
-                continue  # The first arrival is after next route
             ### Otherwise
             else:
                 tmp_route.append(
