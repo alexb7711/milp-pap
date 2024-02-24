@@ -196,16 +196,17 @@ def __accEnergyOut(fn, dm, path):
         - Data files
     """
     # Variables
-    name = fn + "-acc-energy-usage"
-    K = dm["K"]
-    N = dm["N"]
-    T = dm["T"]
-    c = dm["c"]
-    g = dm["g"]
-    r = dm["r"]
-    u = dm["u"]
-    v = [int(i) for i in dm["v"]]
-    data = np.zeros((K, 2), dtype=float)
+    name   = fn + "-acc-energy-usage"
+    K      = dm["K"]
+    N      = dm["N"]
+    T      = dm["T"]
+    c      = dm["c"]
+    dt     = dm["dt"]
+    g      = dm["g"]
+    r      = dm["r"]
+    u      = dm["u"]
+    v      = [int(i) for i in dm["v"]]
+    data   = np.zeros((K, 2), dtype=float)
     fields = ["time", "power"]
 
     # For each visit
@@ -218,7 +219,7 @@ def __accEnergyOut(fn, dm, path):
 
         for i in range(N):
             if u[i] <= k and c[i] >= k and g[i][v[i]] > 0:
-                data[idx, 1] += r[v[i]]
+                data[idx, 1] += r[v[i]] * dt
 
         idx += 1
 
