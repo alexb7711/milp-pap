@@ -231,21 +231,6 @@ def __detStartEndIdx(self, r):
     """
     Determine the starting index for converting routes to visits.
 
-    Example:
-    1)
-    B  E  B  E  B  E  B  E
-    0  1  2  3  4  5  6  7
-
-    The first "visit" it at E = 1 since the BEB is on route from hour 0 to 1.
-    Therefore, the first visit is at index 1.
-
-    2)
-    B  E  B  E  B  E  B  E
-    1  2  3  4  5  6  7  8
-
-    The first visit is at E = 0.0 since we are assuming that B = 1 is the start
-    of the first route of the day. Therefore, the starting index needs to be 1.
-
     Input:
       - self  : Scheduler object
       - r: Vector of bus routes for bus `b`
