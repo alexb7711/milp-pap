@@ -187,7 +187,6 @@ class QuinModified:
           - c   : Stop charge time
         """
         # Variables
-        f = self.init["chargers"]["fast"]["num"]
         s = self.init["chargers"]["slow"]["num"]
         Q = self.dm["Q"]
         queue = []
@@ -229,7 +228,6 @@ class QuinModified:
         """
         # Variables
         N = self.dm["N"]
-        Q = self.dm["Q"]
 
         # Update data manager
         self.dm["c"] = c  # Detatch time
@@ -283,7 +281,6 @@ class QuinModified:
         ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # Variables
         perc = self.low
-        f = self.init["chargers"]["fast"]["num"]  # Fast chargers
         s = self.init["chargers"]["slow"]["num"]  # Slow chargers
         k = self.init["buses"]["bat_capacity"]  # Battery capacity
         r = 0
@@ -301,11 +298,11 @@ class QuinModified:
         else:
             r = self.init["chargers"]["fast"]["rate"]  # [Kw]
 
-        # Reserve spot
-        u, c, v = self.__findFreeTime(a, t, q)
+        # Find a free time
+        u, c, v, avail = self.__findFreeTime(a, t, q)
 
-        # Save reservation
-        if self.__makeReservation(v, u, c):
+        # If an availability was found
+        if v >= 0:
             ## Calculate new charge
             if eta + r * (c - u) >= perc * k:
                 c = (perc * k - eta) / r + u
@@ -313,6 +310,9 @@ class QuinModified:
                 eta = perc * k - self.dm["l"][i]
             else:
                 eta = eta + r * (c - u) - self.dm["l"][i]
+
+            # Make reservation
+            self.__makeReservation(v, u, c, avail)
         else:
             v = -1
 
@@ -354,18 +354,18 @@ class QuinModified:
             ):
                 continue
 
-            if b <= a and t <= e:
+            if b <= a and a <= t and t <= e:
                 v = q
                 break  # a <= u <= c <= t
-            elif a <= b and t <= e:
+            elif a <= b and b <= t and t <= e:
                 u = b
                 v = q
                 break  # b <= u <= c <= t
-            elif a >= b and t >= e:
+            elif b <= a and e <= t:
                 c = e
                 v = q
                 break  # a <= u <= c <= e
-            elif a <= b and t >= e:
+            elif a <= b and e <= t:
                 u = b
                 c = e
                 v = q
@@ -374,11 +374,11 @@ class QuinModified:
             if v >= 0:
                 break  # Charger found
 
-        return u, c, v
+        return u, c, v, i
 
     ##---------------------------------------------------------------------------
     #
-    def __makeReservation(self, v, u, c):
+    def __makeReservation(self, v, u, c, i):
         """
         Save reservation in charger usage array
 
@@ -395,16 +395,13 @@ class QuinModified:
 
         # If there has been times allotted
         if v >= 0:
-            for j in self.cu[v]:
-                s = j[0]  # Start of free time
-                e = j[1]  # End of free time
+            s = i[0]   # Start of free time
+            e = i[1] # End of free time
 
-                # If the allocated time is in the selected free time
-                if s <= u and c <= e:
-                    q = self.cu[v]
-                    q.remove(j)  # Remove current free time
-                    q.append([s, u])  # Update charger times
-                    q.append([c, e])
-                    res_made = True  # Indicate a reservation was made
-                    break
+            # If the allocated time is in the selected free time
+            self.cu[v].remove(i)  # Remove current free time
+            self.cu[v].append([s, u])  # Update charger times
+            self.cu[v].append([c, e])
+            res_made = True  # Indicate a reservation was made
+
         return res_made
