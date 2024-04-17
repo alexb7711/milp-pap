@@ -1,8 +1,8 @@
 jobs: 12
 load_from_file: 0
-plot: 0
+plot: 1
 run_prev: 0
 schedule_type: csv
-solver: Gurobi
+solver: None
 time_limit: 7200
 verbose: 0

@@ -93,17 +93,17 @@ class QuinModified:
                 eta[gam[i]] = eta[i] - dis  # Next visit charge
             ## Else its a normal visit
             else:
-                priority = "slow"
+                priority = ""                                                   # Default to the lowest priority
 
                 ### If the charge is below 60%, prioritize it to fast
                 if eta[i] < high * k[G[i]]:
-                    priority = "fast"
+                    priority = "high"
                 ### Else if prioritize to slow, fast if no slow
                 elif eta[i] >= high * k[G[i]] and eta[i] < med * k[G[i]]:
-                    priority = "slow"
+                    priority = "medium"
                 ### Else if only use slow
-                elif eta[i] <= med * k[G[i]] and eta[i] < low * k[G[i]]:
-                    priority = "SLOW"
+                elif eta[i] >= med * k[G[i]] and eta[i] < low * k[G[i]]:
+                    priority = "low"
                 ### Else if, don't charge
                 elif eta[i] >= low * k[G[i]]:
                     priority = ""  # Don't do anything
@@ -194,11 +194,11 @@ class QuinModified:
         u = c = 0
 
         # Set up search priority
-        if priority == "slow":
-            queue = range(Q)  # Prioritize slow
-        if priority == "fast":
+        if priority == "high":
             queue = range(s, Q, 1)  # Prioritize fast
-        if priority == "SLOW":
+        if priority == "medium":
+            queue = range(Q)  # Prioritize slow
+        if priority == "low":
             queue = range(0, s)  # Only slow
 
         # For each of the chargers going from slow to fast
@@ -348,7 +348,7 @@ class QuinModified:
             b = i[0]  # Begin slot
             e = i[1]  # End slot
 
-            ## Try to find an open slot
+            ## If the BEB does not fit within the time slice
             if (all(a < x for x in i) and all(t < x for x in i)) or (
                 all(a > x for x in i) and all(t > x for x in i)
             ):
@@ -356,20 +356,20 @@ class QuinModified:
 
             if b <= a and a <= t and t <= e:
                 v = q
-                break  # a <= u <= c <= t
+                break  # b <= a <= t <= e
             elif a <= b and b <= t and t <= e:
                 u = b
                 v = q
-                break  # b <= u <= c <= t
-            elif b <= a and e <= t:
+                break  # a <= u <= t <= e
+            elif b <= a and a <= t and e <= t:
                 c = e
                 v = q
-                break  # a <= u <= c <= e
-            elif a <= b and e <= t:
+                break  # b <= u <= e <= t
+            elif a <= b and b <= e and e <= t:
                 u = b
                 c = e
                 v = q
-                break  # b <= u <= c <= e
+                break  # u <= b <= e <= t
 
             if v >= 0:
                 break  # Charger found
