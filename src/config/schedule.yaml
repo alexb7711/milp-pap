@@ -22,7 +22,7 @@ final_charge: 0.20                                                              
 chargers:
   slow:
     num: 15
-    rate: 30                                                                    # [Kw]
+    rate: 30.0                                                                  # [Kw]
   fast:
     num: 15
     rate: 910.95                                                                # [Kw]
