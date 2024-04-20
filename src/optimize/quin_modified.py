@@ -197,9 +197,9 @@ class QuinModified:
         if priority == "high":
             queue = range(s, Q, 1)  # Prioritize fast
         if priority == "medium":
-            queue = range(0,Q)  # Prioritize slow
+            queue = range(0,Q, 1)  # Prioritize slow
         if priority == "low":
-            queue = range(0, s)  # Only slow
+            queue = range(0, s, 1)  # Only slow
 
         # For each of the chargers going from slow to fast
         for q in queue:
@@ -306,8 +306,13 @@ class QuinModified:
             ## Calculate new charge
             if eta + r * (c - u) >= perc * k:
                 c = (perc * k - eta) / r + u
-                # print("Amount charged: {0}".format(t))
                 eta = perc * k - self.dm["l"][i]
+
+                ### In case the times inverse somehow
+                if u > c:
+                    tmp = c
+                    c = u
+                    u = tmp
             else:
                 eta = eta + r * (c - u) - self.dm["l"][i]
 
@@ -348,11 +353,10 @@ class QuinModified:
             e = ts[1]  # End slot
 
             ## If the BEB does not fit within the time slice
-            if (all(a < x for x in ts) and all(t < x for x in ts)) or (
-                all(a > x for x in ts) and all(t > x for x in ts)
+            if (all(a <= x for x in ts) and all(t <= x for x in ts)) or (
+                all(a >= x for x in ts) and all(t >= x for x in ts)
             ):
                 continue
-
 
             ## b <= a <= t <= e
             if b <= a and a <= t and t <= e:

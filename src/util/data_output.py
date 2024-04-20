@@ -257,10 +257,9 @@ def __scheduleOut(fn, dm, path):
 
     # For each visit
     for i in range(N):
-        if g[i][v[i]] > 0.001:
-            data[i][G[i] * 3 + 0] = v[i]
-            data[i][G[i] * 3 + 1] = u[i]
-            data[i][G[i] * 3 + 2] = g[i][v[i]]
+        data[i][G[i] * 3 + 0] = v[i]
+        data[i][G[i] * 3 + 1] = u[i]
+        data[i][G[i] * 3 + 2] = g[i][v[i]]
 
     # Write data to disk
     __saveToFile(path, name, fields, data)
