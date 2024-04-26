@@ -8,7 +8,7 @@ IMG_D     = img
 SRC_D     = src
 TST_D     = test
 ENV_DIR   = .venv
-ifeq ($(shell uname), Linux)
+ifneq ($(wildcard $(ENV_DIR)/bin/.),)
 NOSE_DIR  = $(ENV_DIR)/bin
 else
 NOSE_DIR  = $(ENV_DIR)/Scripts
@@ -18,7 +18,7 @@ endif
 # File Paths
 DATA    = data
 P_DATA  = ./docs/milp-pap-paper-frontiers/img/data
-ifeq ($(shell uname), Linux)
+ifneq ($(wildcard $(ENV_DIR)/bin/.),)
 BIN     = $(ENV_DIR)/bin
 else
 BIN     = $(ENV_DIR)/Scripts
@@ -66,7 +66,7 @@ update: ## Update the virtual environment packages
 ##==============================================================================
 #
 run: ## Execute the program
-	cd $(shell pwd)        &&  \
+	cd "$(shell pwd)"        &&  \
 	source $(BIN)/activate  &&  \
 	cd $(SRC_D)             &&  \
 	$(PYTHON) main.py

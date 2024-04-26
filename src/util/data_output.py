@@ -257,6 +257,9 @@ def __scheduleOut(fn, dm, path):
 
     # For each visit
     for i in range(N):
+        if u[i] >= 24.0:
+            continue
+
         data[i][G[i] * 3 + 0] = v[i]
         data[i][G[i] * 3 + 1] = u[i]
         data[i][G[i] * 3 + 2] = g[i][v[i]]
