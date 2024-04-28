@@ -8,13 +8,21 @@ IMG_D     = img
 SRC_D     = src
 TST_D     = test
 ENV_DIR   = .venv
+ifneq ($(wildcard $(ENV_DIR)/bin/.),)
 NOSE_DIR  = $(ENV_DIR)/bin
+else
+NOSE_DIR  = $(ENV_DIR)/Scripts
+endif
 
 ##==============================================================================
 # File Paths
 DATA    = data
 P_DATA  = ./docs/milp-pap-paper-frontiers/img/data
+ifneq ($(wildcard $(ENV_DIR)/bin/.),)
 BIN     = $(ENV_DIR)/bin
+else
+BIN     = $(ENV_DIR)/Scripts
+endif
 DEP     = dependencies
 PYTHON  = python
 
@@ -33,10 +41,9 @@ all: setup update run ## Default action
 ##==============================================================================
 #
 test: ## Run unit tests
-	@bash -c                    \
-	"cd $(shell pwd)        &&  \
+	cd $(shell pwd)        &&  \
 	source $(BIN)/activate  &&  \
-	$(PYTHON) -m unittest discover -s $(TST_D) -p \"test_*.py\""
+	$(PYTHON) -m unittest discover -s $(TST_D) -p "test_*.py"
 
 ##==============================================================================
 #
@@ -59,12 +66,10 @@ update: ## Update the virtual environment packages
 ##==============================================================================
 #
 run: ## Execute the program
-	@bash -c                    \
-	"cd $(shell pwd)        &&  \
+	cd "$(shell pwd)"        &&  \
 	source $(BIN)/activate  &&  \
 	cd $(SRC_D)             &&  \
-	$(PYTHON) main.py"
-	@bash -c "cp $(DATA)/*.csv $(P_DATA)"
+	$(PYTHON) main.py
 
 ##==============================================================================
 #

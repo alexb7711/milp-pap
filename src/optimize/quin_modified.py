@@ -93,17 +93,17 @@ class QuinModified:
                 eta[gam[i]] = eta[i] - dis  # Next visit charge
             ## Else its a normal visit
             else:
-                priority = "slow"
+                priority = ""  # Default to the lowest priority
 
                 ### If the charge is below 60%, prioritize it to fast
                 if eta[i] < high * k[G[i]]:
-                    priority = "fast"
+                    priority = "high"
                 ### Else if prioritize to slow, fast if no slow
                 elif eta[i] >= high * k[G[i]] and eta[i] < med * k[G[i]]:
-                    priority = "slow"
+                    priority = "medium"
                 ### Else if only use slow
-                elif eta[i] <= med * k[G[i]] and eta[i] < low * k[G[i]]:
-                    priority = "SLOW"
+                elif eta[i] >= med * k[G[i]] and eta[i] < low * k[G[i]]:
+                    priority = "low"
                 ### Else if, don't charge
                 elif eta[i] >= low * k[G[i]]:
                     priority = ""  # Don't do anything
@@ -194,12 +194,12 @@ class QuinModified:
         u = c = 0
 
         # Set up search priority
-        if priority == "slow":
-            queue = range(Q)  # Prioritize slow
-        if priority == "fast":
+        if priority == "high":
             queue = range(s, Q, 1)  # Prioritize fast
-        if priority == "SLOW":
-            queue = range(0, s)  # Only slow
+        if priority == "medium":
+            queue = range(0, Q, 1)  # Prioritize slow
+        if priority == "low":
+            queue = range(0, s, 1)  # Only slow
 
         # For each of the chargers going from slow to fast
         for q in queue:
@@ -306,15 +306,18 @@ class QuinModified:
             ## Calculate new charge
             if eta + r * (c - u) >= perc * k:
                 c = (perc * k - eta) / r + u
-                # print("Amount charged: {0}".format(t))
                 eta = perc * k - self.dm["l"][i]
+
+                ### In case the times inverse somehow
+                if u > c:
+                    tmp = c
+                    c = u
+                    u = tmp
             else:
                 eta = eta + r * (c - u) - self.dm["l"][i]
 
             # Make reservation
             self.__makeReservation(v, u, c, avail)
-        else:
-            v = -1
 
         # If the charge is less than 0, then the bus battery is flat
         if eta < 0:
@@ -337,6 +340,7 @@ class QuinModified:
           - u : Start charge time
           - c : End charge time
           - v : Selected queue
+          - ts : Selected time slice
         """
         # Variables
         u = a
@@ -344,41 +348,42 @@ class QuinModified:
         v = -1
 
         # For every assigned charge time
-        for i in self.cu[q]:
-            b = i[0]  # Begin slot
-            e = i[1]  # End slot
+        for ts in self.cu[q]:
+            b = ts[0]  # Begin slot
+            e = ts[1]  # End slot
 
-            ## Try to find an open slot
-            if (all(a < x for x in i) and all(t < x for x in i)) or (
-                all(a > x for x in i) and all(t > x for x in i)
+            ## If the BEB does not fit within the time slice
+            if (all(a <= x for x in ts) and all(t <= x for x in ts)) or (
+                all(a >= x for x in ts) and all(t >= x for x in ts)
             ):
                 continue
 
+            ## b <= a <= t <= e
             if b <= a and a <= t and t <= e:
                 v = q
-                break  # a <= u <= c <= t
+                break
+            ## a <= u <= t <= e`
             elif a <= b and b <= t and t <= e:
                 u = b
                 v = q
-                break  # b <= u <= c <= t
-            elif b <= a and e <= t:
+                break
+            ## b <= u <= e <= t
+            elif b <= a and a <= e and e <= t:
                 c = e
                 v = q
-                break  # a <= u <= c <= e
-            elif a <= b and e <= t:
+                break
+            ## u <= b <= e <= t
+            elif a <= b and b <= e and e <= t:
                 u = b
                 c = e
                 v = q
-                break  # b <= u <= c <= e
+                break
 
-            if v >= 0:
-                break  # Charger found
-
-        return u, c, v, i
+        return u, c, v, ts
 
     ##---------------------------------------------------------------------------
     #
-    def __makeReservation(self, v, u, c, i):
+    def __makeReservation(self, v, u, c, ts):
         """
         Save reservation in charger usage array
 
@@ -395,13 +400,14 @@ class QuinModified:
 
         # If there has been times allotted
         if v >= 0:
-            s = i[0]   # Start of free time
-            e = i[1] # End of free time
+            s = ts[0]  # Start of free time
+            e = ts[1]  # End of free time
 
             # If the allocated time is in the selected free time
-            self.cu[v].remove(i)  # Remove current free time
+            self.cu[v].remove(ts)  # Remove current free time
             self.cu[v].append([s, u])  # Update charger times
             self.cu[v].append([c, e])
+            self.cu.sort()
             res_made = True  # Indicate a reservation was made
 
         return res_made
