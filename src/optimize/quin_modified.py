@@ -93,7 +93,7 @@ class QuinModified:
                 eta[gam[i]] = eta[i] - dis  # Next visit charge
             ## Else its a normal visit
             else:
-                priority = ""                                                   # Default to the lowest priority
+                priority = ""  # Default to the lowest priority
 
                 ### If the charge is below 60%, prioritize it to fast
                 if eta[i] < high * k[G[i]]:
@@ -197,7 +197,7 @@ class QuinModified:
         if priority == "high":
             queue = range(s, Q, 1)  # Prioritize fast
         if priority == "medium":
-            queue = range(0,Q, 1)  # Prioritize slow
+            queue = range(0, Q, 1)  # Prioritize slow
         if priority == "low":
             queue = range(0, s, 1)  # Only slow
 
@@ -372,7 +372,7 @@ class QuinModified:
                 c = e
                 v = q
                 break
-            ## u <= b <= e <= t`
+            ## u <= b <= e <= t
             elif a <= b and b <= e and e <= t:
                 u = b
                 c = e
@@ -400,8 +400,8 @@ class QuinModified:
 
         # If there has been times allotted
         if v >= 0:
-            s = ts[0]   # Start of free time
-            e = ts[1] # End of free time
+            s = ts[0]  # Start of free time
+            e = ts[1]  # End of free time
 
             # If the allocated time is in the selected free time
             self.cu[v].remove(ts)  # Remove current free time
