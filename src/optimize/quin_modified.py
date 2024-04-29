@@ -353,8 +353,8 @@ class QuinModified:
             e = ts[1]  # End slot
 
             ## If the BEB does not fit within the time slice
-            if (all(a <= x for x in ts) and all(t <= x for x in ts)) or (
-                all(a >= x for x in ts) and all(t >= x for x in ts)
+            if (all(a < x for x in ts) and all(t < x for x in ts)) or (
+                all(a > x for x in ts) and all(t > x for x in ts)
             ):
                 continue
 
