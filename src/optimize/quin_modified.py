@@ -31,9 +31,9 @@ class QuinModified:
         self.__genDecisionVars()  # Generate decision variables
         self.BOD = 0.0  # Beginning of day
         self.EOD = self.init["time"]["EOD"] - self.init["time"]["BOD"]  # End of day
-        self.high = 0.85  # High priority
-        self.med = 0.90  # Medium priority
-        self.low = 0.95  # Low priority
+        self.high = 0.40  # High priority
+        self.med = 0.70  # Medium priority
+        self.low = 0.90  # Low priority
         return
 
     ##---------------------------------------------------------------------------
@@ -244,6 +244,7 @@ class QuinModified:
                 self.w[i][v[i]] = 1  # Active charger
                 self.g[i][v[i]] = self.dm["p"][i]  # Linearization term
 
+        # Update data manage with formatted data
         self.dm["w"] = self.w
         self.dm["g"] = self.g
 
@@ -304,9 +305,9 @@ class QuinModified:
         # If an availability was found
         if v >= 0:
             ## Calculate new charge
-            if eta + r * (c - u) >= perc * k:
+            if eta + r * (c - u) - self.dm["l"][i] >= perc * k:
                 c = (perc * k - eta) / r + u
-                eta = perc * k - self.dm["l"][i]
+                eta = eta + r * (c - u) - self.dm["l"][i]
 
                 ### In case the times inverse somehow
                 if u > c:
@@ -317,7 +318,8 @@ class QuinModified:
                 eta = eta + r * (c - u) - self.dm["l"][i]
 
             # Make reservation
-            self.__makeReservation(v, u, c, avail)
+            if not self.__makeReservation(v, u, c, avail):
+                v = -1
 
         # If the charge is less than 0, then the bus battery is flat
         if eta < 0:
@@ -353,31 +355,34 @@ class QuinModified:
             e = ts[1]  # End slot
 
             ## If the BEB does not fit within the time slice
-            if (all(a < x for x in ts) and all(t < x for x in ts)) or (
-                all(a > x for x in ts) and all(t > x for x in ts)
+            if (all(a <= x for x in ts) and all(t <= x for x in ts)) or (
+                all(a >= x for x in ts) and all(t >= x for x in ts)
             ):
                 continue
 
-            ## b <= a <= t <= e
-            if b <= a and a <= t and t <= e:
+            ## b < a < t < e
+            if b < a and a < t and t < e:
                 v = q
                 break
-            ## a <= u <= t <= e`
-            elif a <= b and b <= t and t <= e:
+            ## a < u < t < e`
+            elif a < b and b < t and t < e:
                 u = b
                 v = q
                 break
-            ## b <= u <= e <= t
-            elif b <= a and a <= e and e <= t:
+            ## b < u < e < t
+            elif b < a and a < e and e < t:
                 c = e
                 v = q
                 break
-            ## u <= b <= e <= t
-            elif a <= b and b <= e and e <= t:
+            ## u < b < e < t
+            elif a < b and b < e and e < t:
                 u = b
                 c = e
                 v = q
                 break
+
+        if abs(c - u) <= 0.01:
+            v = -1
 
         return u, c, v, ts
 
@@ -407,7 +412,13 @@ class QuinModified:
             self.cu[v].remove(ts)  # Remove current free time
             self.cu[v].append([s, u])  # Update charger times
             self.cu[v].append([c, e])
-            self.cu.sort()
+            self.cu[v].sort()
+
+            for cu in self.cu:
+                for t in cu:
+                    if t[1] - t[0] == 0:
+                        cu.remove(t)
+
             res_made = True  # Indicate a reservation was made
 
         return res_made

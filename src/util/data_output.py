@@ -248,7 +248,6 @@ def __scheduleOut(fn, dm, path):
     N = dm["N"]
     G = dm["Gamma"]
     g = dm["g"]
-    r = dm["r"]
     u = dm["u"]
     v = [int(i) for i in dm["v"]]
     data = -1 * np.ones((N, 3 * A), dtype=float)
