@@ -31,9 +31,9 @@ class QuinModified:
         self.__genDecisionVars()  # Generate decision variables
         self.BOD = 0.0  # Beginning of day
         self.EOD = self.init["time"]["EOD"] - self.init["time"]["BOD"]  # End of day
-        self.high = 0.80  # High priority
-        self.med = 0.90  # Medium priority
-        self.low = 0.95  # Low priority
+        self.high = 0.60  # High priority
+        self.med = 0.70  # Medium priority
+        self.low = 0.90  # Low priority
         return
 
     ##---------------------------------------------------------------------------
@@ -109,12 +109,17 @@ class QuinModified:
                     priority = ""  # Don't do anything
 
                 # Update the SOC
-                eta[i] = eta[i] - dis
+                if priority != "":
+                    eta[[gam[i]]] = eta[i] - dis
 
                 ## Assign bus to charger
                 eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(
                     i, eta[i], self.cu, a[i], t[i], priority
                 )
+
+            # If the charge is less than 0, then the bus battery is flat
+            if eta[i] < 0:
+                eta[i] = 0
 
         # Format results
         results = self.__formatResults(eta, v, u, c)
@@ -308,9 +313,9 @@ class QuinModified:
         # If an availability was found
         if v >= 0:
             ## Calculate new charge
-            if eta + r * (c - u) >= perc * k:
+            if eta + r * (c - u) - self.dm["l"][i] >= perc * k:
                 c = (perc * k - eta) / r + u
-                eta = eta + r * (c - u)
+                eta = eta + r * (c - u) - self.dm["l"][i]
 
                 ### In case the times inverse somehow
                 if u > c:
@@ -318,15 +323,11 @@ class QuinModified:
                     c = u
                     u = tmp
             else:
-                eta = eta + r * (c - u)
+                eta = eta + r * (c - u) - self.dm["l"][i]
 
             # Make reservation
             if not self.__makeReservation(v, u, c, avail):
                 v = -1
-
-        # If the charge is less than 0, then the bus battery is flat
-        if eta < 0:
-            eta = 0
 
         return eta, u, c, v
 
