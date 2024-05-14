@@ -31,9 +31,9 @@ class QuinModified:
         self.__genDecisionVars()  # Generate decision variables
         self.BOD = 0.0  # Beginning of day
         self.EOD = self.init["time"]["EOD"] - self.init["time"]["BOD"]  # End of day
-        self.high = 0.40  # High priority
-        self.med = 0.70  # Medium priority
-        self.low = 0.90  # Low priority
+        self.high = 0.80  # High priority
+        self.med = 0.90  # Medium priority
+        self.low = 0.95  # Low priority
         return
 
     ##---------------------------------------------------------------------------
@@ -107,6 +107,9 @@ class QuinModified:
                 ### Else if, don't charge
                 elif eta[i] >= low * k[G[i]]:
                     priority = ""  # Don't do anything
+
+                # Update the SOC
+                eta[i] = eta[i] - dis
 
                 ## Assign bus to charger
                 eta[gam[i]], v[i], u[i], c[i] = self.__assignCharger(
@@ -305,9 +308,9 @@ class QuinModified:
         # If an availability was found
         if v >= 0:
             ## Calculate new charge
-            if eta + r * (c - u) - self.dm["l"][i] >= perc * k:
+            if eta + r * (c - u) >= perc * k:
                 c = (perc * k - eta) / r + u
-                eta = eta + r * (c - u) - self.dm["l"][i]
+                eta = eta + r * (c - u)
 
                 ### In case the times inverse somehow
                 if u > c:
@@ -315,7 +318,7 @@ class QuinModified:
                     c = u
                     u = tmp
             else:
-                eta = eta + r * (c - u) - self.dm["l"][i]
+                eta = eta + r * (c - u)
 
             # Make reservation
             if not self.__makeReservation(v, u, c, avail):
@@ -360,22 +363,22 @@ class QuinModified:
             ):
                 continue
 
-            ## b < a < t < e
-            if b < a and a < t and t < e:
+            ## b <= a <= t <= e
+            if b <= a and a <= t and t <= e:
                 v = q
                 break
-            ## a < u < t < e`
-            elif a < b and b < t and t < e:
+            ## a <= u <= t <= e`
+            elif a <= b and b <= t and t <= e:
                 u = b
                 v = q
                 break
-            ## b < u < e < t
-            elif b < a and a < e and e < t:
+            ## b <= u <= e <= t
+            elif b <= a and a <= e and e <= t:
                 c = e
                 v = q
                 break
-            ## u < b < e < t
-            elif a < b and b < e and e < t:
+            ## u <= b <= e <= t
+            elif a <= b and b <= e and e <= t:
                 u = b
                 c = e
                 v = q
