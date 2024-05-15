@@ -248,7 +248,6 @@ def __scheduleOut(fn, dm, path):
     N = dm["N"]
     G = dm["Gamma"]
     g = dm["g"]
-    r = dm["r"]
     u = dm["u"]
     v = [int(i) for i in dm["v"]]
     data = -1 * np.ones((N, 3 * A), dtype=float)
@@ -257,10 +256,12 @@ def __scheduleOut(fn, dm, path):
 
     # For each visit
     for i in range(N):
-        if g[i][v[i]] > 0.001:
-            data[i][G[i] * 3 + 0] = v[i]
-            data[i][G[i] * 3 + 1] = u[i]
-            data[i][G[i] * 3 + 2] = g[i][v[i]]
+        if u[i] >= 22.9 and g[i][v[i]] <= 0.01:
+            continue
+
+        data[i][G[i] * 3 + 0] = v[i]
+        data[i][G[i] * 3 + 1] = u[i]
+        data[i][G[i] * 3 + 2] = g[i][v[i]]
 
     # Write data to disk
     __saveToFile(path, name, fields, data)

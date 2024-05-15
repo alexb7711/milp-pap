@@ -93,8 +93,10 @@ def createModel(path: str = "./config/general.yaml"):
     # TODO: Create appropriate model for GLPK
     if solver == "GLPK":
         model = gp.Model()
+    elif solver == "GLPK":
+        model = None
     else:
-        model = gp.Model()
+        model = None
 
     return model
 
@@ -221,19 +223,20 @@ def main():
 
     # Optimize
     ## Initialize optimizer
-    o = Optimizer()  # MILP solution
-    qm = QuinModified()  # Quin Modified solution
+    if dm["model"] != None:
+        o = Optimizer()  # MILP solution
 
-    ## Initialize objectives and constraints
-    setupObjective(o, dm)
-    setupConstraints(o, dm)
+        ## Initialize objectives and constraints
+        setupObjective(o, dm)
+        setupConstraints(o, dm)
 
-    ### Optimize model with MILP
-    results = o.optimize()
-    outputData("milp", results)
-    plot(results, dm)
+        ### Optimize model with MILP
+        results = o.optimize()
+        outputData("milp", results)
+        plot(results, dm)
 
     ### Optimize with Quin-Modified
+    qm = QuinModified()  # Quin Modified solution
     results = qm.optimize()
     outputData("qm", dm)
     plot(results, dm)
