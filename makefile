@@ -41,6 +41,10 @@ all: setup update run ## Default action
 ##==============================================================================
 #
 test: ## Run unit tests
+	echo +++++++++
+	ls
+	echo +++++++++
+
 	cd $(shell pwd)        &&  \
 	source $(BIN)/activate  &&  \
 	$(PYTHON) -m unittest discover -s $(TST_D) -p "test_*.py"
