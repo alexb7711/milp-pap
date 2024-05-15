@@ -18,7 +18,7 @@ endif
 # File Paths
 DATA    = data
 P_DATA  = ./docs/milp-pap-paper-frontiers/img/data
-ifneq ($(wildcard $(ENV_DIR)/bin/.),)
+ifneq ($(shell uname -s), "Linux")
 BIN     = $(ENV_DIR)/bin
 else
 BIN     = $(ENV_DIR)/Scripts
